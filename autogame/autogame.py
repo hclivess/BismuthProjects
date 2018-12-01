@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import classes
 
 conn = sqlite3.connect("../../Bismuth/static/ledger.db")
 conn.text_factory = str
@@ -7,46 +8,7 @@ c = conn.cursor()
 
 block = 1
 
-
-class Hero:
-    FULL_HP = 500
-
-    def __init__(self):
-        self.health = self.FULL_HP
-        self.power = 10
-        self.alive = True
-        self.in_combat = False
-        self.experience = 0
-
-class Troll:
-    def __init__(self):
-        self.name = "Troll"
-        self.health = 20
-        self.power = 15
-        self.alive = True
-
-class Goblin:
-    def __init__(self):
-        self.name = "Goblin"
-        self.health = 10
-        self.power = 10
-        self.alive = True
-
-class berserker:
-    def __init__(self):
-        self.name = "Berserker"
-        self.health = 5
-        self.power = 30
-        self.alive = True
-
-class Dragon:
-    def __init__(self):
-        self.name = "Dragon"
-        self.health = 30
-        self.power = 50
-        self.alive = True
-
-hero = Hero()
+hero = classes.Hero()
 
 #trigger is followed by events affected by modifiers
 
@@ -81,23 +43,52 @@ def hero_dead_check():
 
 def enemy_define(event):
     if event == "troll":
-        enemy = Troll()
+        enemy = classes.Troll()
     elif event == "goblin":
-        enemy = Goblin()
+        enemy = classes.Goblin()
     elif event == "berserker":
-        enemy = berserker()
+        enemy = classes.Berserker()
     elif event == "dragon":
-        enemy = Dragon()
+        enemy = classes.Dragon()
     else:
         enemy = None
 
     return enemy
+
+def attack():
+    hero.experience += 1
+    damage = hero.power
+    enemy.health -= hero.power
+    print(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
+
+def critical_hit():
+    hero.experience += 1
+    damage = hero.power + hero.experience
+    enemy.health -= damage
+    print(f"{enemy.name} suffers {damage} critical damage and is left with {enemy.health} HP")
 
 def cycle(block):
     c.execute("SELECT * FROM transactions WHERE block_height = ? ORDER BY block_height", (block,))
     result = c.fetchall()
     block_hash  = result[0][7]
     return block_hash
+
+def heal():
+    if hero.in_combat and hero.health < classes.Hero.FULL_HP:
+        hero.health = hero.health + 5
+        print(f"You drink a potion and heal to {hero.health} HP...")
+
+    elif not hero.in_combat:
+        hero.health = 100
+        print("You rest and fully heal...")
+
+    if hero.health > classes.Hero.FULL_HP:
+        hero.health = classes.Hero.FULL_HP
+
+def attacked():
+    hero.in_combat = True
+    hero.health = hero.health - enemy.power
+    print(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
 
 while hero.alive:
 
@@ -121,37 +112,16 @@ while hero.alive:
                         print(f"Event: {event}")
 
                         if event == "attack":
-                            hero.experience += 1
-                            damage = hero.power
-                            enemy.health -= hero.power
-                            print(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
-
+                            attack()
 
                         if event == "critical_hit":
-                            hero.experience += 1
-                            damage = hero.power+hero.experience
-                            enemy.health -= damage
-                            print(f"{enemy.name} suffers {damage} critical damage and is left with {enemy.health} HP")
-
+                            critical_hit()
 
                         if event == "heal":
-                            if hero.in_combat and hero.health < Hero.FULL_HP:
-                                hero.health = hero.health + 5
-                                print(f"You drink a potion and heal to {hero.health} HP...")
-
-                            elif not hero.in_combat:
-                                hero.health = 100
-                                print ("You rest and fully heal...")
-
-                            if hero.health > Hero.FULL_HP:
-                                hero.health = Hero.FULL_HP
-
-                            break
+                            heal()
 
                         if events[event_key] == "attacked":
-                            hero.in_combat = True
-                            hero.health = hero.health - enemy.power
-                            print(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
+                            attacked()
 
                 hero_dead_check()
                 enemy_dead_check()
