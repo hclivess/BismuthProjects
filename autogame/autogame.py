@@ -101,8 +101,8 @@ def heal():
 def attacked():
     hero.in_combat = True
     hero.health = hero.health - enemy.power
-    hero_dead_check()
     print(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
+    hero_dead_check()
 
 while hero.alive:
 
