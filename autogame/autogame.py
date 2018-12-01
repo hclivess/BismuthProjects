@@ -20,8 +20,8 @@ hero = classes.Hero()
 #trigger is followed by events affected by modifiers
 
 #define events
-events = {seed[0:2] : "heal",
-          seed[2:4] : "attack",
+
+EVENTS = {seed[2:4] : "attack",
           seed[4:6] : "attacked",
           seed[6:8] : "critical_hit"}
 
@@ -30,11 +30,13 @@ modifiers = {"a1c" : "health_belt",
              "082" : "enchanted_sword"}
 
 #define triggers
-triggers = {"4f" : "troll",
+triggers_combat = {"4f" : "troll",
             "df" : "goblin",
             "5a" : "berserker",
             "61a" : "dragon"
             }
+
+triggers_peaceful = {"3d" : "health_potion"}
 
 def enemy_dead_check():
     if enemy.health < 1:
@@ -83,20 +85,16 @@ def cycle(block):
     return block_hash
 
 def heal():
-    if hero.health == classes.Hero.FULL_HP:
-        print ("You cannot get any healthier")
+    if hero.in_combat:
+        hero.health = hero.health + 5
+        print(f"You drink a potion and heal to {hero.health} HP...")
 
-    else:
-        if hero.in_combat:
-            hero.health = hero.health + 5
-            print(f"You drink a potion and heal to {hero.health} HP...")
+    elif not hero.in_combat:
+        hero.health = classes.Hero.FULL_HP
+        print("You rest and fully heal...")
 
-        elif not hero.in_combat:
-            hero.health = classes.Hero.FULL_HP
-            print("You rest and fully heal...")
-
-        if hero.health > classes.Hero.FULL_HP:
-            hero.health = classes.Hero.FULL_HP
+    if hero.health > classes.Hero.FULL_HP:
+        hero.health = classes.Hero.FULL_HP
 
 def attacked():
     hero.in_combat = True
@@ -108,21 +106,25 @@ while hero.alive:
 
     block_hash = cycle(block)
 
-    for trigger_key in triggers:
+    for trigger_key in triggers_peaceful:
+        trigger = triggers_peaceful[trigger_key]
+        if trigger == "health_potion" and hero.health < 100:
+            heal()
 
+    for trigger_key in triggers_combat:
         if trigger_key in block_hash and hero.alive:
-            trigger = triggers[trigger_key]
-            enemy = enemy_define(trigger)
+            trigger = triggers_combat[trigger_key]
 
+            enemy = enemy_define(trigger)
             print(f"You meet {enemy.name} on block {block}")
             hero.in_combat = True
 
             while hero.alive and enemy.alive:
-                for event_key in events: #check what happened
+                for event_key in EVENTS: #check what happened
                     block_hash = cycle(block)  # roll new hash happen while engaged
 
                     if event_key in block_hash:
-                        event = events[event_key]
+                        event = EVENTS[event_key]
                         print(f"Event: {event}")
 
                         if event == "attack":
@@ -130,9 +132,6 @@ while hero.alive:
 
                         elif event == "critical_hit":
                             critical_hit()
-
-                        elif event == "heal":
-                            heal()
 
                         elif event == "attacked":
                             attacked()
