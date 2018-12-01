@@ -41,7 +41,7 @@ def enemy_dead_check():
         hero.in_combat = False
         enemy.alive = False
         print(f"{enemy.name} died")
-        enemy.alive = False
+        print(f"You now have {hero.experience} experience")
 
 def hero_dead_check():
     if hero.health < 1:
@@ -67,12 +67,14 @@ def attack():
     damage = hero.power
     enemy.health -= hero.power
     print(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
+    enemy_dead_check()
 
 def critical_hit():
     hero.experience += 1
     damage = hero.power + hero.experience
     enemy.health -= damage
     print(f"{enemy.name} suffers {damage} *critical* damage and is left with {enemy.health} HP")
+    enemy_dead_check()
 
 def cycle(block):
     c.execute("SELECT * FROM transactions WHERE block_height = ? ORDER BY block_height", (block,))
@@ -99,6 +101,7 @@ def heal():
 def attacked():
     hero.in_combat = True
     hero.health = hero.health - enemy.power
+    hero_dead_check()
     print(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
 
 while hero.alive:
@@ -115,9 +118,9 @@ while hero.alive:
             hero.in_combat = True
 
             while hero.alive and enemy.alive:
-                block_hash = cycle(block)
+                for event_key in events: #check what happened
+                    block_hash = cycle(block)  # roll new hash happen while engaged
 
-                for event_key in events:
                     if event_key in block_hash:
                         event = events[event_key]
                         print(f"Event: {event}")
@@ -125,18 +128,14 @@ while hero.alive:
                         if event == "attack":
                             attack()
 
-                        if event == "critical_hit":
+                        elif event == "critical_hit":
                             critical_hit()
 
-                        if event == "heal":
+                        elif event == "heal":
                             heal()
 
-                        if events[event_key] == "attacked":
+                        elif event == "attacked":
                             attacked()
-
-                hero_dead_check()
-                enemy_dead_check()
-
 
                 block += 1
                 time.sleep(2)
