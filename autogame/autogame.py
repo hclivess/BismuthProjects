@@ -25,18 +25,17 @@ EVENTS = {seed[2:4] : "attack",
           seed[4:6] : "attacked",
           seed[6:8] : "critical_hit"}
 
-#define modifiers
-modifiers = {"a1c" : "health_belt",
-             "082" : "enchanted_sword"}
-
 #define triggers
 triggers_combat = {"4f" : "troll",
-            "df" : "goblin",
-            "5a" : "berserker",
-            "61a" : "dragon"
-            }
+                   "df" : "goblin",
+                   "5a" : "berserker",
+                   "61a" : "dragon"
+                   }
 
-triggers_peaceful = {"3d" : "health_potion"}
+triggers_peaceful = {"3d" : "health_potion",
+                     "69a": "armor",
+                     "70b": "sword"
+                     }
 
 def enemy_dead_check():
     if enemy.health < 1:
@@ -64,9 +63,22 @@ def enemy_define(event):
 
     return enemy
 
+def sword_get():
+    if not hero.inventory["weapon"]:
+        hero.inventory["weapon"] = "sword"
+        print(f"You obtained a sword")
+
+def armor_get():
+    if not hero.inventory["armor"]:
+        hero.inventory["armor"] = "armor"
+        print(f"You obtained armor")
+
 def attack():
     hero.experience += 1
     damage = hero.power
+    if hero.inventory["weapon"] == "sword":
+        damage += 10
+
     enemy.health -= hero.power
     print(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
     enemy_dead_check()
@@ -98,7 +110,13 @@ def heal():
 
 def attacked():
     hero.in_combat = True
-    hero.health = hero.health - enemy.power
+    damage_taken = enemy.power
+
+    if hero.inventory["armor"] == "armor":
+        damage_taken -= 5
+
+    hero.health = hero.health - damage_taken
+
     print(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
     hero_dead_check()
 
@@ -108,8 +126,14 @@ while hero.alive:
 
     for trigger_key in triggers_peaceful:
         trigger = triggers_peaceful[trigger_key]
-        if trigger == "health_potion" and hero.health < 100:
-            heal()
+
+        if trigger_key in block_hash:
+            if trigger == "health_potion" and hero.health < 100:
+                heal()
+            elif trigger == "armor":
+                armor_get()
+            elif trigger == "sword":
+                sword_get()
 
     for trigger_key in triggers_combat:
         if trigger_key in block_hash and hero.alive:

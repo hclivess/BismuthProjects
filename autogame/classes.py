@@ -7,6 +7,8 @@ class Hero:
         self.alive = True
         self.in_combat = False
         self.experience = 0
+        self.armor = 0
+        self.inventory = {"weapon":None, "armor":None}
 
 class Troll:
     def __init__(self):
