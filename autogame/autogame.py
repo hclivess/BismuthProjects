@@ -81,16 +81,20 @@ def cycle(block):
     return block_hash
 
 def heal():
-    if hero.in_combat and hero.health < classes.Hero.FULL_HP:
-        hero.health = hero.health + 5
-        print(f"You drink a potion and heal to {hero.health} HP...")
+    if hero.health == classes.Hero.FULL_HP:
+        print ("You cannot get any healthier")
 
-    elif not hero.in_combat:
-        hero.health = 100
-        print("You rest and fully heal...")
+    else:
+        if hero.in_combat:
+            hero.health = hero.health + 5
+            print(f"You drink a potion and heal to {hero.health} HP...")
 
-    if hero.health > classes.Hero.FULL_HP:
-        hero.health = classes.Hero.FULL_HP
+        elif not hero.in_combat:
+            hero.health = classes.Hero.FULL_HP
+            print("You rest and fully heal...")
+
+        if hero.health > classes.Hero.FULL_HP:
+            hero.health = classes.Hero.FULL_HP
 
 def attacked():
     hero.in_combat = True
