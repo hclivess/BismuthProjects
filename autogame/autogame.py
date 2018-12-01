@@ -1,7 +1,7 @@
 import sqlite3
 import time
 
-conn = sqlite3.connect("../Bismuth/static/ledger.db")
+conn = sqlite3.connect("../../Bismuth/static/ledger.db")
 conn.text_factory = str
 c = conn.cursor()
 
