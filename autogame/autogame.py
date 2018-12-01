@@ -72,7 +72,7 @@ def critical_hit():
     hero.experience += 1
     damage = hero.power + hero.experience
     enemy.health -= damage
-    print(f"{enemy.name} suffers {damage} critical damage and is left with {enemy.health} HP")
+    print(f"{enemy.name} suffers {damage} *critical* damage and is left with {enemy.health} HP")
 
 def cycle(block):
     c.execute("SELECT * FROM transactions WHERE block_height = ? ORDER BY block_height", (block,))
@@ -107,7 +107,7 @@ while hero.alive:
             trigger = triggers[trigger_key]
             enemy = enemy_define(trigger)
 
-            print(f"You meet {enemy.name}")
+            print(f"You meet {enemy.name} on block {block}")
             hero.in_combat = True
 
             while hero.alive and enemy.alive:
