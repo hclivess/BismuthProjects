@@ -32,6 +32,6 @@ class Berserker:
 class Dragon:
     def __init__(self):
         self.name = "Dragon"
-        self.health = 30
+        self.health = 150
         self.power = 50
         self.alive = True
