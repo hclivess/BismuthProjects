@@ -90,8 +90,8 @@ def heal():
         print(f"You drink a potion and heal to {hero.health} HP...")
 
     elif not hero.in_combat:
-        hero.health = classes.Hero.FULL_HP
-        print("You rest and fully heal...")
+        hero.health = hero.health + 15
+        print("You rest and heal well to {hero.health} HP...")
 
     if hero.health > classes.Hero.FULL_HP:
         hero.health = classes.Hero.FULL_HP
