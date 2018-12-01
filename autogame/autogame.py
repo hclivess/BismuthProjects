@@ -74,6 +74,7 @@ def armor_get():
         print(f"You obtained armor")
 
 def attack():
+    hero.in_combat = True
     hero.experience += 1
     damage = hero.power
     if hero.inventory["weapon"] == "sword":
@@ -128,7 +129,7 @@ while hero.alive:
         trigger = triggers_peaceful[trigger_key]
 
         if trigger_key in block_hash:
-            if trigger == "health_potion" and hero.health < 100:
+            if trigger == "health_potion" and hero.health < classes.Hero.FULL_HP:
                 heal()
             elif trigger == "armor":
                 armor_get()
@@ -141,13 +142,12 @@ while hero.alive:
 
             enemy = enemy_define(trigger)
             print(f"You meet {enemy.name} on block {block}")
-            hero.in_combat = True
 
             while hero.alive and enemy.alive:
                 for event_key in EVENTS: #check what happened
                     block_hash = cycle(block)  # roll new hash happen while engaged
 
-                    if event_key in block_hash:
+                    if event_key in block_hash and enemy.alive:
                         event = EVENTS[event_key]
                         print(f"Event: {event}")
 
