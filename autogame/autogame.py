@@ -104,7 +104,7 @@ def heal():
 
     elif not hero.in_combat:
         hero.health = hero.health + 15
-        print("You rest and heal well to {hero.health} HP...")
+        print(f"You rest and heal well to {hero.health} HP...")
 
     if hero.health > classes.Hero.FULL_HP:
         hero.health = classes.Hero.FULL_HP
