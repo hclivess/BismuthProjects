@@ -20,24 +20,28 @@ class Hero:
 
 class Troll:
     def __init__(self):
+        self.name = "Troll"
         self.health = 20
         self.power = 15
         self.alive = True
 
 class Goblin:
     def __init__(self):
+        self.name = "Goblin"
         self.health = 10
         self.power = 10
         self.alive = True
 
-class Berserk:
+class berserker:
     def __init__(self):
+        self.name = "Berserker"
         self.health = 5
         self.power = 30
         self.alive = True
 
 class Dragon:
     def __init__(self):
+        self.name = "Dragon"
         self.health = 30
         self.power = 50
         self.alive = True
@@ -59,19 +63,33 @@ modifiers = {"a1c" : "health_belt",
 #define triggers
 triggers = {"4f" : "troll",
             "df" : "goblin",
-            "5a" : "berserk",
+            "5a" : "berserker",
             "61a" : "dragon"
             }
+
+def enemy_dead_check():
+    if enemy.health < 1:
+        hero.in_combat = False
+        enemy.alive = False
+        print(f"{enemy.name} died")
+        enemy.alive = False
+
+def hero_dead_check():
+    if hero.health < 1:
+        print(f"You died with {hero.experience} experience")
+        hero.alive = False
 
 def enemy_define(event):
     if event == "troll":
         enemy = Troll()
     elif event == "goblin":
         enemy = Goblin()
-    elif event == "berserk":
-        enemy = Berserk()
+    elif event == "berserker":
+        enemy = berserker()
     elif event == "dragon":
         enemy = Dragon()
+    else:
+        enemy = None
 
     return enemy
 
@@ -89,10 +107,10 @@ while hero.alive:
 
         if trigger_key in block_hash and hero.alive:
             trigger = triggers[trigger_key]
-            print("You meet {}".format(trigger))
-            hero.in_combat = True
-
             enemy = enemy_define(trigger)
+
+            print(f"You meet {enemy.name}")
+            hero.in_combat = True
 
             while hero.alive and enemy.alive:
                 block_hash = cycle(block)
@@ -100,23 +118,26 @@ while hero.alive:
                 for event_key in events:
                     if event_key in block_hash:
                         event = events[event_key]
-                        print("Event: {}".format(event))
+                        print(f"Event: {event}")
 
                         if event == "attack":
                             hero.experience += 1
+                            damage = hero.power
                             enemy.health -= hero.power
-                            print("Enemy suffers {} damage and is left with {} HP".format(hero.power, enemy.health))
+                            print(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
 
-                            if enemy.health < 1:
-                                hero.in_combat = False
-                                enemy.alive = False
-                                print ("Enemy dies")
-                                break
+
+                        if event == "critical_hit":
+                            hero.experience += 1
+                            damage = hero.power+hero.experience
+                            enemy.health -= damage
+                            print(f"{enemy.name} suffers {damage} critical damage and is left with {enemy.health} HP")
+
 
                         if event == "heal":
                             if hero.in_combat and hero.health < Hero.FULL_HP:
                                 hero.health = hero.health + 5
-                                print("You drink a potion and heal to {} HP...".format(hero.health))
+                                print(f"You drink a potion and heal to {hero.health} HP...")
 
                             elif not hero.in_combat:
                                 hero.health = 100
@@ -130,10 +151,11 @@ while hero.alive:
                         if events[event_key] == "attacked":
                             hero.in_combat = True
                             hero.health = hero.health - enemy.power
-                            print("{} hit you for {} HP, you now have {} HP".format(trigger, enemy.power, hero.health))
-                            if hero.health < 1:
-                                print("You died with {} experience".format(hero.experience))
-                                hero.alive = False
+                            print(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
+
+                hero_dead_check()
+                enemy_dead_check()
+
 
                 block += 1
                 time.sleep(2)
