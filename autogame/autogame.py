@@ -1,6 +1,13 @@
+import sys
+sys.path.append("../../Bismuth")
+
 import sqlite3
 import time
 import classes
+import essentials
+
+seed = essentials.keys_load_new()[6] #address
+print(seed)
 
 conn = sqlite3.connect("../../Bismuth/static/ledger.db")
 conn.text_factory = str
@@ -13,10 +20,10 @@ hero = classes.Hero()
 #trigger is followed by events affected by modifiers
 
 #define events
-events = {"9a" : "heal",
-          "6c" : "attack",
-          "e2" : "attacked",
-          "8f" : "critical_hit"}
+events = {seed[0:2] : "heal",
+          seed[2:4] : "attack",
+          seed[4:6] : "attacked",
+          seed[6:8] : "critical_hit"}
 
 #define modifiers
 modifiers = {"a1c" : "health_belt",
