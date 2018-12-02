@@ -7,7 +7,7 @@ class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.db = classes.ScoreDb()
 
-        self.db.c.execute("SELECT * FROM scores ORDER BY experience LIMIT 1")
+        self.db.c.execute("SELECT * FROM scores ORDER BY experience DESC LIMIT 1")
         self.top = self.db.c.fetchone()
 
         self.write('<title>Autogame</title>\n')

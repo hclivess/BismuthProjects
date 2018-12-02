@@ -20,10 +20,10 @@ def go(seed, block):
 
 
     def output(entry):
-        game.event_number += 1
+        game.step += 1
         print(entry)
 
-        game.story[game.event_number] = entry
+        game.story[game.step] = entry
 
         if game.finished:
             filename = "static/" + str(game.hash+".json")
@@ -31,8 +31,6 @@ def go(seed, block):
             if not os.path.exists (filename):
                 with open (filename, "w+") as file:
                     file.write(json.dumps(game.story))
-
-
 
     #trigger is followed by events affected by modifiers
 
