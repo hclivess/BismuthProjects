@@ -9,19 +9,29 @@ result = db.c.fetchall()
 print (result)
 
 
-all = classes.History()
+scores = classes.Scores()
 
+counter = 0
 for entry in result:
 
-    game = classes.Game()
-    game.seed = entry[2]  # address
-    print(game.seed)
-    game.block = entry[0]
-    print(game.block)
 
-    game.id = (f"{game.block}{game.seed}")
-    all.history[game.id] = game
+    seed = entry[2]  # address
+    print(seed)
+    block = entry[0]
+    print(block)
 
-    core.go(game.seed,game.block)
+    game,hero = core.go(seed, block)
 
-print (all.history)
+    game.id = counter
+    scores.history[game.id] = {"block" : game.block,
+                               "object" : game,
+                               "seed" : game.seed,
+                               "experience" : hero.experience,
+                               "inventory" : hero.inventory,
+                               }
+
+
+
+    counter += 1
+
+print (scores.history)

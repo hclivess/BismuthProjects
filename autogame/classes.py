@@ -5,7 +5,7 @@ class Db:
         self.conn.text_factory = str
         self.c = self.conn.cursor()
 
-class History:
+class Scores:
     def __init__(self):
         self.history = {}
 
@@ -14,7 +14,7 @@ class Game:
         self.seed = None
         self.block_start = None
         self.block = None
-        self.id = None
+        self.id = {}
 
 class Hero:
     FULL_HP = 500

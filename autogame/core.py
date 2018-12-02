@@ -158,7 +158,7 @@ def go(seed, block):
 
                     game.block += 1
         game.block += 1
-
+    return game,hero
 
 
 
