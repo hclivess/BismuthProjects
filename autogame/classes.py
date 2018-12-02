@@ -1,3 +1,18 @@
+class Db:
+    import sqlite3
+    def __init__(self):
+        self.conn = self.sqlite3.connect("../../Bismuth/static/ledger.db")
+        self.conn.text_factory = str
+        self.c = self.conn.cursor()
+
+
+class Game:
+    def __init__(self):
+        self.seed = None
+        self.block_start = None
+        self.block = None
+        #self.timeline = []
+
 class Hero:
     FULL_HP = 500
 
