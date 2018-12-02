@@ -5,15 +5,18 @@ class Db:
         self.conn.text_factory = str
         self.c = self.conn.cursor()
 
-class Scores:
+class ScoreDb:
+    import sqlite3
     def __init__(self):
-        self.history = {}
+        self.conn = self.sqlite3.connect("score.db")
+        self.conn.text_factory = str
+        self.c = self.conn.cursor()
 
 class Game:
     def __init__(self):
         self.seed = None
-        self.block_start = None
         self.block = None
+        self.hash = None
         self.id = {}
 
 class Hero:
