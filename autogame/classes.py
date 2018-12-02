@@ -11,6 +11,7 @@ class Game:
         self.seed = None
         self.block_start = None
         self.block = None
+        self.id = None
         #self.timeline = []
 
 class Hero:
