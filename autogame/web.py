@@ -1,7 +1,16 @@
 import classes
 import tornado.ioloop
 import tornado.web
+import json
 
+class GetGameByIdHandler(tornado.web.RequestHandler):
+    def get(self, hash):
+        print("buzna")
+        filename = (f"static/{hash}.json")
+        with open (filename) as file:
+            response = json.loads(file.read())
+
+        self.write(response)
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -70,6 +79,7 @@ def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
+        (r"/hash/(.*)", GetGameByIdHandler),
     ])
 
 if __name__ == "__main__":
