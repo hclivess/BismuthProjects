@@ -2,7 +2,6 @@ import sqlite3
 import core
 import classes
 import json
-from hashlib import blake2b
 
 db = core.db #do not reinit
 scores_db = classes.ScoreDb()
@@ -15,10 +14,10 @@ for entry in result:
 
     seed = entry[2]  # address
     block = entry[0]
+
     game,hero = core.go(seed, block)
 
     if game.finished:
-        game.hash = blake2b((game.seed + str(game.block)).encode(), digest_size=10).hexdigest()
 
         try:
             scores_db.c.execute("SELECT * FROM scores WHERE hash = ?", (game.hash,))

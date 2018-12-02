@@ -1,17 +1,38 @@
 import time
 import classes
 import sqlite3
+import os
+import json
+from hashlib import blake2b
+
 
 db = classes.Db()
 
 
-def go(seed, block):
 
+def go(seed, block):
     game = classes.Game()
     game.block = block
     game.seed = seed
+    game.hash = blake2b((seed + str(block)).encode(), digest_size=10).hexdigest()
 
     hero = classes.Hero()
+
+
+    def output(entry):
+        game.event_number += 1
+        print(entry)
+
+        game.story[game.event_number] = entry
+
+        if game.finished:
+            filename = "static/" + str(game.hash+".json")
+
+            if not os.path.exists (filename):
+                with open (filename, "w+") as file:
+                    file.write(json.dumps(game.story))
+
+
 
     #trigger is followed by events affected by modifiers
 
@@ -37,14 +58,14 @@ def go(seed, block):
         if enemy.health < 1:
             hero.in_combat = False
             enemy.alive = False
-            print(f"{enemy.name} died")
-            print(f"You now have {hero.experience} experience")
+            output(f"{enemy.name} died")
+            output(f"You now have {hero.experience} experience")
 
     def hero_dead_check():
         if hero.health < 1:
-            print(f"You died with {hero.experience} experience")
             hero.alive = False
-            game.finished = True
+            game.finished = True #output goes to file
+            output(f"You died with {hero.experience} experience")
 
     def enemy_define(event):
         if event == "troll":
@@ -63,12 +84,12 @@ def go(seed, block):
     def sword_get():
         if not hero.inventory["weapon"]:
             hero.inventory["weapon"] = "sword"
-            print(f"You obtained a sword")
+            output(f"You obtained a sword")
 
     def armor_get():
         if not hero.inventory["armor"]:
             hero.inventory["armor"] = "armor"
-            print(f"You obtained armor")
+            output(f"You obtained armor")
 
     def attack():
         hero.in_combat = True
@@ -78,14 +99,14 @@ def go(seed, block):
             damage += 10
 
         enemy.health -= hero.power
-        print(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
+        output(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
         enemy_dead_check()
 
     def critical_hit():
         hero.experience += 1
         damage = hero.power + hero.experience
         enemy.health -= damage
-        print(f"{enemy.name} suffers {damage} *critical* damage and is left with {enemy.health} HP")
+        output(f"{enemy.name} suffers {damage} *critical* damage and is left with {enemy.health} HP")
         enemy_dead_check()
 
     def cycle(block):
@@ -97,11 +118,11 @@ def go(seed, block):
     def heal():
         if hero.in_combat:
             hero.health = hero.health + 5
-            print(f"You drink a potion and heal to {hero.health} HP...")
+            output(f"You drink a potion and heal to {hero.health} HP...")
 
         elif not hero.in_combat:
             hero.health = hero.health + 15
-            print(f"You rest and heal well to {hero.health} HP...")
+            output(f"You rest and heal well to {hero.health} HP...")
 
         if hero.health > classes.Hero.FULL_HP:
             hero.health = classes.Hero.FULL_HP
@@ -115,7 +136,7 @@ def go(seed, block):
 
         hero.health = hero.health - damage_taken
 
-        print(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
+        output(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
         hero_dead_check()
 
     while hero.alive:
@@ -138,7 +159,7 @@ def go(seed, block):
                 trigger = triggers_combat[trigger_key]
 
                 enemy = enemy_define(trigger)
-                print(f"You meet {enemy.name} on block {block}")
+                output(f"You meet {enemy.name} on block {block}")
 
                 while hero.alive and enemy.alive:
                     for event_key in EVENTS: #check what happened
@@ -146,7 +167,7 @@ def go(seed, block):
 
                         if event_key in block_hash and enemy.alive:
                             event = EVENTS[event_key]
-                            print(f"Event: {event}")
+                            output(f"Event: {event}")
 
                             if event == "attack":
                                 attack()

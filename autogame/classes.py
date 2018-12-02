@@ -18,6 +18,8 @@ class Game:
         self.block = None
         self.hash = None
         self.finished = False
+        self.story = {}
+        self.event_number = 0
 
 class Hero:
     FULL_HP = 500
