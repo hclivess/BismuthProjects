@@ -157,9 +157,6 @@ def go(seed, block):
                                 attacked()
 
                     game.block += 1
-                    time.sleep(2)
-
-
         game.block += 1
 
 
