@@ -5,7 +5,6 @@ import json
 
 class GetGameByIdHandler(tornado.web.RequestHandler):
     def get(self, hash):
-        print("buzna")
         filename = (f"static/{hash}.json")
         with open (filename) as file:
             response = json.loads(file.read())
@@ -40,7 +39,7 @@ class MainHandler(tornado.web.RequestHandler):
 
         self.write("<tr>")
         self.write(f"<td>{self.top[0]}")
-        self.write(f"<td>{self.top[1]}")
+        self.write(f"<td><a href='/hash/{self.top[1]}'>{self.top[1]}</a>")
         self.write(f"<td>{self.top[2]}")
         self.write(f"<td>{self.top[3]}")
         self.write(f"<td>{self.top[4]}")
@@ -65,7 +64,7 @@ class MainHandler(tornado.web.RequestHandler):
         for line in self.all:
             self.write("<tr>")
             self.write(f"<td>{line[0]}")
-            self.write(f"<td>{line[1]}")
+            self.write(f"<td><a href='/hash/{line[1]}'>{line[1]}</a>")
             self.write(f"<td>{line[2]}")
             self.write(f"<td>{line[3]}")
             self.write(f"<td>{line[4]}")
