@@ -9,7 +9,8 @@ result = db.c.fetchall()
 print (result)
 
 
-all = {}
+all = classes.History()
+
 for entry in result:
 
     game = classes.Game()
@@ -19,8 +20,8 @@ for entry in result:
     print(game.block)
 
     game.id = (f"{game.block}{game.seed}")
-    all[game.id] = game
+    all.history[game.id] = game
 
     core.go(game.seed,game.block)
 
-print (all)
+print (all.history)
