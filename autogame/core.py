@@ -44,6 +44,7 @@ def go(seed, block):
         if hero.health < 1:
             print(f"You died with {hero.experience} experience")
             hero.alive = False
+            game.finished = True
 
     def enemy_define(event):
         if event == "troll":

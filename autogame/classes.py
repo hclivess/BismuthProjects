@@ -17,7 +17,7 @@ class Game:
         self.seed = None
         self.block = None
         self.hash = None
-        self.id = {}
+        self.finished = False
 
 class Hero:
     FULL_HP = 500
