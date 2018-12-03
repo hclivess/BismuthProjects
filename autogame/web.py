@@ -5,9 +5,14 @@ import json
 
 class GetGameByIdHandler(tornado.web.RequestHandler):
 
-
     def get(self, hash):
-        filename = (f"static/{hash}.json")
+        finished = self.get_arguments("finished")
+
+        if finished == "1":
+            filename = (f"static/replays/{hash}.json")
+        else:
+            filename = (f"static/replays/{hash}_.json")
+
         with open (filename) as file:
             text = json.loads(file.read())
 
@@ -67,7 +72,7 @@ class MainHandler(tornado.web.RequestHandler):
 
         self.write("<tr>")
         self.write(f"<td>{self.top[0]}")
-        self.write(f"<td><a href='/hash/{self.top[1]}'>{self.top[1]}</a>")
+        self.write(f"<td><a href='/replay/{self.top[1]}'>{self.top[1]}</a>")
         self.write(f"<td>{self.top[2]}")
         self.write(f"<td>{self.top[3]}")
         self.write(f"<td>{self.top[4]}")
@@ -77,9 +82,10 @@ class MainHandler(tornado.web.RequestHandler):
 
 
         self.db.c.execute("SELECT * FROM scores")
-        self.all = self.db.c.fetchall()
+        self.all_finished = self.db.c.fetchall()
         self.write("<h1>Finished Games:</h1>")
 
+        #table
         self.write("<table class='table table-responsive'>")
         self.write("<tr>")
         self.write("<th>Start block</th>")
@@ -89,16 +95,44 @@ class MainHandler(tornado.web.RequestHandler):
         self.write("<th>Corpse inventory</th>")
         self.write("</tr>")
 
-        for line in self.all:
+        for line in self.all_finished:
             self.write("<tr>")
             self.write(f"<td>{line[0]}")
-            self.write(f"<td><a href='/hash/{line[1]}'>{line[1]}</a>")
+            self.write(f"<td><a href='/replay/{line[1]}?finished=1'>{line[1]}</a>")
             self.write(f"<td>{line[2]}")
             self.write(f"<td>{line[3]}")
             self.write(f"<td>{line[4]}")
             self.write("</td></tr>")
 
         self.write("</table>")
+        # table
+
+
+        self.db.c.execute("SELECT * FROM unfinished")
+        self.all_unfinished = self.db.c.fetchall()
+
+        self.write("<h1>Games in progress:</h1>")
+        #table
+        self.write("<table class='table table-responsive'>")
+        self.write("<tr>")
+        self.write("<th>Start block</th>")
+        self.write("<th>Game replay</th>")
+        self.write("<th>Game seed</th>")
+        self.write("<th>Hero experience</th>")
+        self.write("<th>Hero inventory</th>")
+        self.write("</tr>")
+
+        for line in self.all_unfinished:
+            self.write("<tr>")
+            self.write(f"<td>{line[0]}")
+            self.write(f"<td><a href='/replay/{line[1]}?finished=0'>{line[1]}</a>")
+            self.write(f"<td>{line[2]}")
+            self.write(f"<td>{line[3]}")
+            self.write(f"<td>{line[4]}")
+            self.write("</td></tr>")
+
+        self.write("</table>")
+        # table
 
 
 def make_app():
@@ -106,7 +140,8 @@ def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
-        (r"/hash/(.*)", GetGameByIdHandler),
+        (r"/replay/(.*)", GetGameByIdHandler),
+        (r"/unfinished/(.*)", GetGameByIdHandler),
     ])
 
 if __name__ == "__main__":

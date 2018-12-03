@@ -19,17 +19,26 @@ def go(seed, block):
 
 
     def output(entry):
-        game.step += 1
-        print(entry)
+        filename_temp = "static/replays/" + str(game.hash + "_.json")
+        filename = "static/replays/" + str(game.hash + ".json")
 
+        game.step += 1
+
+        print(entry)
         game.story[game.step] = entry
 
-        if game.finished:
-            filename = "static/" + str(game.hash+".json")
+        if game.finished and os.path.exists (filename_temp):
+            os.remove(filename_temp)
+
 
             if not os.path.exists (filename):
-                with open (filename, "w+") as file:
+                with open (filename, "w") as file:
                     file.write(json.dumps(game.story))
+
+        elif not game.finished:
+            filename = "static/replays/" + str(game.hash + "_.json")
+            with open(filename, "w") as file:
+                file.write(json.dumps(game.story))
 
     #trigger is followed by events affected by modifiers
 
@@ -61,7 +70,7 @@ def go(seed, block):
     def hero_dead_check():
         if hero.health < 1:
             hero.alive = False
-            game.finished = True #output goes to file
+            game.finished = True
             output(f"You died with {hero.experience} experience")
 
     def enemy_define(event):
@@ -142,7 +151,7 @@ def go(seed, block):
         try:
             block_hash = cycle()
         except:
-            output("The game is too recent")
+            output("The game is still running")
             game.quit = True
             break
 

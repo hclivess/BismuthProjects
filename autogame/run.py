@@ -28,5 +28,14 @@ while True:
                 scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?)", (game.start_block,game.hash,game.seed,hero.experience,json.dumps(hero.inventory),))
                 scores_db.conn.commit()
 
+        elif not game.finished:
+            try:
+                scores_db.c.execute("SELECT * FROM unfinished WHERE hash = ?", (game.hash,))
+                dummy = scores_db.c.fetchall()[0]
+            except:
+                scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,)) #remove previous entry
+                scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?)", (game.start_block,game.hash,game.seed,hero.experience,json.dumps(hero.inventory),))
+                scores_db.conn.commit()
+
     print ("Run finished, sleeping")
     time.sleep(60)
