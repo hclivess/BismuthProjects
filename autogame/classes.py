@@ -22,6 +22,7 @@ class Game:
     def __init__(self):
         self.seed = None
         self.block = None
+        self.start_block = None
         self.hash = None
         self.finished = False
         self.story = {}

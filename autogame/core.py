@@ -10,6 +10,7 @@ db = classes.Db(config.path["ledger"])
 
 def go(seed, block):
     game = classes.Game()
+    game.start_block = block
     game.block = block
     game.seed = seed
     game.hash = blake2b((seed + str(block)).encode(), digest_size=10).hexdigest()
