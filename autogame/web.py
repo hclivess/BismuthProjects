@@ -6,9 +6,16 @@ import json
 class GetGameByIdHandler(tornado.web.RequestHandler):
 
     def get(self, hash):
-        finished = self.get_arguments("finished")
+        #url args
+        finished_arg = self.get_arguments("finished")
+        print (finished_arg)
+        if finished_arg[0] == "1":
+            finished = True
+        else:
+            finished = False
+        # url args
 
-        if finished == "1":
+        if finished:
             filename = (f"static/replays/{hash}.json")
         else:
             filename = (f"static/replays/{hash}_.json")
@@ -27,15 +34,18 @@ class GetGameByIdHandler(tornado.web.RequestHandler):
 
         self.write(display)
 
+        #style
         self.write("<style>")
         with open("static/style.css") as file:
             self.write(file.read())
 
-        for key, value in text.items():
-            self.write("\n")
-            self.write("p:nth-child("+str(key)+"){white-space:nowrap;overflow:hidden;opacity:0;animation: type 1s steps(40, end);animation: type2 1s steps(40, end);animation-fill-mode: forwards;animation-delay: "+str(int(key)*2)+"s;}")
-            self.write("\n")
+        if finished:
+            for key, value in text.items():
+                self.write("\n")
+                self.write("p:nth-child("+str(key)+"){white-space:nowrap;overflow:hidden;opacity:0;animation: type 1s steps(40, end);animation: type2 1s steps(40, end);animation-fill-mode: forwards;animation-delay: "+str(int(key)*2)+"s;}")
+                self.write("\n")
         self.write("</style>")
+        # style
 
         with open("static/html2") as file:
             self.write(file.read())
@@ -72,7 +82,7 @@ class MainHandler(tornado.web.RequestHandler):
 
         self.write("<tr>")
         self.write(f"<td>{self.top[0]}")
-        self.write(f"<td><a href='/replay/{self.top[1]}'>{self.top[1]}</a>")
+        self.write(f"<td><a href='/replay/{self.top[1]}?finished=1'>{self.top[1]}</a>")
         self.write(f"<td>{self.top[2]}")
         self.write(f"<td>{self.top[3]}")
         self.write(f"<td>{self.top[4]}")
