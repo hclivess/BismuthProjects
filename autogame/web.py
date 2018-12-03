@@ -4,12 +4,38 @@ import tornado.web
 import json
 
 class GetGameByIdHandler(tornado.web.RequestHandler):
+
+
     def get(self, hash):
         filename = (f"static/{hash}.json")
         with open (filename) as file:
-            response = json.loads(file.read())
+            text = json.loads(file.read())
 
-        self.write(response)
+            display = ""
+            for key, value in text.items():
+                display += "<p>"
+                display += value
+                display += "</p>"
+
+        with open("static/html1") as file:
+            self.write(file.read())
+
+        self.write(display)
+
+        self.write("<style>")
+        with open("static/style.css") as file:
+            self.write(file.read())
+
+        for key, value in text.items():
+            self.write("\n")
+            self.write("p:nth-child("+str(key)+"){white-space:nowrap;overflow:hidden;opacity:0;animation: type 1s steps(40, end);animation: type2 1s steps(40, end);animation-fill-mode: forwards;animation-delay: "+str(int(key)*2)+"s;}")
+            self.write("\n")
+        self.write("</style>")
+
+        with open("static/html2") as file:
+            self.write(file.read())
+
+
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -19,12 +45,14 @@ class MainHandler(tornado.web.RequestHandler):
         self.top = self.db.c.fetchone()
 
         self.write('<title>Autogame</title>\n')
+
         # html.append('<link rel="stylesheet" type="text/css" href="static/style.css">')
         self.write('<link rel = "icon" href = "static/explorer.ico" type = "image/x-icon" / >\n')
         self.write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >')
-        self.write('<script src="static/Chart.js"></script>\n')
+
         self.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>')
         self.write('<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script >')
+
 
 
         self.write("<h1>Top Player:</h1>")
@@ -83,5 +111,5 @@ def make_app():
 
 if __name__ == "__main__":
     app = make_app()
-    app.listen(80)
+    app.listen(6060)
     tornado.ioloop.IOLoop.current().start()
