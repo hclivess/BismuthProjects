@@ -20,6 +20,7 @@ class Game:
         self.finished = False
         self.story = {}
         self.step = 0
+        self.quit = False
 
 class Hero:
     FULL_HP = 500

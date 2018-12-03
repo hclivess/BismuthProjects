@@ -107,11 +107,12 @@ def go(seed, block):
         output(f"{enemy.name} suffers {damage} *critical* damage and is left with {enemy.health} HP")
         enemy_dead_check()
 
-    def cycle(block):
-        db.c.execute("SELECT * FROM transactions WHERE block_height = ? ORDER BY block_height", (block,))
+    def cycle():
+        db.c.execute("SELECT * FROM transactions WHERE block_height = ? ORDER BY block_height", (game.block,))
         result = db.c.fetchall()
         block_hash  = result[0][7]
         return block_hash
+
 
     def heal():
         if hero.in_combat:
@@ -137,9 +138,14 @@ def go(seed, block):
         output(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
         hero_dead_check()
 
-    while hero.alive:
+    while hero.alive and not game.quit:
 
-        block_hash = cycle(game.block)
+        try:
+            block_hash = cycle()
+        except:
+            output("The game is too recent")
+            game.quit = True
+            break
 
         for trigger_key in triggers_peaceful:
             trigger = triggers_peaceful[trigger_key]
@@ -157,11 +163,16 @@ def go(seed, block):
                 trigger = triggers_combat[trigger_key]
 
                 enemy = enemy_define(trigger)
-                output(f"You meet {enemy.name} on block {block}")
+                output(f"You meet {enemy.name} on block {game.block}")
 
-                while hero.alive and enemy.alive:
+                while hero.alive and enemy.alive and not game.quit:
                     for event_key in EVENTS: #check what happened
-                        block_hash = cycle(game.block)  # roll new hash happen while engaged
+                        try:  # roll new hash happen while engaged
+                            block_hash = cycle()
+                        except:
+                            output("The game is too recent")
+                            game.quit = True
+                            break
 
                         if event_key in block_hash and enemy.alive:
                             event = EVENTS[event_key]
