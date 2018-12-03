@@ -37,7 +37,7 @@ def go(seed, block):
 
     EVENTS = {seed[2:4] : "attack",
               seed[4:6] : "attacked",
-              seed[6:8] : "critical_hit"}
+              seed[6:8] : "attack_critical"}
 
     #define triggers
     triggers_combat = {"4f" : "troll",
@@ -99,7 +99,7 @@ def go(seed, block):
         output(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
         enemy_dead_check()
 
-    def critical_hit():
+    def attack_critical():
         hero.experience += 1
         damage = hero.power + hero.experience
         enemy.health -= damage
@@ -180,8 +180,8 @@ def go(seed, block):
                             if event == "attack":
                                 attack()
 
-                            elif event == "critical_hit":
-                                critical_hit()
+                            elif event == "attack_critical":
+                                attack_critical()
 
                             elif event == "attacked":
                                 attacked()
