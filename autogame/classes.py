@@ -1,7 +1,13 @@
+class Config:
+    import json
+    def __init__(self):
+        with open ("config.json") as file:
+            self.path = self.json.loads(file.read())
+
 class Db:
     import sqlite3
-    def __init__(self):
-        self.conn = self.sqlite3.connect("../../Bismuth/static/ledger.db")
+    def __init__(self, path):
+        self.conn = self.sqlite3.connect(path)
         self.conn.text_factory = str
         self.c = self.conn.cursor()
 

@@ -5,10 +5,8 @@ import os
 import json
 from hashlib import blake2b
 
-
-db = classes.Db()
-
-
+config = classes.Config()
+db = classes.Db(config.path["ledger"])
 
 def go(seed, block):
     game = classes.Game()
