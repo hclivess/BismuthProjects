@@ -78,8 +78,8 @@ def go(seed, block):
                          "70b": "sword"
                          }
 
-    triggers_human_individual = {"chaos_ring" : "item:chaos_ring"}
-    triggers_human_global = {"rangarok" : "event:ragnarok"}
+    triggers_human_individual = {"item:chaos_ring" : "chaos_ring"}
+    triggers_human_global = {"event:rangarok" : "ragnarok"}
 
     def enemy_dead_check():
         if enemy.health < 1:
@@ -110,6 +110,9 @@ def go(seed, block):
 
     def chaos_ring():
         output(f"You see a chaos ring")
+
+    def ragnarok():
+        output(f"Ragnarok begins")
 
     def sword_get():
         if not hero.inventory["weapon"]:
@@ -193,7 +196,21 @@ def go(seed, block):
             break
 
         for subposition, subcycle in game.cycle.items(): #for tx in block
-            #print (subcycle)
+            print (subcycle)
+
+            # human interaction
+            for trigger_key in triggers_human_individual:
+                trigger = triggers_human_individual[trigger_key]
+                if trigger_key == subcycle["data"] and subcycle["address"] == game.seed and subcycle["operation"] == "autogame:add":
+                    if trigger == "chaos_ring":
+                        chaos_ring()
+
+            for trigger_key in triggers_human_global:
+                trigger = triggers_human_global[trigger_key]
+                if trigger_key == subcycle["data"] and subcycle["operation"] == "autogame:add":
+                    if trigger == "ragnarok":
+                        ragnarok()
+            # human interaction
 
             if not hero.in_combat:
                 for trigger_key in triggers_peaceful:
@@ -218,17 +235,6 @@ def go(seed, block):
 
             if hero.in_combat and hero.alive and not game.quit:
                 for event_key in EVENTS: #check what happened
-
-                    # human interaction
-                    """
-                    for trigger_key in triggers_human_individual:
-                        trigger = triggers_human_individual[trigger_key]
-
-                        if trigger_key in subcycle["operation"] and subcycle["address"] == game.seed:
-                            if trigger == "chaos_ring":
-                                chaos_ring()
-                    """
-                    #human interaction
 
 
                     if event_key in subcycle["block_hash"] and enemy.alive:
