@@ -35,21 +35,19 @@ def go(seed, block):
 
     def output(entry):
         game.step += 1
-
         print(entry)
         game.story[game.step] = entry
 
-        if game.finished and os.path.exists (game.filename_temp):
-            os.remove(game.filename_temp)
+    def replay_save():
+        if game.finished:
+            if os.path.exists (game.filename_temp):
+                os.remove(game.filename_temp)
             with open (game.filename, "w") as file:
                 file.write(json.dumps(game.story))
-
 
         elif not game.finished:
             with open(game.filename_temp, "w") as file:
                 file.write(json.dumps(game.story))
-
-
 
     if os.path.exists(game.filename):
         game.finished = True
@@ -145,9 +143,7 @@ def go(seed, block):
         result = db.c.fetchall()
 
         position = 0
-        game.cycle = {}
-
-
+        game.cycle = {} #remove previous cycle if exists
         for tx in result:
             position = position + 1
 
@@ -190,11 +186,8 @@ def go(seed, block):
 
     while hero.alive and not game.quit:
 
-
         cycle()
-
-
-        if not game.subcycle:
+        if not game.cycle:
             output("The game is still running")
             game.quit = True
             break
@@ -215,7 +208,7 @@ def go(seed, block):
                             sword_get()
 
                 for trigger_key in triggers_combat:
-                    if trigger_key in subcycle["block_hash"] and hero.alive:
+                    if trigger_key in subcycle["block_hash"] and hero.alive and not hero.in_combat:
                         trigger = triggers_combat[trigger_key]
 
                         enemy = enemy_define(trigger)
@@ -253,8 +246,9 @@ def go(seed, block):
 
         game.block = game.block + 1
 
-
+    replay_save()
     db_output()
+
     return game,hero
 
 
