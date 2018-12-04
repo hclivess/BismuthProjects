@@ -56,6 +56,7 @@ class Troll:
         self.health = 20
         self.power = 15
         self.alive = True
+        self.requirement = 0
 
 class Goblin:
     def __init__(self):
@@ -63,6 +64,7 @@ class Goblin:
         self.health = 10
         self.power = 10
         self.alive = True
+        self.requirement = 0
 
 class Berserker:
     def __init__(self):
@@ -70,6 +72,7 @@ class Berserker:
         self.health = 5
         self.power = 30
         self.alive = True
+        self.requirement = 0
 
 class Dragon:
     def __init__(self):
@@ -77,3 +80,4 @@ class Dragon:
         self.health = 300
         self.power = 75
         self.alive = True
+        self.requirement = 0
