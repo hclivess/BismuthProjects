@@ -31,6 +31,8 @@ class Game:
         self.story = {}
         self.step = 0
         self.quit = False
+        self.filename_temp = None
+        self.filename = None
 
 class Hero:
     FULL_HP = 500

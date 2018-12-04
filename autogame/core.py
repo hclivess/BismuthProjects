@@ -14,30 +14,27 @@ def go(seed, block):
     game.block = block
     game.seed = seed
     game.hash = blake2b((seed + str(block)).encode(), digest_size=10).hexdigest()
+    game.filename_temp = "static/replays/" + str(game.hash + "_.json")
+    game.filename = "static/replays/" + str(game.hash + ".json")
 
     hero = classes.Hero()
 
 
     def output(entry):
-        filename_temp = "static/replays/" + str(game.hash + "_.json")
-        filename = "static/replays/" + str(game.hash + ".json")
-
         game.step += 1
 
         print(entry)
         game.story[game.step] = entry
 
-        if game.finished and os.path.exists (filename_temp):
-            os.remove(filename_temp)
+        if game.finished and os.path.exists (game.filename_temp):
+            os.remove(game.filename_temp)
 
-
-            if not os.path.exists (filename):
-                with open (filename, "w") as file:
+            if not os.path.exists (game.filename):
+                with open (game.filename, "w") as file:
                     file.write(json.dumps(game.story))
 
         elif not game.finished:
-            filename = "static/replays/" + str(game.hash + "_.json")
-            with open(filename, "w") as file:
+            with open(game.filename_temp, "w") as file:
                 file.write(json.dumps(game.story))
 
     #trigger is followed by events affected by modifiers
@@ -178,7 +175,7 @@ def go(seed, block):
                         try:  # roll new hash happen while engaged
                             block_hash = cycle()
                         except:
-                            output("The game is too recent")
+                            output("The game is still running")
                             game.quit = True
                             break
 
