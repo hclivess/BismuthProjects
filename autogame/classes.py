@@ -33,6 +33,7 @@ class Game:
         self.quit = False
         self.filename_temp = None
         self.filename = None
+        self.replay_exists = False
 
 class Hero:
     FULL_HP = 500

@@ -7,6 +7,7 @@ from hashlib import blake2b
 
 config = classes.Config()
 db = classes.Db(config.path["ledger"])
+scores_db = classes.ScoreDb()
 
 def go(seed, block):
     game = classes.Game()
@@ -17,7 +18,20 @@ def go(seed, block):
     game.filename_temp = "static/replays/" + str(game.hash + "_.json")
     game.filename = "static/replays/" + str(game.hash + ".json")
 
-    hero = classes.Hero()
+
+    def db_output():
+
+        if not game.finished:
+            scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry
+            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?)",(game.start_block, game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
+            scores_db.conn.commit()
+
+
+        elif game.finished and not game.replay_exists:
+            scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?)", (
+            game.start_block, game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
+            scores_db.conn.commit()
 
 
     def output(entry):
@@ -29,13 +43,24 @@ def go(seed, block):
         if game.finished and os.path.exists (game.filename_temp):
             os.remove(game.filename_temp)
 
-            if not os.path.exists (game.filename):
-                with open (game.filename, "w") as file:
-                    file.write(json.dumps(game.story))
+            with open (game.filename, "w") as file:
+                file.write(json.dumps(game.story))
 
-        elif not game.finished:
+
+        elif not game.finished and not game.quit:
             with open(game.filename_temp, "w") as file:
                 file.write(json.dumps(game.story))
+
+
+
+    if os.path.exists(game.filename):
+        game.finished = True
+        game.quit = True
+        game.replay_exists = True
+        output(f"Replay for {game.hash} already present, skipping match")
+
+
+    hero = classes.Hero()
 
     #trigger is followed by events affected by modifiers
 
@@ -192,8 +217,12 @@ def go(seed, block):
                             elif event == "attacked":
                                 attacked()
 
+
+
                     game.block += 1
         game.block += 1
+
+    db_output()
     return game,hero
 
 
