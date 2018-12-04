@@ -34,6 +34,9 @@ class Game:
         self.filename_temp = None
         self.filename = None
         self.replay_exists = False
+        self.cycle={}
+        self.subcycle={}
+
 
 class Hero:
     FULL_HP = 500
@@ -45,7 +48,7 @@ class Hero:
         self.in_combat = False
         self.experience = 0
         self.armor = 0
-        self.inventory = {"weapon":None, "armor":None}
+        self.inventory = {"weapon":None, "armor":None, "ring":None}
 
 class Troll:
     def __init__(self):

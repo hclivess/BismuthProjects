@@ -22,13 +22,12 @@ def go(seed, block):
     def db_output():
 
         if not game.finished:
-            scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry
+            scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
             scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?)",(game.start_block, game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
             scores_db.conn.commit()
 
-
         elif game.finished and not game.replay_exists:
-            scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry
+            scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
             scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?)", (
             game.start_block, game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
             scores_db.conn.commit()
@@ -42,12 +41,11 @@ def go(seed, block):
 
         if game.finished and os.path.exists (game.filename_temp):
             os.remove(game.filename_temp)
-
             with open (game.filename, "w") as file:
                 file.write(json.dumps(game.story))
 
 
-        elif not game.finished and not game.quit:
+        elif not game.finished:
             with open(game.filename_temp, "w") as file:
                 file.write(json.dumps(game.story))
 
@@ -82,6 +80,9 @@ def go(seed, block):
                          "70b": "sword"
                          }
 
+    triggers_human_individual = {"chaos_ring" : "item:chaos_ring"}
+    triggers_human_global = {"rangarok" : "event:ragnarok"}
+
     def enemy_dead_check():
         if enemy.health < 1:
             hero.in_combat = False
@@ -109,6 +110,9 @@ def go(seed, block):
 
         return enemy
 
+    def chaos_ring():
+        output(f"You see a chaos ring")
+
     def sword_get():
         if not hero.inventory["weapon"]:
             hero.inventory["weapon"] = "sword"
@@ -120,7 +124,6 @@ def go(seed, block):
             output(f"You obtained armor")
 
     def attack():
-        hero.in_combat = True
         hero.experience += 1
         damage = hero.power
         if hero.inventory["weapon"] == "sword":
@@ -140,24 +143,41 @@ def go(seed, block):
     def cycle():
         db.c.execute("SELECT * FROM transactions WHERE block_height = ? ORDER BY block_height", (game.block,))
         result = db.c.fetchall()
-        block_hash  = result[0][7]
-        return block_hash
+
+        position = 0
+        game.cycle = {}
+
+
+        for tx in result:
+            position = position + 1
+
+            block_height = tx[0]
+            timestamp = tx[1]
+            address = tx[2]
+            recipient = tx[3]
+            amount = tx[4]
+            block_hash  = tx[7]
+            operation = tx[10]
+            data = tx[11]
+            game.cycle[position] = {"block_height":block_height,"timestamp":timestamp,"address":address,"recipient":recipient,":amount":amount,"block_hash":block_hash,"operation":operation,"data":data}
 
 
     def heal():
         if hero.in_combat:
             hero.health = hero.health + 5
             output(f"You drink a potion and heal to {hero.health} HP...")
+            if hero.health > classes.Hero.FULL_HP:
+                hero.health = classes.Hero.FULL_HP
 
         elif not hero.in_combat:
             hero.health = hero.health + 15
+            if hero.health > classes.Hero.FULL_HP:
+                hero.health = classes.Hero.FULL_HP
             output(f"You rest and heal well to {hero.health} HP...")
 
-        if hero.health > classes.Hero.FULL_HP:
-            hero.health = classes.Hero.FULL_HP
+
 
     def attacked():
-        hero.in_combat = True
         damage_taken = enemy.power
 
         if hero.inventory["armor"] == "armor":
@@ -170,57 +190,69 @@ def go(seed, block):
 
     while hero.alive and not game.quit:
 
-        try:
-            block_hash = cycle()
-        except:
+
+        cycle()
+
+
+        if not game.subcycle:
             output("The game is still running")
             game.quit = True
             break
 
-        for trigger_key in triggers_peaceful:
-            trigger = triggers_peaceful[trigger_key]
+        for subposition, subcycle in game.cycle.items(): #for tx in block
+            #print (subcycle)
 
-            if trigger_key in block_hash:
-                if trigger == "health_potion" and hero.health < classes.Hero.FULL_HP:
-                    heal()
-                elif trigger == "armor":
-                    armor_get()
-                elif trigger == "sword":
-                    sword_get()
+            if not hero.in_combat:
+                for trigger_key in triggers_peaceful:
+                    trigger = triggers_peaceful[trigger_key]
 
-        for trigger_key in triggers_combat:
-            if trigger_key in block_hash and hero.alive:
-                trigger = triggers_combat[trigger_key]
+                    if trigger_key in subcycle["block_hash"]:
+                        if trigger == "health_potion" and hero.health < classes.Hero.FULL_HP:
+                            heal()
+                        elif trigger == "armor":
+                            armor_get()
+                        elif trigger == "sword":
+                            sword_get()
 
-                enemy = enemy_define(trigger)
-                output(f"You meet {enemy.name} on block {game.block}")
+                for trigger_key in triggers_combat:
+                    if trigger_key in subcycle["block_hash"] and hero.alive:
+                        trigger = triggers_combat[trigger_key]
 
-                while hero.alive and enemy.alive and not game.quit:
-                    for event_key in EVENTS: #check what happened
-                        try:  # roll new hash happen while engaged
-                            block_hash = cycle()
-                        except:
-                            output("The game is still running")
-                            game.quit = True
-                            break
-
-                        if event_key in block_hash and enemy.alive:
-                            event = EVENTS[event_key]
-                            output(f"Event: {event}")
-
-                            if event == "attack":
-                                attack()
-
-                            elif event == "attack_critical":
-                                attack_critical()
-
-                            elif event == "attacked":
-                                attacked()
+                        enemy = enemy_define(trigger)
+                        output(f"You meet {enemy.name} on block {game.block}")
+                        hero.in_combat = True
 
 
+            if hero.in_combat and hero.alive and not game.quit:
+                for event_key in EVENTS: #check what happened
 
-                    game.block += 1
-        game.block += 1
+                    # human interaction
+                    """
+                    for trigger_key in triggers_human_individual:
+                        trigger = triggers_human_individual[trigger_key]
+
+                        if trigger_key in subcycle["operation"] and subcycle["address"] == game.seed:
+                            if trigger == "chaos_ring":
+                                chaos_ring()
+                    """
+                    #human interaction
+
+
+                    if event_key in subcycle["block_hash"] and enemy.alive:
+                        event = EVENTS[event_key]
+                        output(f"Event: {event}")
+
+                        if event == "attack":
+                            attack()
+
+                        elif event == "attack_critical":
+                            attack_critical()
+
+                        elif event == "attacked":
+                            attacked()
+
+        game.block = game.block + 1
+
 
     db_output()
     return game,hero
