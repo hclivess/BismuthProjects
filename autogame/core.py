@@ -39,7 +39,7 @@ def go(seed, block):
         game.story[game.step] = entry
 
     def replay_save():
-        if game.finished:
+        if game.finished and not game.replay_exists:
             if os.path.exists (game.filename_temp):
                 os.remove(game.filename_temp)
             with open (game.filename, "w") as file:
