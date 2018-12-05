@@ -15,7 +15,8 @@ def go(seed, block):
     game.block = block
     game.seed = seed
     game.hash = blake2b((seed + str(block)).encode(), digest_size=10).hexdigest()
-    game.filename_temp = "static/replays/" + str(game.hash + "_.json")
+
+    game.filename_temp = "static/replays/unfinished/" + str(game.hash + ".json")
     game.filename = "static/replays/" + str(game.hash + ".json")
 
 
@@ -39,6 +40,14 @@ def go(seed, block):
         game.story[game.step] = entry
 
     def replay_save():
+
+
+        if not os.path.exists("static/replays"):
+            os.mkdir("static/replays")
+        if not os.path.exists("static/replays/unfinished"):
+            os.mkdir("static/replays/unfinished")
+
+
         if game.finished and not game.replay_exists:
             if os.path.exists (game.filename_temp):
                 os.remove(game.filename_temp)
