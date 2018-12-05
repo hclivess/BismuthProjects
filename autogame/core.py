@@ -229,8 +229,9 @@ def go(seed, block):
                         ragnarok()
             # human interaction
 
-            if not hero.in_combat:
-                for trigger_key in triggers_peaceful:
+
+            for trigger_key in triggers_peaceful:
+                if not hero.in_combat:
                     trigger = triggers_peaceful[trigger_key]
 
                     if trigger_key in subcycle["cycle_hash"]:
@@ -241,18 +242,18 @@ def go(seed, block):
                         elif trigger == "sword":
                             sword_get()
 
-                for trigger_key in triggers_combat:
-                    if trigger_key in subcycle["cycle_hash"] and hero.alive and not hero.in_combat:
-                        trigger = triggers_combat[trigger_key]
+            for trigger_key in triggers_combat:
+                if trigger_key in subcycle["cycle_hash"] and hero.alive and not hero.in_combat:
+                    trigger = triggers_combat[trigger_key]
 
-                        enemy = enemy_define(trigger)
-                        output(f"You meet {enemy.name} on block {game.block}")
-                        hero.in_combat = True
+                    enemy = enemy_define(trigger)
+                    output(f"You meet {enemy.name} on block {game.block}")
+                    hero.in_combat = True
 
 
-            if hero.in_combat and hero.alive and not game.quit:
-                for event_key in EVENTS: #check what happened
 
+            for event_key in EVENTS: #check what happened
+                if hero.in_combat and hero.alive and not game.quit:
 
                     if event_key in subcycle["cycle_hash"] and enemy.alive:
                         event = EVENTS[event_key]
