@@ -41,7 +41,8 @@ def go(seed, block):
 
     def replay_save():
 
-
+        if not os.path.exists("static"):
+            os.mkdir("static")
         if not os.path.exists("static/replays"):
             os.mkdir("static/replays")
         if not os.path.exists("static/replays/unfinished"):
@@ -167,8 +168,10 @@ def go(seed, block):
             block_hash  = tx[7]
             operation = tx[10]
             data = tx[11]
-            game.cycle[position] = {"block_height":block_height,"timestamp":timestamp,"address":address,"recipient":recipient,":amount":amount,"block_hash":block_hash,"operation":operation,"data":data}
 
+            cycle_hash = blake2b((str(tx)).encode(), digest_size=60).hexdigest()
+
+            game.cycle[position] = {"block_height":block_height,"timestamp":timestamp,"address":address,"recipient":recipient,":amount":amount,"block_hash":block_hash,"operation":operation,"data":data, "cycle_hash":cycle_hash}
 
     def heal():
         if hero.in_combat:
@@ -195,6 +198,11 @@ def go(seed, block):
 
         output(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
         hero_dead_check()
+
+
+
+
+
 
     while hero.alive and not game.quit:
 
@@ -225,7 +233,7 @@ def go(seed, block):
                 for trigger_key in triggers_peaceful:
                     trigger = triggers_peaceful[trigger_key]
 
-                    if trigger_key in subcycle["block_hash"]:
+                    if trigger_key in subcycle["cycle_hash"]:
                         if trigger == "health_potion" and hero.health < hero.full_hp:
                             heal()
                         elif trigger == "armor":
@@ -234,7 +242,7 @@ def go(seed, block):
                             sword_get()
 
                 for trigger_key in triggers_combat:
-                    if trigger_key in subcycle["block_hash"] and hero.alive and not hero.in_combat:
+                    if trigger_key in subcycle["cycle_hash"] and hero.alive and not hero.in_combat:
                         trigger = triggers_combat[trigger_key]
 
                         enemy = enemy_define(trigger)
@@ -246,7 +254,7 @@ def go(seed, block):
                 for event_key in EVENTS: #check what happened
 
 
-                    if event_key in subcycle["block_hash"] and enemy.alive:
+                    if event_key in subcycle["cycle_hash"] and enemy.alive:
                         event = EVENTS[event_key]
                         output(f"Event: {event}")
 
