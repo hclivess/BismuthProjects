@@ -39,7 +39,7 @@ def make_app():
         (r"/", MainHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
         (r"/replay/(.*)", GetGameByIdHandler),
-        (r"/replay/unfinished/(.*)", GetUnfinishedByIdHandler),
+        (r"/unfinished/(.*)", GetUnfinishedByIdHandler),
     ])
 
 if __name__ == "__main__":
