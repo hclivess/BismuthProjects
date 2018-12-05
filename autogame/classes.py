@@ -55,14 +55,14 @@ class Troll:
     def __init__(self):
         self.name = "Troll"
         self.health = 20
-        self.power = 15
+        self.power = 20
         self.alive = True
         self.requirement = 0
 
 class Goblin:
     def __init__(self):
         self.name = "Goblin"
-        self.health = 10
+        self.health = 20
         self.power = 10
         self.alive = True
         self.requirement = 0
@@ -70,8 +70,8 @@ class Goblin:
 class Berserker:
     def __init__(self):
         self.name = "Berserker"
-        self.health = 5
-        self.power = 30
+        self.health = 15
+        self.power = 40
         self.alive = True
         self.requirement = 0
 
