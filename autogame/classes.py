@@ -39,10 +39,11 @@ class Game:
 
 
 class Hero:
-    FULL_HP = 500
+
 
     def __init__(self):
-        self.health = self.FULL_HP
+        self.full_hp = 500
+        self.health = self.full_hp
         self.power = 10
         self.alive = True
         self.in_combat = False

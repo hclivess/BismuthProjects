@@ -1,0 +1,72 @@
+<title>{{title}}</title>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script >
+
+
+<h1>Top Player:</h1>
+<table class='table table-responsive'>
+<tr>
+    <th>Start block</th>
+    <th>Game replay</th>
+    <th>Game seed</th>
+    <th>Hero experience</th>
+    <th>Corpse inventory</th>
+</tr>
+
+<tr>
+    <td>{{top[0]}}
+    <td><a href='/replay/{top[1]}'>{{top[1]}}</a>
+    <td>{{top[2]}}
+    <td>{{top[3]}}
+    <td>{{top[4]}}
+    </td>
+</tr>
+</table>
+
+<h1>Finished Games:</h1>
+
+<table class='table table-responsive'>
+<tr>
+<th>Start block</th>
+<th>Game replay</th>
+<th>Game seed</th>
+<th>Hero experience</th>
+<th>Corpse inventory</th>
+</tr>
+
+{% for line in all_finished %}
+    <tr>
+    <td>{{line[0]}}
+    <td><a href='/replay/{{line[1]}}'>{{line[1]}}</a>
+    <td>{{line[2]}}
+    <td>{{line[3]}}
+    <td>{{line[4]}}
+    </td></tr>
+{% end %}
+
+</table>
+
+
+
+<h1>Games in progress:</h1>
+
+<table class='table table-responsive'>")
+<tr>
+<th>Start block</th>
+<th>Game replay</th>
+<th>Game seed</th>
+<th>Hero experience</th>
+<th>Hero inventory</th>
+</tr>
+
+{% for line in all_unfinished %}
+    <tr>
+    <td>{{line[0]}}
+    <td><a href='/unfinished/{{line[1]}}'>{{line[1]}}</a>
+    <td>{{line[2]}}
+    <td>{{line[3]}}
+    <td>{{line[4]}}
+    </td></tr>
+{% end %}
+</table>

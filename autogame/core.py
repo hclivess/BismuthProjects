@@ -165,13 +165,13 @@ def go(seed, block):
         if hero.in_combat:
             hero.health = hero.health + 5
             output(f"You drink a potion and heal to {hero.health} HP...")
-            if hero.health > classes.Hero.FULL_HP:
-                hero.health = classes.Hero.FULL_HP
+            if hero.health > hero.full_hp:
+                hero.health = hero.full_hp
 
         elif not hero.in_combat:
             hero.health = hero.health + 15
-            if hero.health > classes.Hero.FULL_HP:
-                hero.health = classes.Hero.FULL_HP
+            if hero.health > hero.full_hp:
+                hero.health = hero.full_hp
             output(f"You rest and heal well to {hero.health} HP...")
 
 
@@ -217,7 +217,7 @@ def go(seed, block):
                     trigger = triggers_peaceful[trigger_key]
 
                     if trigger_key in subcycle["block_hash"]:
-                        if trigger == "health_potion" and hero.health < classes.Hero.FULL_HP:
+                        if trigger == "health_potion" and hero.health < hero.full_hp:
                             heal()
                         elif trigger == "armor":
                             armor_get()
