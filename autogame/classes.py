@@ -23,9 +23,9 @@ class ScoreDb:
 
 class Game:
     def __init__(self):
+        self.properties = {}
         self.seed = None
-        self.block = None
-        self.start_block = None
+        self.current_block = None
         self.hash = None
         self.finished = False
         self.story = {}
@@ -36,6 +36,8 @@ class Game:
         self.replay_exists = False
         self.cycle={}
         self.subcycle={}
+        self.league = None
+        self.coordinator = None
 
 
 class Hero:

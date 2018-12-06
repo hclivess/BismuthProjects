@@ -8,15 +8,10 @@ db = core.db #do not reinit
 
 while True:
     db.c.execute("SELECT * FROM transactions WHERE operation = ?",("autogame",))
-    result = db.c.fetchall()
-    print (result)
+    matches = db.c.fetchall()
 
-    for entry in result:
-
-        seed = entry[2]  # address
-        block = entry[0]
-
-        game,hero = core.go(seed, block)
+    for match in matches:
+        core.go(match)
 
     print ("Run finished, sleeping")
     time.sleep(60)

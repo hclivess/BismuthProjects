@@ -5,16 +5,22 @@ import os
 import json
 from hashlib import blake2b
 
+coordinator = ""
+
 config = classes.Config()
 db = classes.Db(config.path["ledger"])
 scores_db = classes.ScoreDb()
 
-def go(seed, block):
+def go(match):
+
     game = classes.Game()
-    game.start_block = block
-    game.block = block
-    game.seed = seed
-    game.hash = blake2b((seed + str(block)).encode(), digest_size=10).hexdigest()
+    game.properties = {"seed":match[2],"block":match[0],"recipient":match[3],"amount" : match[4]}
+
+    game.start_block = game.properties["block"]
+    game.current_block = game.start_block
+    game.seed = game.properties["seed"]
+    game.hash = blake2b((game.properties["seed"] + str(game.properties["block"])).encode(), digest_size=10).hexdigest()
+
 
     game.filename_temp = "static/replays/unfinished/" + str(game.hash + ".json")
     game.filename = "static/replays/" + str(game.hash + ".json")
@@ -24,13 +30,12 @@ def go(seed, block):
 
         if not game.finished:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?)",(game.start_block, game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
+            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
             scores_db.conn.commit()
 
         elif game.finished and not game.replay_exists:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?)", (
-            game.start_block, game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
             scores_db.conn.commit()
 
 
@@ -72,9 +77,9 @@ def go(seed, block):
 
     #define events
 
-    EVENTS = {seed[2:4] : "attack",
-              seed[4:6] : "attacked",
-              seed[6:8] : "attack_critical"}
+    EVENTS = {game.properties["seed"][2:4] : "attack",
+              game.properties["seed"][4:6] : "attacked",
+              game.properties["seed"][6:8] : "attack_critical"}
 
     #define triggers
     triggers_combat = {"4f" : "troll",
@@ -152,7 +157,7 @@ def go(seed, block):
         enemy_dead_check()
 
     def cycle():
-        db.c.execute("SELECT * FROM transactions WHERE block_height = ? ORDER BY block_height", (game.block,))
+        db.c.execute("SELECT * FROM transactions WHERE block_height = ? ORDER BY block_height", (game.current_block,))
         result = db.c.fetchall()
 
         position = 0
@@ -247,7 +252,7 @@ def go(seed, block):
                     trigger = triggers_combat[trigger_key]
 
                     enemy = enemy_define(trigger)
-                    output(f"You meet {enemy.name} on block {game.block}")
+                    output(f"You meet {enemy.name} on block {game.current_block}")
                     hero.in_combat = True
 
 
@@ -268,7 +273,7 @@ def go(seed, block):
                         elif event == "attacked":
                             attacked()
 
-        game.block = game.block + 1
+        game.current_block = game.current_block + 1
 
     replay_save()
     db_output()
