@@ -24,11 +24,12 @@ class MainHandler(tornado.web.RequestHandler):
         self.db.c.execute("SELECT * FROM scores ORDER BY experience DESC LIMIT 1")
         self.top = self.db.c.fetchone()
 
-        self.db.c.execute("SELECT * FROM unfinished")
-        self.all_unfinished = self.db.c.fetchall()
 
-        self.db.c.execute("SELECT * FROM scores")
+        self.db.c.execute("SELECT * FROM scores ORDER BY block_height DESC")
         self.all_finished = self.db.c.fetchall()
+
+        self.db.c.execute("SELECT * FROM unfinished ORDER BY block_height DESC")
+        self.all_unfinished = self.db.c.fetchall()
 
         self.render("main.html", title="Autogame", top = self.top, all_finished=self.all_finished, all_unfinished=self.all_unfinished)
 
