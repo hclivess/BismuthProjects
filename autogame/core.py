@@ -252,7 +252,7 @@ def go(match):
                     trigger = triggers_combat[trigger_key]
 
                     enemy = enemy_define(trigger)
-                    output(f"You meet {enemy.name} on block {game.current_block}")
+                    output(f"You meet {enemy.name} on transaction {subposition} of block {game.current_block}")
                     hero.in_combat = True
 
 
