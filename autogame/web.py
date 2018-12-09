@@ -3,11 +3,10 @@ import tornado.ioloop
 import tornado.web
 import json
 
-
+dummy = "Waiting for games..."
 
 class GetTournamentHandler(tornado.web.RequestHandler):
     def get(self, league):
-        dummy = "Waiting for games..."
 
         self.db = classes.ScoreDb()
         self.db.c.execute("SELECT * FROM scores WHERE league = ? ORDER BY experience DESC LIMIT 1", (league,))
@@ -25,7 +24,7 @@ class GetTournamentHandler(tornado.web.RequestHandler):
         if not self.all_unfinished:
             self.all_unfinished = [[dummy,"","","","",""]]
 
-        self.render("main.html", title=f"{league} League", top = self.top, all_finished=self.all_finished, all_unfinished=self.all_unfinished)
+        self.render("tournament.html", title=f"{league} League", top = self.top, all_finished=self.all_finished, all_unfinished=self.all_unfinished)
 
 
 class GetGameByIdHandler(tornado.web.RequestHandler):
@@ -48,13 +47,19 @@ class MainHandler(tornado.web.RequestHandler):
 
         self.db.c.execute("SELECT * FROM scores ORDER BY experience DESC LIMIT 1")
         self.top = self.db.c.fetchone()
+        if not self.top:
+            self.top = [dummy,"","","","",""]
 
 
         self.db.c.execute("SELECT * FROM scores ORDER BY block_start DESC")
         self.all_finished = self.db.c.fetchall()
+        if not self.all_finished:
+            self.all_finished = [[dummy,"","","","",""]]
 
         self.db.c.execute("SELECT * FROM unfinished ORDER BY block_start DESC")
         self.all_unfinished = self.db.c.fetchall()
+        if not self.all_unfinished:
+            self.all_unfinished = [[dummy,"","","","",""]]
 
         self.render("main.html", title="Autogame", top = self.top, all_finished=self.all_finished, all_unfinished=self.all_unfinished)
 
