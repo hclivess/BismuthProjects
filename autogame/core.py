@@ -5,7 +5,8 @@ import os
 import json
 from hashlib import blake2b
 
-coordinator = ""
+coordinator = "fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d"
+league_requirement = 5
 
 config = classes.Config()
 db = classes.Db(config.path["ledger"])
@@ -14,12 +15,20 @@ scores_db = classes.ScoreDb()
 def go(match):
 
     game = classes.Game()
-    game.properties = {"seed":match[2],"block":match[0],"recipient":match[3],"amount" : match[4]}
+    game.properties = {"seed":match[2],"block":match[0],"recipient":match[3],"amount" : match[4], "league" : match[11]}
 
     game.start_block = game.properties["block"]
+    game.recipient = game.properties["recipient"]
+    game.amount = game.properties["amount"]
     game.current_block = game.start_block
     game.seed = game.properties["seed"]
     game.hash = blake2b((game.properties["seed"] + str(game.properties["block"])).encode(), digest_size=10).hexdigest()
+
+
+    if game.recipient == coordinator and game.amount >= league_requirement:
+        game.league = game.properties["league"]
+    else:
+        game.league = "casual"
 
 
     game.filename_temp = "static/replays/unfinished/" + str(game.hash + ".json")
@@ -30,12 +39,12 @@ def go(match):
 
         if not game.finished:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
+            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),game.league,))
             scores_db.conn.commit()
 
         elif game.finished and not game.replay_exists:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),))
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),game.league,))
             scores_db.conn.commit()
 
 

@@ -28,20 +28,22 @@
 
 <table class='table table-responsive'>
 <tr>
-<th>Start block</th>
-<th>Game replay</th>
-<th>Game seed</th>
-<th>Hero experience</th>
-<th>Corpse inventory</th>
+    <th>Start block</th>
+    <th>Game replay</th>
+    <th>Game seed</th>
+    <th>Hero experience</th>
+    <th>Corpse inventory</th>
+    <th>Tournament</th>
 </tr>
 
 {% for line in all_finished %}
     <tr>
-    <td>{{line[0]}}
-    <td><a href='/replay/{{line[1]}}'>{{line[1]}}</a>
-    <td>{{line[2]}}
-    <td>{{line[3]}}
-    <td>{{line[4]}}
+        <td>{{line[0]}}
+        <td><a href='/replay/{{line[1]}}'>{{line[1]}}</a>
+        <td>{{line[2]}}
+        <td>{{line[3]}}
+        <td>{{line[4]}}
+        <td><a href='/league/{{line[5]}}'>{{line[5]}}</a>
     </td></tr>
 {% end %}
 
@@ -53,20 +55,22 @@
 
 <table class='table table-responsive'>
 <tr>
-<th>Start block</th>
-<th>Game replay</th>
-<th>Game seed</th>
-<th>Hero experience</th>
-<th>Hero inventory</th>
+    <th>Start block</th>
+    <th>Game replay</th>
+    <th>Game seed</th>
+    <th>Hero experience</th>
+    <th>Hero inventory</th>
+    <th>Tournament</th>
 </tr>
 
 {% for line in all_unfinished %}
     <tr>
-    <td>{{line[0]}}
-    <td><a href='/unfinished/{{line[1]}}'>{{line[1]}}</a>
-    <td>{{line[2]}}
-    <td>{{line[3]}}
-    <td>{{line[4]}}
+        <td>{{line[0]}}
+        <td><a href='/unfinished/{{line[1]}}'>{{line[1]}}</a>
+        <td>{{line[2]}}
+        <td>{{line[3]}}
+        <td>{{line[4]}}
+        <td><a href='/league/{{line[5]}}'>{{line[5]}}</a>
     </td></tr>
 {% end %}
 </table>

@@ -3,6 +3,31 @@ import tornado.ioloop
 import tornado.web
 import json
 
+
+
+class GetTournamentHandler(tornado.web.RequestHandler):
+    def get(self, league):
+        dummy = "Waiting for games..."
+
+        self.db = classes.ScoreDb()
+        self.db.c.execute("SELECT * FROM scores WHERE league = ? ORDER BY experience DESC LIMIT 1", (league,))
+        self.top = self.db.c.fetchone()
+        if not self.top:
+            self.top = [dummy,"","","","",""]
+
+        self.db.c.execute("SELECT * FROM scores WHERE league = ? ORDER BY block_start DESC", (league,))
+        self.all_finished = self.db.c.fetchall()
+        if not self.all_finished:
+            self.all_finished = [[dummy,"","","","",""]]
+
+        self.db.c.execute("SELECT * FROM unfinished WHERE league = ? ORDER BY block_start DESC", (league,))
+        self.all_unfinished = self.db.c.fetchall()
+        if not self.all_unfinished:
+            self.all_unfinished = [[dummy,"","","","",""]]
+
+        self.render("main.html", title=f"{league} League", top = self.top, all_finished=self.all_finished, all_unfinished=self.all_unfinished)
+
+
 class GetGameByIdHandler(tornado.web.RequestHandler):
 
     def get(self, hash):
@@ -41,6 +66,7 @@ def make_app():
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
         (r"/replay/(.*)", GetGameByIdHandler),
         (r"/unfinished/(.*)", GetUnfinishedByIdHandler),
+        (r"/league/(.*)", GetTournamentHandler),
     ])
 
 if __name__ == "__main__":
