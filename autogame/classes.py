@@ -82,3 +82,19 @@ class Dragon:
         self.power = 75
         self.alive = True
         self.requirement = 0
+
+class Fenrir:
+    def __init__(self):
+        self.name = "Fenrir"
+        self.health = 500
+        self.power = 100
+        self.alive = True
+        self.requirement = 0
+
+class Dwarf:
+    def __init__(self):
+        self.name = "Dwarf"
+        self.health = 20
+        self.power = 5
+        self.alive = True
+        self.requirement = 0

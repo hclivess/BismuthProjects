@@ -127,6 +127,10 @@ def go(match):
             enemy = classes.Berserker()
         elif event == "dragon":
             enemy = classes.Dragon()
+        elif event == "fenrir": #only triggers on ragnarok
+            enemy = classes.Fenrir()
+        elif event == "dwarf": #only triggers on ragnarok
+            enemy = classes.Dwarf()
         else:
             enemy = None
 
@@ -151,7 +155,10 @@ def go(match):
 
 
     def ragnarok():
-        output(f"Ragnarok begins")
+        output(f"Ragnarök begins")
+        # add new monsters to the world
+        triggers_combat["53b"] = "fenrir"
+        triggers_combat["4c"] = "dwarf"
 
     def sword_get():
         if not hero.inventory["weapon"]:
