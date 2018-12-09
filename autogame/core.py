@@ -133,7 +133,22 @@ def go(match):
         return enemy
 
     def chaos_ring():
-        output(f"You see a chaos ring")
+        if not hero.inventory["ring"]:
+            output(f'You see a chaos ring, the engraving says {subcycle["cycle_hash"][0:5]}')
+            if subcycle["cycle_hash"][0] in ["0","1","2","3","4","5","6","7","8","9"]:
+                hero.inventory["ring"] = "ring_perseverance"
+                hero.full_hp = 650
+                if hero.health < hero.full_hp:
+                    hero.health = hero.full_hp
+
+                output(f"You slide the ring on your finger and immediately feel stronger")
+            else:
+                hero.inventory["ring"] = "ring_blight"
+                hero.full_hp = 350
+                if hero.health > hero.full_hp:
+                    hero.health = hero.full_hp
+                output(f"You slide the ring on your finger and your hands start to tremble")
+
 
     def ragnarok():
         output(f"Ragnarok begins")

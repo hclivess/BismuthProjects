@@ -41,8 +41,6 @@ class Game:
 
 
 class Hero:
-
-
     def __init__(self):
         self.full_hp = 500
         self.health = self.full_hp
