@@ -18,3 +18,6 @@ the transaction:
 ### Rewards
 All the registration fees will be given to the winning player. The last block registration height
 is 950,000. No new games will be taken into consideration in this league afterwards.
+
+### Progress
+You can watch the current league pot and the league games here: http://autogame.bismuth.live:6060/league/tournament1
