@@ -2,14 +2,16 @@
 
 ## tournament1
 
-This is the first league event of autogame. All the registration fees will be given to 
+This is the first league event of autogame. All registration fees will be given to 
 the winning player. The last block registration height is 950,000. No new games will 
 be taken into consideration in this league afterwards. You can watch the current league 
 pot and the league games here: http://autogame.bismuth.live:6060/league/tournament1
 
+Usage of Chaos Ring item and Ragnarök event are allowed. You can read about them here: https://github.com/hclivess/BismuthProjects/blob/master/autogame/about.md
 
-### Joining using BISURL
-You can join by loading the following BISURL in your wallet and sending
+
+### Joining using BIS URL
+You can join by loading the following BIS URL in your wallet and sending
 the transaction. In the Bismuth wallet, go to the _send_ tab, copy and paste the following line and click _read_: 
 
 **bis://pay/fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d/5/VRdwGXJKt+/bZ>QXZeeX@Zgep/y~%@ebq%Anv~D&ilDUuz**
