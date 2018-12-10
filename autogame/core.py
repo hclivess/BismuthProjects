@@ -24,7 +24,6 @@ def go(match):
     game.seed = game.properties["seed"]
     game.hash = blake2b((game.properties["seed"] + str(game.properties["block"])).encode(), digest_size=10).hexdigest()
 
-
     if game.recipient == coordinator and game.bet >= league_requirement:
         game.league = game.properties["league"]
     else:
