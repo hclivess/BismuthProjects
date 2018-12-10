@@ -10,7 +10,7 @@ pot and the league games here: http://autogame.bismuth.live:6060/league/tourname
 
 ### Joining using BISURL
 You can join by loading the following BISURL in your wallet and sending
-the transaction: 
+the transaction. In the Bismuth wallet, go to the _send_ tab, copy and paste the following line and click _read_: 
 
 **bis://pay/fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d/5/VRdwGXJKt+/bZ>QXZeeX@Zgep/y~%@ebq%Anv~D&ilDUuz**
 
