@@ -29,7 +29,7 @@ league.
 
 |Data|Operation|Recipient|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
-|None|autogame|any|any|Starts a match in the casual league.|
+|None|autogame|_any_|_any_|Starts a match in the casual league.|
 
 ### Tournaments:
 Tournaments require you to send a specific amount to a specific address of the tournament 
@@ -39,7 +39,7 @@ the league.
 
 |Data|Operation|Recipient|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
-|_Tournament name_|autogame|_Tournament coordinator_|_Tournament fee_|Starts a match in a given tournament, fabulous prizes to be won.
+|_Tournament name_|autogame|_Tournament coordinator address_|_Tournament fee_|Starts a match in a given tournament, fabulous prizes to be won.
 
 ### Human interaction:
 
@@ -51,8 +51,8 @@ blessing or a negative curse** based on the structure of the current step in the
 
 |Data|Operation|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|
-|item:chaos_ring|autogame:add|any|Adds Chaos Ring to the ongoing match of the given address.
-|event:ragnarok|autogame:add|any|Introduces the Ragnarök event to all currently running matches across all leagues.|
+|item:chaos_ring|autogame:add|_any_|Adds Chaos Ring to the ongoing match of the given address.
+|event:ragnarok|autogame:add|_any_|Introduces the Ragnarök event to all currently running matches across all leagues.|
 
 
 

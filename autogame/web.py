@@ -11,8 +11,6 @@ class GetTournamentHandler(tornado.web.RequestHandler):
 
         self.db.c.execute("SELECT SUM(bet) FROM scores WHERE league = ?", (league,))
         self.pot = self.db.c.fetchone()[0]
-        print (self.pot)
-
 
         self.db.c.execute("SELECT * FROM scores WHERE league = ? ORDER BY experience DESC LIMIT 1", (league,))
         self.top = self.db.c.fetchone()
@@ -29,7 +27,7 @@ class GetTournamentHandler(tornado.web.RequestHandler):
         if not self.all_unfinished:
             self.all_unfinished = [[dummy,"","","","",""]]
 
-        self.render("tournament.html", title=f"{league} League", top = self.top, all_finished=self.all_finished, all_unfinished=self.all_unfinished, pot=self.pot)
+        self.render("tournament.html", title=f"{league}", top = self.top, all_finished=self.all_finished, all_unfinished=self.all_unfinished, pot=self.pot)
 
 
 class GetGameByIdHandler(tornado.web.RequestHandler):
