@@ -11,14 +11,12 @@ class GetTournamentHandler(tornado.web.RequestHandler):
 
         self.db.c.execute("SELECT SUM(bet) FROM scores WHERE league = ?", (league,))
         self.pot_finished = self.db.c.fetchone()[0]
+        self.pot_finished = 0 if self.pot_finished is None else self.pot_finished
 
         self.db.c.execute("SELECT SUM(bet) FROM unfinished WHERE league = ?", (league,))
         self.pot_unfinished = self.db.c.fetchone()[0]
+        self.pot_unfinished = 0 if self.pot_unfinished is None else self.pot_unfinished
 
-        if self.pot_finished is None:
-            self.pot_finished = 0
-        if self.pot_unfinished is None:
-            self.pot_unfinished = 0
 
         self.pot = self.pot_unfinished + self.pot_finished
 

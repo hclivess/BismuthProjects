@@ -1,14 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-</head>
+<title>Replay</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script >
 
+
+<div class="jumbotron text-center">
+    <h1>Game replay</h1>
+</div>
+
+<div class="container">
 
 {% for key, value in text.items() %}
     <p>Step {{key}} : {{value}}</p>
 {% end %}
-
-<body>
 
 <style>
 p
@@ -16,9 +19,5 @@ p
     font-family: "Anonymous Pro";
     font-size: 24px;
 }
-
-
 </style>
-
-</body>
-</html>
+</div>
