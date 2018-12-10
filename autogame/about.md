@@ -17,7 +17,8 @@ same weapons and armor. However, encounters will evolve differently, based on th
 which are used as match seeds.**
 
 Progress in the world is linear, block by block and transaction by transaction. 
-Each transaction generates a random game step hash. Each game ultimately ends in player's death. 
+Each transaction generates a random game step hash. The game then cycles through the hashes,
+looking for patterns. Certain patterns trigger events. Each game ultimately ends in player's death. 
 **The player who survives the longest takes the top spot in the highscores table.**
 
 ## Participation:
