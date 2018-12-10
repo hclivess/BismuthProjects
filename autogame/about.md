@@ -62,3 +62,49 @@ Progress of individual matches can be tracked online in real time at
 http://autogame.bismuth.live:6060 or you can run your own instance of the **game engine (run.py)**
 and the **webserver (web.py)** available in this repository. You will need to specify path
 to the running Bismuth blockchain in **config.json**
+
+## Strategy:
+Much in autogame is based on probability. Taking into consideration development of the recent
+matches, players can plan their entries carefully with an event averaging expectation.
+If the player meets too many dragons in one match, it can be expected that there will not 
+be as many in the following matches, the same goes for items and automated events in general.
+
+Judging from the tournament scores and the number of participants, the player can estimate 
+whether entering the tournament is worth the risk.
+
+## Effort Efficiency Theory:
+
+Autogame is based on the presumption that players enjoy taking part in games over which they lack
+control. This is dictated by the **relationship between effort and reward**. Organisms in general 
+strive to **minimize the first and maximize the latter**, achieving the greatest **risk/reward
+ratio**. We need to see effort as a rare resource for this purpose.
+
+This claim can be demonstrated on the most popular games with lack of involvement, such as lotteries,
+Candy Crush, roulette, slot machines, organized religion, horoscopes, where **responsibility for failure is 
+attributed to bad luck (higher power) and success to self.** The tone is strong even in more involved 
+games such as MOBAs or Battle Royales, where **responsibility for failure is attributed to others 
+and success to self.**
+
+This leads to underlining the **objective lack of responsibility with a subjective misjudgement** 
+as the result of absolute **priorization of reward by the brain over all other assets** in order
+for the dopamine to be released as the result of perceived success or at least the best possible
+outcome. 
+
+This effect can also be seen in users of dopamine-affecting drugs, where for satisfaction, users
+divert from any moral code and indulge in criminal activities for the simple reason of **inducing
+the reward effect** in the brain by **chemically manipulating dopamine receptors.**
+
+Since _learning how to win a game or lead a life in which people have control is much more difficult
+than rewarding the brain with dopamine_, the brain in general priorizes shortcuts such as 
+narcotics or games with the highest possible degree of **passivity to effect ratio (aka efficiency).**
+
+|Situation|Attribution|Result|Justification|Causation|
+|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+|Success|Self|Reward|I am the best|Perfection of self
+|Partial Success|Self|Reward|I am better| Superiority over contender 
+|Partial Failure|Other|Reward|Everything possible was done| Superiority of self
+|Heavy Failure|Other|Reward|Their fault or my bad luck| Externalized
+
+As you can see from the table, the resistance of brain towards learning (spending effort) is
+in a direct relation to the level of received reward. Therefore, **the holy grail of efficiency
+is the efortless victory, which required the least amount of learning and engagement.**
