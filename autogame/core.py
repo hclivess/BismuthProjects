@@ -102,7 +102,7 @@ def go(match):
                          }
 
     triggers_human_individual = {"item:chaos_ring" : "chaos_ring"}
-    triggers_human_global = {"event:rangarok" : "ragnarok"}
+    triggers_human_global = {"event:ragnarok" : "ragnarok"}
 
     def enemy_dead_check():
         if enemy.health < 1:
