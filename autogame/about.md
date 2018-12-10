@@ -1,6 +1,6 @@
-#Welcome to the Bismuth autogame tutorial
+# Welcome to the Bismuth autogame tutorial
 
-##What is autogame:
+## What is autogame:
 
 Autogame is a **deterministic semi-autonomous** computer game with RPG elements everyone in
 possession of Bismuth can participate in. Without a central server, everyone can reproduce
@@ -20,7 +20,7 @@ Progress in the world is linear, block by block and transaction by transaction.
 Each transaction generates a random game step hash. Each game ultimately ends in player's death. 
 **The player who survives the longest takes the top spot in the highscores table.**
 
-####Human interaction:
+#### Human interaction:
 
 - They can **grant themselves items**, currently **The Chaos Ring**, which can give them a **positive
 blessing or a negative curse** based on the structure of the current step in the world.
@@ -34,9 +34,9 @@ blessing or a negative curse** based on the structure of the current step in the
 |event:ragnarok|autogame:add|any|Introduces the Ragnarök event to all currently running games across all leagues.|
 
 
-##Participation:
+## Participation:
 
-###Casual league:
+### Casual league:
 You can participate by sending a random Bismuth transaction to anyone, but you **must include 
 "autogame" as the transaction operation.** That will automatically include you in the casual
 league.
@@ -45,7 +45,7 @@ league.
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
 |None|autogame|any|any|Starts a match in the casual league.|
 
-###Tournaments:
+### Tournaments:
 Tournaments require you to send a specific amount to a specific address of the tournament 
 coordinator. You **must include "autogame" as the transaction operation and enter the tournament 
 name in the "data" field.** If you do it correctly, you will be automatically included in 
@@ -54,7 +54,8 @@ the league.
 |Data|Operation|Recipient|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
 |_Tournament name_|autogame|_Tournament coordinator_|_Tournament fee_|Starts a match in a given tournament, fabulous prizes to be won.
-##Game progress:
+
+## Game progress:
 Progress of individual matches can be tracked online in real time at 
 http://autogame.bismuth.live:6060 or you can run your own instance of the **game engine (run.py)**
 and the **webserver (web.py)** available in this repository. You will need to specify path
