@@ -47,12 +47,12 @@ the league.
 blessing or a negative curse** based on the structure of the current step in the world.
 
 - They can summon global events that happen across all leagues for all players, currently 
-**Ragnarök, which adds new types of enemies to the game.**
+**Ragnarök, which adds new types of enemies to the currently running matches.**
 
 |Data|Operation|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|
 |item:chaos_ring|autogame:add|any|Adds Chaos Ring to the ongoing match of the given address.
-|event:ragnarok|autogame:add|any|Introduces the Ragnarök event to all currently running games across all leagues.|
+|event:ragnarok|autogame:add|any|Introduces the Ragnarök event to all currently running matches across all leagues.|
 
 
 
