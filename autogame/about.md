@@ -95,7 +95,7 @@ divert from any moral code and indulge in criminal activities for the simple rea
 the reward effect** in the brain by **chemically manipulating dopamine receptors.**
 
 Since _learning how to win a game or lead a life in which people have control is much more difficult
-than rewarding the brain with dopamine_, the brain in general priorizes shortcuts such as 
+than rewarding the brain with dopamine_, the brain in general prioritizes shortcuts such as 
 narcotics or games with the highest possible degree of **passivity to effect ratio (aka efficiency).**
 
 |Situation|Attribution|Result|Justification|Causation|
@@ -107,4 +107,4 @@ narcotics or games with the highest possible degree of **passivity to effect rat
 
 As you can see from the table, the resistance of brain towards learning (spending effort) is
 in a direct relation to the level of received reward. Therefore, **the holy grail of efficiency
-is the efortless victory, which required the least amount of learning and engagement.**
+is the effortless victory, which required the least amount of learning and engagement.**
