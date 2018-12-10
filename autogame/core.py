@@ -19,13 +19,13 @@ def go(match):
 
     game.start_block = game.properties["block"]
     game.recipient = game.properties["recipient"]
-    game.amount = game.properties["amount"]
+    game.bet = game.properties["amount"]
     game.current_block = game.start_block
     game.seed = game.properties["seed"]
     game.hash = blake2b((game.properties["seed"] + str(game.properties["block"])).encode(), digest_size=10).hexdigest()
 
 
-    if game.recipient == coordinator and game.amount >= league_requirement:
+    if game.recipient == coordinator and game.bet >= league_requirement:
         game.league = game.properties["league"]
     else:
         game.league = "casual"
@@ -39,13 +39,13 @@ def go(match):
 
         if not game.finished:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),game.league,))
+            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),game.league,game.bet,))
             scores_db.conn.commit()
 
         elif game.finished and not game.replay_exists:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),game.league,))
-            scores_db.conn.commit()
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),game.league,game.bet,))
+            scores_db.conn.commit()             
 
 
     def output(entry):

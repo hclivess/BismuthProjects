@@ -3,6 +3,7 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script >
 
+<h1>{{title}} Pot: {{pot}}</h1>
 
 <h1>Top Player:</h1>
 <table class='table table-responsive'>
@@ -20,7 +21,6 @@
     <td>{{top[2]}}
     <td>{{top[3]}}
     <td>{{top[4]}}
-    <td>{{top[5]}}
     </td>
 </tr>
 </table>
@@ -34,7 +34,6 @@
     <th>Game seed</th>
     <th>Hero experience</th>
     <th>Corpse inventory</th>
-    <th>League</th>
 </tr>
 
 {% for line in all_finished %}
@@ -44,7 +43,6 @@
         <td>{{line[2]}}
         <td>{{line[3]}}
         <td>{{line[4]}}
-        <td>{{line[5]}}
     </td></tr>
 {% end %}
 
@@ -61,7 +59,6 @@
     <th>Game seed</th>
     <th>Hero experience</th>
     <th>Hero inventory</th>
-    <th>League</th>
 </tr>
 
 {% for line in all_unfinished %}
@@ -71,7 +68,6 @@
         <td>{{line[2]}}
         <td>{{line[3]}}
         <td>{{line[4]}}
-        <td>{{line[5]}}
     </td></tr>
 {% end %}
 </table>
