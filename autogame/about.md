@@ -20,20 +20,6 @@ Progress in the world is linear, block by block and transaction by transaction.
 Each transaction generates a random game step hash. Each game ultimately ends in player's death. 
 **The player who survives the longest takes the top spot in the highscores table.**
 
-#### Human interaction:
-
-- They can **grant themselves items**, currently **The Chaos Ring**, which can give them a **positive
-blessing or a negative curse** based on the structure of the current step in the world.
-
-- They can summon global events that happen across all leagues for all players, currently 
-**Ragnarök, which adds new types of enemies to the game.**
-
-|Data|Operation|Amount|Effect|
-|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
-|item:chaos_ring|autogame:add|any|Adds Chaos Ring to the ongoing match of the given address.
-|event:ragnarok|autogame:add|any|Introduces the Ragnarök event to all currently running games across all leagues.|
-
-
 ## Participation:
 
 ### Casual league:
@@ -54,6 +40,21 @@ the league.
 |Data|Operation|Recipient|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
 |_Tournament name_|autogame|_Tournament coordinator_|_Tournament fee_|Starts a match in a given tournament, fabulous prizes to be won.
+
+### Human interaction:
+
+- They can **grant themselves items**, currently **The Chaos Ring**, which can give them a **positive
+blessing or a negative curse** based on the structure of the current step in the world.
+
+- They can summon global events that happen across all leagues for all players, currently 
+**Ragnarök, which adds new types of enemies to the game.**
+
+|Data|Operation|Amount|Effect|
+|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+|item:chaos_ring|autogame:add|any|Adds Chaos Ring to the ongoing match of the given address.
+|event:ragnarok|autogame:add|any|Introduces the Ragnarök event to all currently running games across all leagues.|
+
+
 
 ## Game progress:
 Progress of individual matches can be tracked online in real time at 
