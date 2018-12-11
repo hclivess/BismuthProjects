@@ -95,7 +95,7 @@ divert from any moral code and indulge in criminal activities for the simple rea
 the reward effect** in the brain by **chemically manipulating dopamine receptors.**
 
 Since _learning how to win a game or lead a life in which people have control is much more difficult
-than rewarding the brain with dopamine_, the brain in general prioritizes shortcuts such as 
+than rewarding the brain with dopamine for a strawman effort_, the brain in general prioritizes shortcuts such as 
 narcotics or games with the highest possible degree of **passivity to effect ratio (aka efficiency).**
 
 |Situation|Attribution|Result|Justification|Causation|
