@@ -12,7 +12,6 @@ class GetBeastHandler(tornado.web.RequestHandler):
         for enemy in classes.Game().enemies:
             enemy_objects.append(enemy())
 
-        print (enemy_objects)
         self.render("enemies.html", title="Beasts", enemies=enemy_objects)
 
 class GetTournamentHandler(tornado.web.RequestHandler):
