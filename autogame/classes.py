@@ -55,7 +55,9 @@ class Hero:
         self.alive = True
         self.in_combat = False
         self.experience = 0
-        self.armor = 0
+
+
+        self.defense = 0
 
         self.weapon = None
         self.armor = None

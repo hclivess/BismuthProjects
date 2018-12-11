@@ -51,24 +51,15 @@ def go(match):
             output_ring = hero.ring.name
         except:
             output_ring = None
-        try:
-            output_power = hero.weapon.power
-        except:
-            output_power = None
-        try:
-            output_defense = hero.armor.defense
-        except:
-            output_defense = None
-
 
         if not game.finished:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : hero.armor.name, "ring" : output_ring}),game.league,game.bet,output_power,output_defense,))
+            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : hero.armor.name, "ring" : output_ring}),game.league,game.bet,hero.power,hero.defense,))
             scores_db.conn.commit()
 
         elif game.finished and not game.replay_exists:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,output_power,output_defense,))
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,hero.power,hero.defense,))
             scores_db.conn.commit()             
 
 
@@ -203,7 +194,7 @@ def go(match):
         damage_taken = enemy.power
 
         if hero.armor:
-            damage_taken -= hero.armor.defense
+            damage_taken -= hero.defense
 
         hero.health = hero.health - damage_taken
 
@@ -244,6 +235,7 @@ def go(match):
                     if armor_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
                         if not hero.armor:
                             hero.armor = armor_class()
+                            hero.defense += hero.armor.defense
                             output(f"You obtained {armor_class().name}")
 
             for weapon_class in game.weapons:
