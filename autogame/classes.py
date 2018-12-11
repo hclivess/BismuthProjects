@@ -24,6 +24,10 @@ class ScoreDb:
 class Game:
 
     def __init__(self):
+        self.potions = [HealthPotion]
+        self.armors = [Armor]
+        self.weapons = [Sword, Warhammer]
+
         self.properties = {}
         self.seed = None
         self.current_block = None
@@ -120,6 +124,12 @@ class Sword:
         self.name = "Sword"
         self.power = 10
 
+class Warhammer:
+    def __init__(self):
+        self.trigger = "64c"
+        self.name = "Warhammer"
+        self.power = 15
+
 class Armor:
     def __init__(self):
         self.trigger = "69a"
@@ -152,7 +162,7 @@ class Ragnarok:
     def __init__(self):
         self.trigger = "event:ragnarok"
 
-items = [HealthPotion, Armor, Sword] #order matters!
+#the following lists are static, changes to these are persistent across object instances
 items_interactive = [ChaosRing]
 events_interactive_global = [Ragnarok]
 enemies_ragnarok = [Fenrir, Dwarf]  # order matters!

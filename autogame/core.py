@@ -228,22 +228,23 @@ def go(match):
                         ragnarok()
             # human interaction
 
-            for item_class in classes.items:
+            for potion_class in game.potions:
+                if potion_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
 
-                if item_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
-
-                    if item_class == classes.HealthPotion and hero.health < hero.full_hp:
+                    if potion_class == classes.HealthPotion and hero.health < hero.full_hp:
                         heal()
 
-                    elif item_class == classes.Armor:
+            for armor_class in game.armors:
+                    if armor_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
                         if not hero.armor:
-                            hero.armor = item_class()
-                            output(f"You obtained {item_class().name}")
+                            hero.armor = armor_class()
+                            output(f"You obtained {armor_class().name}")
 
-                    elif item_class == classes.Sword:
+            for weapon_class in game.weapons:
+                    if weapon_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
                         if not hero.weapon:
-                            hero.weapon = item_class()
-                            output(f"You obtained {item_class().name}")
+                            hero.weapon = weapon_class()
+                            output(f"You obtained {weapon_class().name}")
 
             for enemy_class in game.enemies:
                 if enemy_class().trigger in subcycle["cycle_hash"] and hero.alive and not hero.in_combat:
