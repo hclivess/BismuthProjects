@@ -39,7 +39,7 @@ class Game:
         self.bet = 0
         self.league = None
         self.coordinator = None
-
+        self.enemies = None
 
 class Hero:
     def __init__(self):
@@ -54,6 +54,7 @@ class Hero:
 
 class Troll:
     def __init__(self):
+        self.trigger = "4f"
         self.name = "Troll"
         self.health = 20
         self.power = 20
@@ -62,6 +63,7 @@ class Troll:
 
 class Goblin:
     def __init__(self):
+        self.trigger = "df"
         self.name = "Goblin"
         self.health = 20
         self.power = 10
@@ -70,6 +72,7 @@ class Goblin:
 
 class Berserker:
     def __init__(self):
+        self.trigger = "5a"
         self.name = "Berserker"
         self.health = 15
         self.power = 40
@@ -78,6 +81,7 @@ class Berserker:
 
 class Dragon:
     def __init__(self):
+        self.trigger = "61a"
         self.name = "Dragon"
         self.health = 300
         self.power = 75
@@ -86,6 +90,7 @@ class Dragon:
 
 class Fenrir:
     def __init__(self):
+        self.trigger = "53b"
         self.name = "Fenrir"
         self.health = 500
         self.power = 100
@@ -94,8 +99,12 @@ class Fenrir:
 
 class Dwarf:
     def __init__(self):
+        self.trigger = "4c"
         self.name = "Dwarf"
         self.health = 20
         self.power = 5
         self.alive = True
         self.requirement = 0
+
+enemies = [Dragon, Berserker, Goblin, Troll]
+enemies_ragnarok = [Dwarf, Fenrir]

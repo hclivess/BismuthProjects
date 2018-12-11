@@ -23,6 +23,8 @@ def go(match):
     game.current_block = game.start_block
     game.seed = game.properties["seed"]
     game.hash = blake2b((game.properties["seed"] + str(game.properties["block"])).encode(), digest_size=10).hexdigest()
+    game.enemies = classes.enemies
+
 
     if game.recipient == coordinator and game.bet >= league_requirement:
         game.league = game.properties["league"]
@@ -90,11 +92,6 @@ def go(match):
               game.properties["seed"][6:8] : "attack_critical"}
 
     #define triggers
-    triggers_combat = {"4f" : "troll",
-                       "df" : "goblin",
-                       "5a" : "berserker",
-                       "61a" : "dragon"
-                       }
 
     triggers_peaceful = {"3d" : "health_potion",
                          "69a": "armor",
@@ -117,24 +114,6 @@ def go(match):
             game.finished = True
             output(f"You died with {hero.experience} experience")
 
-    def enemy_define(event):
-        if event == "troll":
-            enemy = classes.Troll()
-        elif event == "goblin":
-            enemy = classes.Goblin()
-        elif event == "berserker":
-            enemy = classes.Berserker()
-        elif event == "dragon":
-            enemy = classes.Dragon()
-        elif event == "fenrir": #only triggers on ragnarok
-            enemy = classes.Fenrir()
-        elif event == "dwarf": #only triggers on ragnarok
-            enemy = classes.Dwarf()
-        else:
-            enemy = None
-
-        return enemy
-
     def chaos_ring():
         if not hero.inventory["ring"]:
             output(f'You see a chaos ring, the engraving says {subcycle["cycle_hash"][0:5]}')
@@ -156,8 +135,8 @@ def go(match):
     def ragnarok():
         output(f"Ragnarök begins")
         # add new monsters to the world
-        triggers_combat["53b"] = "fenrir"
-        triggers_combat["4c"] = "dwarf"
+        for enemy in classes.enemies_ragnarok:
+            game.enemies.append(enemy)
 
     def sword_get():
         if not hero.inventory["weapon"]:
@@ -234,11 +213,6 @@ def go(match):
         output(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
         hero_dead_check()
 
-
-
-
-
-
     while hero.alive and not game.quit:
 
         cycle()
@@ -277,11 +251,10 @@ def go(match):
                         elif trigger == "sword":
                             sword_get()
 
-            for trigger_key in triggers_combat:
-                if trigger_key in subcycle["cycle_hash"] and hero.alive and not hero.in_combat:
-                    trigger = triggers_combat[trigger_key]
+            for enemy_class in game.enemies:
+                if enemy_class().trigger in subcycle["cycle_hash"] and hero.alive and not hero.in_combat:
+                    enemy = enemy_class()
 
-                    enemy = enemy_define(trigger)
                     output(f"You meet {enemy.name} on transaction {subposition} of block {game.current_block}")
                     hero.in_combat = True
 
