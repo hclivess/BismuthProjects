@@ -18,8 +18,8 @@ class ScoreDb:
         self.conn.text_factory = str
         self.c = self.conn.cursor()
 
-        self.c.execute("CREATE TABLE IF NOT EXISTS scores (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT)")
-        self.c.execute("CREATE TABLE IF NOT EXISTS unfinished (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT)")
+        self.c.execute("CREATE TABLE IF NOT EXISTS scores (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT, damage TEXT, defense TEXT)")
+        self.c.execute("CREATE TABLE IF NOT EXISTS unfinished (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT, damage TEXT, defense TEXT)")
 
 class Game:
 
