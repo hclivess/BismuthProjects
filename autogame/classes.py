@@ -22,6 +22,7 @@ class ScoreDb:
         self.c.execute("CREATE TABLE IF NOT EXISTS unfinished (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT)")
 
 class Game:
+
     def __init__(self):
         self.properties = {}
         self.seed = None
@@ -39,7 +40,8 @@ class Game:
         self.bet = 0
         self.league = None
         self.coordinator = None
-        self.enemies = None
+        self.enemies = [Troll, Goblin, Berserker, Dragon] #order matters!
+        self.interaction_string = "autogame:add"
 
 class Hero:
     def __init__(self):
@@ -50,7 +52,11 @@ class Hero:
         self.in_combat = False
         self.experience = 0
         self.armor = 0
-        self.inventory = {"weapon":None, "armor":None, "ring":None}
+
+        self.weapon = None
+        self.armor = None
+        self.ring = None
+
 
 class Troll:
     def __init__(self):
@@ -106,5 +112,47 @@ class Dwarf:
         self.alive = True
         self.requirement = 0
 
-enemies = [Dragon, Berserker, Goblin, Troll]
-enemies_ragnarok = [Dwarf, Fenrir]
+
+
+class Sword:
+    def __init__(self):
+        self.trigger = "70b"
+        self.name = "Sword"
+        self.power = 10
+
+class Armor:
+    def __init__(self):
+        self.trigger = "69a"
+        self.name = "Armor"
+        self.defense = 5
+
+
+class ChaosRing:
+    def __init__(self):
+        self.trigger = "item:chaos_ring"
+
+    def roll_good(self):
+        self.health_modifier = +150
+        self.name = "Perseverance Ring"
+        self.string = "You slide the ring on your finger and immediately feel stronger"
+        return self
+
+    def roll_bad(self):
+        self.health_modifier = -150
+        self.name = "Blight Ring"
+        self.string = "You slide the ring on your finger and your hands start to tremble"
+        return self
+
+
+class HealthPotion:
+    def __init__(self):
+        self.trigger = "3d"
+
+class Ragnarok:
+    def __init__(self):
+        self.trigger = "event:ragnarok"
+
+items = [HealthPotion, Armor, Sword] #order matters!
+items_interactive = [ChaosRing]
+events_interactive_global = [Ragnarok]
+enemies_ragnarok = [Fenrir, Dwarf]  # order matters!

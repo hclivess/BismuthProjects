@@ -23,7 +23,7 @@ def go(match):
     game.current_block = game.start_block
     game.seed = game.properties["seed"]
     game.hash = blake2b((game.properties["seed"] + str(game.properties["block"])).encode(), digest_size=10).hexdigest()
-    game.enemies = classes.enemies
+    game.enemies = game.enemies
 
 
     if game.recipient == coordinator and game.bet >= league_requirement:
@@ -35,17 +35,31 @@ def go(match):
     game.filename_temp = "static/replays/unfinished/" + str(game.hash + ".json")
     game.filename = "static/replays/" + str(game.hash + ".json")
 
+    hero = classes.Hero()
 
     def db_output():
 
+        try:
+            output_weapon = hero.weapon.name
+        except:
+            output_weapon = None
+        try:
+            output_armor = hero.armor.name
+        except:
+            output_armor = None
+        try:
+            output_ring = hero.ring.name
+        except:
+            output_ring = None
+
         if not game.finished:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),game.league,game.bet,))
+            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : hero.armor.name, "ring" : output_ring}),game.league,game.bet,))
             scores_db.conn.commit()
 
         elif game.finished and not game.replay_exists:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps(hero.inventory),game.league,game.bet,))
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,))
             scores_db.conn.commit()             
 
 
@@ -81,7 +95,7 @@ def go(match):
         output(f"Replay for {game.hash} already present, skipping match")
 
 
-    hero = classes.Hero()
+
 
     #trigger is followed by events affected by modifiers
 
@@ -92,14 +106,6 @@ def go(match):
               game.properties["seed"][6:8] : "attack_critical"}
 
     #define triggers
-
-    triggers_peaceful = {"3d" : "health_potion",
-                         "69a": "armor",
-                         "70b": "sword"
-                         }
-
-    triggers_human_individual = {"item:chaos_ring" : "chaos_ring"}
-    triggers_human_global = {"event:ragnarok" : "ragnarok"}
 
     def enemy_dead_check():
         if enemy.health < 1:
@@ -115,21 +121,16 @@ def go(match):
             output(f"You died with {hero.experience} experience")
 
     def chaos_ring():
-        if not hero.inventory["ring"]:
+        if not hero.ring:
             output(f'You see a chaos ring, the engraving says {subcycle["cycle_hash"][0:5]}')
             if subcycle["cycle_hash"][0] in ["0","1","2","3","4","5","6","7","8","9"]:
-                hero.inventory["ring"] = "ring_perseverance"
-                hero.full_hp = 650
-                if hero.health < hero.full_hp:
-                    hero.health = hero.full_hp
-
-                output(f"You slide the ring on your finger and immediately feel stronger")
+                hero.ring = classes.ChaosRing().roll_good()
             else:
-                hero.inventory["ring"] = "ring_blight"
-                hero.full_hp = 350
-                if hero.health > hero.full_hp:
-                    hero.health = hero.full_hp
-                output(f"You slide the ring on your finger and your hands start to tremble")
+                hero.ring = classes.ChaosRing().roll_bad()
+
+            hero.full_hp += hero.ring.health_modifier
+            hero.health = hero.full_hp
+            output(hero.ring.string)
 
 
     def ragnarok():
@@ -138,21 +139,11 @@ def go(match):
         for enemy in classes.enemies_ragnarok:
             game.enemies.append(enemy)
 
-    def sword_get():
-        if not hero.inventory["weapon"]:
-            hero.inventory["weapon"] = "sword"
-            output(f"You obtained a sword")
-
-    def armor_get():
-        if not hero.inventory["armor"]:
-            hero.inventory["armor"] = "armor"
-            output(f"You obtained armor")
-
     def attack():
         hero.experience += 1
         damage = hero.power
-        if hero.inventory["weapon"] == "sword":
-            damage += 10
+        if hero.weapon:
+            damage += hero.weapon.power
 
         enemy.health -= hero.power
         output(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
@@ -205,8 +196,8 @@ def go(match):
     def attacked():
         damage_taken = enemy.power
 
-        if hero.inventory["armor"] == "armor":
-            damage_taken -= 5
+        if hero.armor:
+            damage_taken -= hero.armor.defense
 
         hero.health = hero.health - damage_taken
 
@@ -222,34 +213,37 @@ def go(match):
             break
 
         for subposition, subcycle in game.cycle.items(): #for tx in block
-            print (subcycle)
+            #print (subcycle)
 
             # human interaction
-            for trigger_key in triggers_human_individual:
-                trigger = triggers_human_individual[trigger_key]
-                if trigger_key == subcycle["data"] and subcycle["address"] == game.seed and subcycle["operation"] == "autogame:add":
-                    if trigger == "chaos_ring":
+            for item_interactive_class in classes.items_interactive:
+                if item_interactive_class().trigger == subcycle["data"] and subcycle["address"] == game.seed and subcycle["operation"] == game.interaction_string:
+                    if item_interactive_class == classes.ChaosRing:
                         chaos_ring()
 
-            for trigger_key in triggers_human_global:
-                trigger = triggers_human_global[trigger_key]
-                if trigger_key == subcycle["data"] and subcycle["operation"] == "autogame:add":
-                    if trigger == "ragnarok":
+
+            for events_interactive_global_class in classes.events_interactive_global:
+                if events_interactive_global_class().trigger == subcycle["data"] and subcycle["operation"] == game.interaction_string:
+                    if events_interactive_global_class == classes.Ragnarok:
                         ragnarok()
             # human interaction
 
+            for item_class in classes.items:
 
-            for trigger_key in triggers_peaceful:
-                if not hero.in_combat:
-                    trigger = triggers_peaceful[trigger_key]
+                if item_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
 
-                    if trigger_key in subcycle["cycle_hash"]:
-                        if trigger == "health_potion" and hero.health < hero.full_hp:
-                            heal()
-                        elif trigger == "armor":
-                            armor_get()
-                        elif trigger == "sword":
-                            sword_get()
+                    if item_class == classes.HealthPotion and hero.health < hero.full_hp:
+                        heal()
+
+                    elif item_class == classes.Armor:
+                        if not hero.armor:
+                            hero.armor = item_class()
+                            output(f"You obtained {item_class().name}")
+
+                    elif item_class == classes.Sword:
+                        if not hero.weapon:
+                            hero.weapon = item_class()
+                            output(f"You obtained {item_class().name}")
 
             for enemy_class in game.enemies:
                 if enemy_class().trigger in subcycle["cycle_hash"] and hero.alive and not hero.in_combat:
@@ -257,8 +251,6 @@ def go(match):
 
                     output(f"You meet {enemy.name} on transaction {subposition} of block {game.current_block}")
                     hero.in_combat = True
-
-
 
             for event_key in EVENTS: #check what happened
                 if hero.in_combat and hero.alive and not game.quit:
