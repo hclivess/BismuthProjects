@@ -27,6 +27,7 @@ class Game:
         self.potions = [HealthPotion]
         self.armors = [Armor]
         self.weapons = [Sword, Warhammer]
+        self.enemies = [Troll, Goblin, Berserker, Dragon]  # order matters!
 
         self.properties = {}
         self.seed = None
@@ -44,7 +45,6 @@ class Game:
         self.bet = 0
         self.league = None
         self.coordinator = None
-        self.enemies = [Troll, Goblin, Berserker, Dragon] #order matters!
         self.interaction_string = "autogame:add"
 
 class Hero:

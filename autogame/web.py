@@ -5,6 +5,16 @@ import json
 
 dummy = "Waiting for games..."
 
+class GetBeastHandler(tornado.web.RequestHandler):
+    def get(self):
+
+        enemy_objects = []
+        for enemy in classes.Game().enemies:
+            enemy_objects.append(enemy())
+
+        print (enemy_objects)
+        self.render("enemies.html", title="Beasts", enemies=enemy_objects)
+
 class GetTournamentHandler(tornado.web.RequestHandler):
     def get(self, league):
         self.db = classes.ScoreDb()
@@ -36,7 +46,6 @@ class GetTournamentHandler(tornado.web.RequestHandler):
             self.all_unfinished = [[dummy,"","","","",""]]
 
         self.render("tournament.html", title=f"{league}", top = self.top, all_finished=self.all_finished, all_unfinished=self.all_unfinished, pot=self.pot)
-
 
 class GetGameByIdHandler(tornado.web.RequestHandler):
 
@@ -82,6 +91,7 @@ def make_app():
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
         (r"/replay/(.*)", GetGameByIdHandler),
         (r"/unfinished/(.*)", GetUnfinishedByIdHandler),
+        (r"/enemies", GetBeastHandler),
         (r"/league/(.*)", GetTournamentHandler),
     ])
 
