@@ -28,6 +28,7 @@ class Game:
         self.armors = [Armor]
         self.weapons = [Sword, Warhammer]
         self.enemies = [Troll, Goblin, Berserker, Dragon]  # order matters!
+        self.pvp = [PvpAttack]
 
         self.properties = {}
         self.seed = None
@@ -51,10 +52,11 @@ class Hero:
     def __init__(self):
         self.full_hp = 500
         self.health = self.full_hp
-        self.power = 10
+        self.damage = 10
         self.alive = True
         self.in_combat = False
         self.experience = 0
+        self.pvp_interactions = 5
 
 
         self.defense = 0
@@ -69,7 +71,7 @@ class Troll:
         self.trigger = "4f"
         self.name = "Troll"
         self.health = 20
-        self.power = 20
+        self.damage = 20
         self.alive = True
         self.requirement = 0
 
@@ -78,7 +80,7 @@ class Goblin:
         self.trigger = "df"
         self.name = "Goblin"
         self.health = 20
-        self.power = 10
+        self.damage = 10
         self.alive = True
         self.requirement = 0
 
@@ -87,7 +89,7 @@ class Berserker:
         self.trigger = "5a"
         self.name = "Berserker"
         self.health = 15
-        self.power = 40
+        self.damage = 40
         self.alive = True
         self.requirement = 0
 
@@ -96,7 +98,7 @@ class Dragon:
         self.trigger = "61a"
         self.name = "Dragon"
         self.health = 300
-        self.power = 75
+        self.damage = 75
         self.alive = True
         self.requirement = 0
 
@@ -105,7 +107,7 @@ class Fenrir:
         self.trigger = "53b"
         self.name = "Fenrir"
         self.health = 500
-        self.power = 100
+        self.damage = 100
         self.alive = True
         self.requirement = 0
 
@@ -114,7 +116,7 @@ class Dwarf:
         self.trigger = "4c"
         self.name = "Dwarf"
         self.health = 20
-        self.power = 5
+        self.damage = 5
         self.alive = True
         self.requirement = 0
 
@@ -124,13 +126,13 @@ class Sword:
     def __init__(self):
         self.trigger = "70b"
         self.name = "Sword"
-        self.power = 10
+        self.damage = 10
 
 class Warhammer:
     def __init__(self):
         self.trigger = "64c"
         self.name = "Warhammer"
-        self.power = 15
+        self.damage = 15
 
 class Armor:
     def __init__(self):
@@ -163,6 +165,10 @@ class HealthPotion:
 class Ragnarok:
     def __init__(self):
         self.trigger = "event:ragnarok"
+
+class PvpAttack:
+    def __init__(self):
+        self.trigger = "pvp:attack"
 
 #the following lists are static, changes to these are persistent across object instances
 items_interactive = [ChaosRing]

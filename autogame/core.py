@@ -54,12 +54,12 @@ def go(match):
 
         if not game.finished:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : hero.armor.name, "ring" : output_ring}),game.league,game.bet,hero.power,hero.defense,))
+            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : hero.armor.name, "ring" : output_ring}),game.league,game.bet,hero.damage,hero.defense,))
             scores_db.conn.commit()
 
         elif game.finished and not game.replay_exists:
             scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,hero.power,hero.defense,))
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,hero.damage,hero.defense,))
             scores_db.conn.commit()             
 
 
@@ -141,14 +141,14 @@ def go(match):
 
     def attack():
         hero.experience += 1
-        damage = hero.power
-        enemy.health -= hero.power
+        damage = hero.damage
+        enemy.health -= hero.damage
         output(f"{enemy.name} suffers {damage} damage and is left with {enemy.health} HP")
         enemy_dead_check()
 
     def attack_critical():
         hero.experience += 1
-        damage = hero.power + hero.experience
+        damage = hero.damage + hero.experience
         enemy.health -= damage
         output(f"{enemy.name} suffers {damage} *critical* damage and is left with {enemy.health} HP")
         enemy_dead_check()
@@ -191,14 +191,14 @@ def go(match):
 
 
     def attacked():
-        damage_taken = enemy.power
+        damage_taken = enemy.damage
 
         if hero.armor:
             damage_taken -= hero.defense
 
         hero.health = hero.health - damage_taken
 
-        output(f"{enemy.name} hits you for {enemy.power} HP, you now have {hero.health} HP")
+        output(f"{enemy.name} hits you for {enemy.damage} HP, you now have {hero.health} HP")
         hero_dead_check()
 
     while hero.alive and not game.quit:
@@ -225,6 +225,22 @@ def go(match):
                         ragnarok()
             # human interaction
 
+            for pvp_class in game.pvp:
+                if pvp_class().trigger == subcycle["data"] and subcycle["operation"] == game.interaction_string and subcycle["recipient"] == game.seed and hero.pvp_interactions > 0:
+                    attacker = subcycle["address"]
+                    try:
+                        scores_db.c.execute("SELECT damage FROM unfinished WHERE seed = ? ORDER BY block_start DESC LIMIT 1",(attacker,))
+                        enemy_damage = scores_db.c.fetchone()[0]
+                        hero.health = hero.health + hero.defense - enemy_damage
+                        hero.pvp_interactions -= 1
+
+                        output(f"{attacker} hits you and you lose {enemy_damage} health down to {hero.health}")
+
+                    except:
+                        output(f"Someone tried to attack you from their grave, but they failed")
+
+                    pass
+
             for potion_class in game.potions:
                 if potion_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
 
@@ -242,7 +258,7 @@ def go(match):
                     if weapon_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
                         if not hero.weapon:
                             hero.weapon = weapon_class()
-                            hero.power += hero.weapon.power
+                            hero.damage += hero.weapon.damage
                             output(f"You obtained {weapon_class().name}")
 
             for enemy_class in game.enemies:
