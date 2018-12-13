@@ -231,10 +231,11 @@ def go(match):
                     try:
                         scores_db.c.execute("SELECT damage FROM unfinished WHERE seed = ? ORDER BY block_start DESC LIMIT 1",(attacker,))
                         enemy_damage = scores_db.c.fetchone()[0]
-                        hero.health = hero.health + hero.defense - enemy_damage
+                        hero.health = hero.health - (enemy_damage - hero.defense)
                         hero.pvp_interactions -= 1
+                        hero_dead_check()
 
-                        output(f"{attacker} hits you and you lose {enemy_damage} health down to {hero.health}")
+                        output(f"{attacker} hits you and you lose {enemy_damage - hero.defense} health down to {hero.health}")
 
                     except:
                         output(f"Someone tried to attack you from their grave, but they failed")
