@@ -5,14 +5,19 @@ import json
 
 dummy = "Waiting for games..."
 
-class GetBeastHandler(tornado.web.RequestHandler):
+class GetEnemyHandler(tornado.web.RequestHandler):
     def get(self):
 
         enemy_objects = []
+        enemy_objects_ragnarok = []
+
         for enemy in classes.Game().enemies:
             enemy_objects.append(enemy())
 
-        self.render("enemies.html", title="Beasts", enemies=enemy_objects)
+        for enemy in classes.Game().enemies_ragnarok:
+            enemy_objects_ragnarok.append(enemy())
+
+        self.render("enemies.html", title="Beasts", enemies=enemy_objects, enemies_ragnarok = enemy_objects_ragnarok)
 
 class GetTournamentHandler(tornado.web.RequestHandler):
     def get(self, league):
@@ -90,7 +95,7 @@ def make_app():
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
         (r"/replay/(.*)", GetGameByIdHandler),
         (r"/unfinished/(.*)", GetUnfinishedByIdHandler),
-        (r"/enemies", GetBeastHandler),
+        (r"/enemies", GetEnemyHandler),
         (r"/league/(.*)", GetTournamentHandler),
     ])
 

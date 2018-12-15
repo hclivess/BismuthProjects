@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enemies</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script >
+
+</head>
+<body>
+
+<div class="jumbotron text-center">
+    <h1>Enemies</h1>
+</div>
+
+<div class="container">
+
+    <table class='table table-responsive'>
+        <tr>
+            <th>Name</th>
+            <th>Trigger</th>
+            <th>Health</th>
+            <th>damage</th>
+            <th>Level requirement</th>
+        </tr>
+        {% for enemy in enemies %}
+        <tr>
+            <td>{{enemy.name}}
+            <td>{{enemy.trigger}}
+            <td>{{enemy.health}}
+            <td>{{enemy.damage}}
+            <td>{{enemy.requirement}}
+        </td></tr>
+        {% end %}
+    </table>
+</div>
+
+<div class="jumbotron text-center">
+    <h1>Ragnarök Event Enemies</h1>
+</div>
+
+<div class="container">
+
+    <table class='table table-responsive'>
+        <tr>
+            <th>Name</th>
+            <th>Trigger</th>
+            <th>Health</th>
+            <th>damage</th>
+            <th>Level requirement</th>
+        </tr>
+        {% for enemy in enemies_ragnarok %}
+        <tr>
+            <td>{{enemy.name}}
+            <td>{{enemy.trigger}}
+            <td>{{enemy.health}}
+            <td>{{enemy.damage}}
+            <td>{{enemy.requirement}}
+        </td></tr>
+        {% end %}
+    </table>
+</div>
+
+</body>
+</html>

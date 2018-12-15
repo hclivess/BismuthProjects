@@ -29,6 +29,7 @@ class Game:
         self.weapons = [Sword, Warhammer]
         self.enemies = [Troll, Goblin, Berserker, Dragon]  # order matters!
         self.pvp = [PvpAttack]
+        self.enemies_ragnarok = [Fenrir, Dwarf]  # order matters!
 
         self.properties = {}
         self.seed = None
@@ -173,4 +174,3 @@ class PvpAttack:
 #the following lists are static, changes to these are persistent across object instances
 items_interactive = [ChaosRing]
 events_interactive_global = [Ragnarok]
-enemies_ragnarok = [Fenrir, Dwarf]  # order matters!
