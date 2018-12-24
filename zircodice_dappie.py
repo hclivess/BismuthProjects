@@ -36,7 +36,7 @@ def percentage(percent, whole):
     return ((Decimal (percent) * Decimal(whole)) / 100)
 
 #(key, private_key_readable, public_key_readable, public_key_hashed, address) = keys.read()
-key, public_key_readable, private_key_readable, _, _, public_key_hashed, address = essentials.keys_load_new("wallet.der")
+key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, _ = essentials.keys_load_new("wallet.der")
 
 
 config = options.Get()
