@@ -108,3 +108,9 @@ narcotics or games with the highest possible degree of **passivity to effect rat
 As you can see from the table, the resistance of brain towards learning (spending effort) is
 in a direct relation to the level of received reward. Therefore, **the holy grail of efficiency
 is the effortless victory, which required the least amount of learning and engagement.**
+
+##Value proposition
+
+Unlike normal games, autogame has no servers. Unlike CryptoKitties, it does not have a vision of every 
+PC on earth running the server. Instead, you can opt to run a game mapper, which reconstructs immutable 
+games from blockchain without putting load on it.
