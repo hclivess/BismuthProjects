@@ -36,7 +36,7 @@ def percentage(percent, whole):
     return ((Decimal (percent) * Decimal(whole)) / 100)
 
 #(key, private_key_readable, public_key_readable, public_key_hashed, address) = keys.read()
-key, public_key_readable, private_key_readable, _, _, public_key_hashed, address = essentials.keys_load_new("wallet.der")
+key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, _ = essentials.keys_load_new("wallet.der")
 
 
 config = options.Get()
@@ -194,7 +194,7 @@ while True:
                     print ("Database locked, retrying")
                     pass
                 except TypeError: #not there
-                    m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?)", (str(timestamp), str(address), str(payout_address), '%.8f' % (float(payout_amount-fee)), str(signature_enc.decode("utf-8")), str(public_key_hashed.decode("utf-8")), "0", str("payout for " + tx_signature[:8])))
+                    m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)", (str(timestamp), str(address), str(payout_address), '%.8f' % (float(payout_amount-fee)), str(signature_enc.decode("utf-8")), str(public_key_hashed.decode("utf-8")), "0", str("payout for " + tx_signature[:8]), str(timestamp)))
                     mempool.commit()  # Save (commit) the changes
                     mempool.close()
                     print ("Mempool updated with a payout transaction for {}".format(tx_signature[:8]))
