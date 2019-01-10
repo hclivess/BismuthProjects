@@ -129,7 +129,10 @@ def go(match):
                 hero.ring = classes.ChaosRing().roll_bad()
 
             hero.full_hp += hero.ring.health_modifier
-            hero.health = hero.full_hp
+
+            if hero.health > hero.full_hp:
+                hero.health = hero.full_hp
+
             output(hero.ring.string)
 
 
