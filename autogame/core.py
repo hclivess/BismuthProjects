@@ -123,7 +123,7 @@ def go(match):
     def chaos_ring():
         if not hero.ring:
             output(f'You see a chaos ring, the engraving says {subcycle["cycle_hash"][0:5]}')
-            if subcycle["cycle_hash"][0] in ["0","1","2","3","4","5","6","7","8","9"]:
+            if subcycle["cycle_hash"][0] in ["0","1","2","3","4"]:
                 hero.ring = classes.ChaosRing().roll_good()
             else:
                 hero.ring = classes.ChaosRing().roll_bad()
