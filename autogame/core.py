@@ -235,11 +235,11 @@ def go(match):
                     if potion_class == classes.HealthPotion and hero.health < hero.full_hp:
 
                         if hero.in_combat:
-                            hero.health = hero.health + classes.HealthPotion.heal_in_combat
+                            hero.health = hero.health + classes.HealthPotion().heal_in_combat
                             output(f"You drink a potion and heal to {hero.health} HP...")
 
                         elif not hero.in_combat:
-                            hero.health = hero.health + classes.HealthPotion.heal_not_in_combat
+                            hero.health = hero.health + classes.HealthPotion().heal_not_in_combat
                             output(f"You rest and heal well to {hero.health} HP...")
 
                         if hero.health > hero.full_hp:
