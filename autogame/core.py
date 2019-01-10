@@ -136,7 +136,7 @@ def go(match):
     def ragnarok():
         output(f"Ragnarök begins")
         # add new monsters to the world
-        for enemy in classes.enemies_ragnarok:
+        for enemy in classes.Game().enemies_ragnarok:
             game.enemies.append(enemy)
 
     def attack():
@@ -174,19 +174,6 @@ def go(match):
             cycle_hash = blake2b((str(tx)).encode(), digest_size=60).hexdigest()
 
             game.cycle[position] = {"block_height":block_height,"timestamp":timestamp,"address":address,"recipient":recipient,":amount":amount,"block_hash":block_hash,"operation":operation,"data":data, "cycle_hash":cycle_hash}
-
-    def heal():
-        if hero.in_combat:
-            hero.health = hero.health + 5
-            output(f"You drink a potion and heal to {hero.health} HP...")
-            if hero.health > hero.full_hp:
-                hero.health = hero.full_hp
-
-        elif not hero.in_combat:
-            hero.health = hero.health + 15
-            if hero.health > hero.full_hp:
-                hero.health = hero.full_hp
-            output(f"You rest and heal well to {hero.health} HP...")
 
 
 
@@ -246,7 +233,17 @@ def go(match):
                 if potion_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
 
                     if potion_class == classes.HealthPotion and hero.health < hero.full_hp:
-                        heal()
+
+                        if hero.in_combat:
+                            hero.health = hero.health + classes.HealthPotion.heal_in_combat
+                            output(f"You drink a potion and heal to {hero.health} HP...")
+
+                        elif not hero.in_combat:
+                            hero.health = hero.health + classes.HealthPotion.heal_not_in_combat
+                            output(f"You rest and heal well to {hero.health} HP...")
+
+                        if hero.health > hero.full_hp:
+                            hero.health = hero.full_hp
 
             for armor_class in game.armors:
                     if armor_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:

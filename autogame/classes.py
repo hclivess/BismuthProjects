@@ -26,7 +26,7 @@ class Game:
     def __init__(self):
         self.potions = [HealthPotion]
         self.armors = [Armor]
-        self.weapons = [Sword, Warhammer]
+        self.weapons = [Sword, War_hammer]
         self.enemies = [Troll, Goblin, Berserker, Dragon]  # order matters!
         self.pvp = [PvpAttack]
         self.enemies_ragnarok = [Fenrir, Dwarf]  # order matters!
@@ -57,7 +57,7 @@ class Hero:
         self.alive = True
         self.in_combat = False
         self.experience = 0
-        self.pvp_interactions = 5
+        self.pvp_interactions = 3
 
 
         self.defense = 0
@@ -129,10 +129,10 @@ class Sword:
         self.name = "Sword"
         self.damage = 10
 
-class Warhammer:
+class War_hammer:
     def __init__(self):
         self.trigger = "64c"
-        self.name = "Warhammer"
+        self.name = "War hammer"
         self.damage = 15
 
 class Armor:
@@ -161,7 +161,10 @@ class ChaosRing:
 
 class HealthPotion:
     def __init__(self):
+        self.items = self.__dict__.items() #reveals class contents
         self.trigger = "3d"
+        self.heal_in_combat = 5
+        self.heal_not_in_combat = 15
 
 class Ragnarok:
     def __init__(self):
@@ -174,3 +177,4 @@ class PvpAttack:
 #the following lists are static, changes to these are persistent across object instances
 items_interactive = [ChaosRing]
 events_interactive_global = [Ragnarok]
+

@@ -17,7 +17,17 @@ class GetEnemyHandler(tornado.web.RequestHandler):
         for enemy in classes.Game().enemies_ragnarok:
             enemy_objects_ragnarok.append(enemy())
 
-        self.render("enemies.html", title="Beasts", enemies=enemy_objects, enemies_ragnarok = enemy_objects_ragnarok)
+        self.render("enemies.html", title="Enemies", enemies=enemy_objects, enemies_ragnarok = enemy_objects_ragnarok)
+
+class GetWeaponHandler(tornado.web.RequestHandler):
+    def get(self):
+
+        weapon_objects = []
+
+        for weapon in classes.Game().weapons:
+            weapon_objects.append(weapon())
+
+        self.render("weapons.html", title="Weapons", weapons=weapon_objects)
 
 class GetTournamentHandler(tornado.web.RequestHandler):
     def get(self, league):
@@ -96,6 +106,7 @@ def make_app():
         (r"/replay/(.*)", GetGameByIdHandler),
         (r"/unfinished/(.*)", GetUnfinishedByIdHandler),
         (r"/enemies", GetEnemyHandler),
+        (r"/weapons", GetWeaponHandler),
         (r"/league/(.*)", GetTournamentHandler),
     ])
 

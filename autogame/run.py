@@ -6,7 +6,7 @@ import time
 
 db = core.db #do not reinit
 
-block_height = 950000
+block_height = 550000
 
 while True:
     db.c.execute("SELECT * FROM transactions WHERE operation = ? AND block_height >= ?",("autogame",block_height,))
