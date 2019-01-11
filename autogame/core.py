@@ -230,7 +230,6 @@ def go(match, iterator):
                         output(f"Player {attacker} hits you and you lose {enemy_damage - hero.defense} health down to {hero.health}")
 
                     except Exception:
-                        raise
                         output(f"Player {attacker} tried to attack you, but they failed")
 
 
