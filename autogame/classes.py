@@ -18,8 +18,7 @@ class ScoreDb:
         self.conn.text_factory = str
         self.c = self.conn.cursor()
 
-        self.c.execute("CREATE TABLE IF NOT EXISTS scores (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT, damage TEXT, defense TEXT)")
-        self.c.execute("CREATE TABLE IF NOT EXISTS unfinished (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT, damage TEXT, defense TEXT)")
+        self.c.execute("CREATE TABLE IF NOT EXISTS scores (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT, damage TEXT, defense TEXT, block_end INTEGER, finished INT2)")
 
 class Game:
 
@@ -54,6 +53,8 @@ class Hero:
         self.full_hp = 500
         self.health = self.full_hp
         self.damage = 10
+        self.damage_table = {0:self.damage}
+
         self.alive = True
         self.in_combat = False
         self.experience = 0
@@ -61,6 +62,7 @@ class Hero:
 
 
         self.defense = 0
+        self.defense_table = {0:self.defense}
 
         self.weapon = None
         self.armor = None

@@ -12,7 +12,7 @@ config = classes.Config()
 db = classes.Db(config.path["ledger"])
 scores_db = classes.ScoreDb()
 
-def go(match):
+def go(match, iterator):
 
     game = classes.Game()
     game.properties = {"seed":match[2],"block":match[0],"recipient":match[3],"amount" : match[4], "league" : match[11]}
@@ -52,15 +52,11 @@ def go(match):
         except:
             output_ring = None
 
-        if not game.finished:
-            scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO unfinished VALUES (?,?,?,?,?,?,?,?,?)",(game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : hero.armor.name, "ring" : output_ring}),game.league,game.bet,hero.damage,hero.defense,))
-            scores_db.conn.commit()
 
-        elif game.finished and not game.replay_exists:
-            scores_db.c.execute("DELETE FROM unfinished WHERE hash = ?", (game.hash,))  # remove temp entry if exists
-            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,hero.damage,hero.defense,))
-            scores_db.conn.commit()             
+        if not game.replay_exists:
+            scores_db.c.execute("DELETE FROM scores WHERE hash = ?",(game.hash,))
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,json.dumps(hero.damage_table),json.dumps(hero.defense_table),game.current_block,game.finished,))
+            scores_db.conn.commit()
 
 
     def output(entry):
@@ -219,18 +215,24 @@ def go(match):
                 if pvp_class().trigger == subcycle["data"] and subcycle["operation"] == game.interaction_string and subcycle["recipient"] == game.seed and hero.pvp_interactions > 0:
                     attacker = subcycle["address"]
                     try:
-                        scores_db.c.execute("SELECT damage FROM unfinished WHERE seed = ? ORDER BY block_start DESC LIMIT 1",(attacker,))
-                        enemy_damage = scores_db.c.fetchone()[0]
+                        scores_db.c.execute("SELECT damage FROM scores WHERE seed = ? AND block_start <= ? AND block_end >= ? ORDER BY block_start DESC LIMIT 1",(attacker,game.current_block,game.current_block,))
+
+                        enemy_damage_table = json.loads(scores_db.c.fetchone()[0])
+
+                        for enemy_damage_block, enemy_damage_value in enemy_damage_table.items():
+                            if enemy_damage_block <= game.current_block:
+                                enemy_damage = enemy_damage_value
+
                         hero.health = hero.health - (enemy_damage - hero.defense)
                         hero.pvp_interactions -= 1
                         hero_dead_check()
 
-                        output(f"{attacker} hits you and you lose {enemy_damage - hero.defense} health down to {hero.health}")
+                        output(f"Player {attacker} hits you and you lose {enemy_damage - hero.defense} health down to {hero.health}")
 
-                    except:
-                        output(f"Someone tried to attack you from their grave, but they failed")
+                    except Exception:
+                        raise
+                        output(f"Player {attacker} tried to attack you, but they failed")
 
-                    pass
 
             for potion_class in game.potions:
                 if potion_class().trigger in subcycle["cycle_hash"] and not hero.in_combat:
@@ -253,6 +255,8 @@ def go(match):
                         if not hero.armor:
                             hero.armor = armor_class()
                             hero.defense += hero.armor.defense
+                            hero.defense_table[game.current_block] = hero.defense
+
                             output(f"You obtained {armor_class().name}")
 
             for weapon_class in game.weapons:
@@ -260,6 +264,8 @@ def go(match):
                         if not hero.weapon:
                             hero.weapon = weapon_class()
                             hero.damage += hero.weapon.damage
+                            hero.damage_table[game.current_block]=hero.damage
+
                             output(f"You obtained {weapon_class().name}")
 
             for enemy_class in game.enemies:
@@ -287,7 +293,9 @@ def go(match):
 
         game.current_block = game.current_block + 1
 
-    replay_save()
+    if iterator == 2:  # db iteration finished, now save the story (player interactions serial, based on db)
+        replay_save()
+
     db_output()
 
     return game,hero

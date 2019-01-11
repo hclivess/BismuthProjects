@@ -33,28 +33,28 @@ class GetTournamentHandler(tornado.web.RequestHandler):
     def get(self, league):
         self.db = classes.ScoreDb()
 
-        self.db.c.execute("SELECT SUM(bet) FROM scores WHERE league = ?", (league,))
+        self.db.c.execute("SELECT SUM(bet) FROM scores WHERE league = ? AND finished = ?", (league,1,))
         self.pot_finished = self.db.c.fetchone()[0]
         self.pot_finished = 0 if self.pot_finished is None else self.pot_finished
 
-        self.db.c.execute("SELECT SUM(bet) FROM unfinished WHERE league = ?", (league,))
+        self.db.c.execute("SELECT SUM(bet) FROM scores WHERE league = ? AND finished = ?", (league,0,))
         self.pot_unfinished = self.db.c.fetchone()[0]
         self.pot_unfinished = 0 if self.pot_unfinished is None else self.pot_unfinished
 
 
         self.pot = self.pot_unfinished + self.pot_finished
 
-        self.db.c.execute("SELECT * FROM scores WHERE league = ? ORDER BY experience DESC LIMIT 1", (league,))
+        self.db.c.execute("SELECT * FROM scores WHERE league = ? AND finished = ? ORDER BY experience DESC LIMIT 1", (league,1,))
         self.top = self.db.c.fetchone()
         if not self.top:
             self.top = [dummy,"","","","",""]
 
-        self.db.c.execute("SELECT * FROM scores WHERE league = ? ORDER BY block_start DESC", (league,))
+        self.db.c.execute("SELECT * FROM scores WHERE league = ? AND finished = ? ORDER BY block_start DESC", (league,1,))
         self.all_finished = self.db.c.fetchall()
         if not self.all_finished:
             self.all_finished = [[dummy,"","","","",""]]
 
-        self.db.c.execute("SELECT * FROM unfinished WHERE league = ? ORDER BY block_start DESC", (league,))
+        self.db.c.execute("SELECT * FROM scores WHERE league = ? AND finished = ? ORDER BY block_start DESC", (league,0,))
         self.all_unfinished = self.db.c.fetchall()
         if not self.all_unfinished:
             self.all_unfinished = [[dummy,"","","","",""]]
@@ -85,12 +85,12 @@ class MainHandler(tornado.web.RequestHandler):
             self.top = [dummy,"","","","",""]
 
 
-        self.db.c.execute("SELECT * FROM scores ORDER BY block_start DESC")
+        self.db.c.execute("SELECT * FROM scores WHERE finished = ? ORDER BY block_start DESC",(1,))
         self.all_finished = self.db.c.fetchall()
         if not self.all_finished:
             self.all_finished = [[dummy,"","","","",""]]
 
-        self.db.c.execute("SELECT * FROM unfinished ORDER BY block_start DESC")
+        self.db.c.execute("SELECT * FROM scores WHERE finished = ? ORDER BY block_start DESC",(0,))
         self.all_unfinished = self.db.c.fetchall()
         if not self.all_unfinished:
             self.all_unfinished = [[dummy,"","","","",""]]
