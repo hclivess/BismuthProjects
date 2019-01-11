@@ -211,27 +211,28 @@ def go(match, iterator):
                         ragnarok()
             # human interaction
 
-            for pvp_class in game.pvp:
-                if pvp_class().trigger == subcycle["data"] and subcycle["operation"] == game.interaction_string and subcycle["recipient"] == game.seed and hero.pvp_interactions > 0:
-                    attacker = subcycle["address"]
-                    try:
-                        scores_db.c.execute("SELECT damage FROM scores WHERE seed = ? AND block_start <= ? AND block_end >= ? ORDER BY block_start DESC LIMIT 1",(attacker,game.current_block,game.current_block,))
+            if iterator == 2:
+                for pvp_class in game.pvp:
+                    if pvp_class().trigger == subcycle["data"] and subcycle["operation"] == game.interaction_string and subcycle["recipient"] == game.seed and hero.pvp_interactions > 0:
+                        attacker = subcycle["address"]
+                        try:
+                            scores_db.c.execute("SELECT damage FROM scores WHERE seed = ? AND block_start <= ? AND block_end >= ? ORDER BY block_start DESC LIMIT 1",(attacker,game.current_block,game.current_block,))
 
-                        enemy_damage_table = json.loads(scores_db.c.fetchone()[0])
+                            enemy_damage_table = json.loads(scores_db.c.fetchone()[0])
 
-                        for enemy_damage_block, enemy_damage_value in enemy_damage_table.items():
-                            if int(enemy_damage_block) <= game.current_block:
-                                enemy_damage = int(enemy_damage_value)
+                            for enemy_damage_block, enemy_damage_value in enemy_damage_table.items():
+                                if int(enemy_damage_block) <= game.current_block:
+                                    enemy_damage = int(enemy_damage_value)
 
-                        hero.health = hero.health - (enemy_damage - hero.defense)
-                        hero.pvp_interactions -= 1
-                        hero_dead_check()
+                            hero.health = hero.health - (enemy_damage - hero.defense)
+                            hero.pvp_interactions -= 1
+                            hero_dead_check()
 
-                        output(f"Player {attacker} hits you and you lose {enemy_damage - hero.defense} health down to {hero.health}")
+                            output(f"Player {attacker} hits you and you lose {enemy_damage - hero.defense} health down to {hero.health}")
 
-                    except Exception:
-                        output(f"Player {attacker} tried to attack you, but they failed")
-                        raise
+                        except Exception:
+                            output(f"Player {attacker} tried to attack you, but they failed")
+
 
 
             for potion_class in game.potions:
