@@ -220,8 +220,8 @@ def go(match, iterator):
                         enemy_damage_table = json.loads(scores_db.c.fetchone()[0])
 
                         for enemy_damage_block, enemy_damage_value in enemy_damage_table.items():
-                            if enemy_damage_block <= game.current_block:
-                                enemy_damage = enemy_damage_value
+                            if int(enemy_damage_block) <= game.current_block:
+                                enemy_damage = int(enemy_damage_value)
 
                         hero.health = hero.health - (enemy_damage - hero.defense)
                         hero.pvp_interactions -= 1
@@ -231,6 +231,7 @@ def go(match, iterator):
 
                     except Exception:
                         output(f"Player {attacker} tried to attack you, but they failed")
+                        raise
 
 
             for potion_class in game.potions:
