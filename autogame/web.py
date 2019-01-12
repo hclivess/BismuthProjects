@@ -29,6 +29,55 @@ class GetWeaponHandler(tornado.web.RequestHandler):
 
         self.render("weapons.html", title="Weapons", weapons=weapon_objects)
 
+class GetApiDbHandler(tornado.web.RequestHandler):
+    def get(self, hash):
+        self.db = classes.ScoreDb()
+        self.db.c.execute("SELECT * FROM scores WHERE hash = ?", (hash,))
+
+        self.db_hashes = self.db.c.fetchall()[0]
+        print(self.db_hashes)
+
+        api_dict = {}
+
+        api_dict["block_start"] = self.db_hashes[0]
+        api_dict["hash"] = self.db_hashes[1]
+        api_dict["seed"] = self.db_hashes[2]
+        api_dict["experience"] = self.db_hashes[3]
+        api_dict["inventory"] = self.db_hashes[4]
+        api_dict["league"] = self.db_hashes[5]
+        api_dict["bet"] = self.db_hashes[6]
+        api_dict["damage"] = self.db_hashes[7]
+        api_dict["defense"] = self.db_hashes[8]
+        api_dict["block_end"] = self.db_hashes[9]
+        api_dict["finished"] = self.db_hashes[10]
+
+        print(api_dict)
+        self.render("api.html",text=api_dict)
+
+class GetApiReplayHandler(tornado.web.RequestHandler):
+    def get(self, hash):
+        with open(f"static/replays/{hash}.json") as file:
+            api_dict = json.loads(file.read())
+        self.render("api.html", text=api_dict)
+
+class GetApiSeedHandler(tornado.web.RequestHandler):
+    def get(self, seed):
+        self.db = classes.ScoreDb()
+        self.db.c.execute("SELECT hash FROM scores WHERE seed = ?", (seed,))
+
+        self.db_seed_matches = self.db.c.fetchall()
+        print(self.db_seed_matches)
+
+        api_dict = {}
+
+        i = 1
+        for entry in self.db_seed_matches:
+            api_dict[i] = entry[0]
+            i += 1
+
+        self.render("api.html",text=api_dict)
+
+
 class GetTournamentHandler(tornado.web.RequestHandler):
     def get(self, league):
         self.db = classes.ScoreDb()
@@ -108,6 +157,10 @@ def make_app():
         (r"/enemies", GetEnemyHandler),
         (r"/weapons", GetWeaponHandler),
         (r"/league/(.*)", GetTournamentHandler),
+
+        (r"/api/db/(.*)", GetApiDbHandler),
+        (r"/api/replay/(.*)", GetApiReplayHandler),
+        (r"/api/seed/(.*)", GetApiSeedHandler),
     ])
 
 if __name__ == "__main__":

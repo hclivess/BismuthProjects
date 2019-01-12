@@ -19,8 +19,7 @@ terminal_output=config.terminal_output
 
 
 #(key, private_key_readable, public_key_readable, public_key_hashed, address) = keys.read() #import keys
-key, public_key_readable, private_key_readable, _, _, public_key_hashed, address = essentials.keys_load_new("wallet.der")
-
+key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, keyfile = essentials.keys_load_new("wallet.der")
 
 app_log = log.log("anon.log",debug_level,terminal_output)
 
