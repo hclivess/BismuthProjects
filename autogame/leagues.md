@@ -17,12 +17,6 @@ the transaction. In the Bismuth wallet, go to the _send_ tab, copy and paste the
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
 |tournament2|autogame|fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d|5|Starts a match in the tournament2 league.|
 
-###Attacking other players
-
-|Data|Operation|Recipient|Amount|Effect|
-|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
-|pvp:attack|autogame:add|*player you want to attack*|Any|Attacks enemy player in all his current instances with character from your latest game, includes weapon damage, armor counts. Any player can be attacked 3 times maximum.|
-
 ## tournament1
 
 This is the first league event of autogame. All registration fees will be given to 

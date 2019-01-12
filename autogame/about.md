@@ -55,7 +55,11 @@ blessing or a negative curse** based on the structure of the current step in the
 |item:chaos_ring|autogame:add|_any_|Adds Chaos Ring to the ongoing match of the given address.
 |event:ragnarok|autogame:add|_any_|Introduces the Ragnarök event to all currently running matches across all leagues.|
 
+### Attacking other players
 
+|Data|Operation|Recipient|Amount|Effect|
+|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+|pvp:attack|autogame:add|*player you want to attack*|Any|Attacks enemy player in all his current instances with character from your latest game, includes weapon damage, armor counts. Any player can be attacked 3 times maximum.|
 
 ## Game progress:
 Progress of individual matches can be tracked online in real time at 
