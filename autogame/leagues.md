@@ -7,6 +7,8 @@ together with extra 2500 BIS. This is the first tournament with PvP enabled (eve
 up to 3 attacks from various other players who are currently participating in the game and alive).
 You can watch the current league pot and the league games here: http://autogame.bismuth.live:6060/league/tournament2
 
+Usage of Chaos Ring item, PvP and Ragnarök event allowed. You can read about them here: https://github.com/hclivess/BismuthProjects/blob/master/autogame/about.md
+
 ### Joining using BIS URL
 You can join by loading the following BIS URL in your wallet and sending
 the transaction. In the Bismuth wallet, go to the _send_ tab, copy and paste the following line and click _read_: 
@@ -24,7 +26,7 @@ the winning player. The last block registration height is 950,000. No new games 
 be taken into consideration in this league afterwards. You can watch the current league 
 pot and the league games here: http://autogame.bismuth.live:6060/league/tournament1
 
-Usage of Chaos Ring item and Ragnarök event are allowed. You can read about them here: https://github.com/hclivess/BismuthProjects/blob/master/autogame/about.md
+Usage of Chaos Ring item and Ragnarök event allowed. You can read about them here: https://github.com/hclivess/BismuthProjects/blob/master/autogame/about.md
 
 
 ### Joining using BIS URL
