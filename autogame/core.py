@@ -14,19 +14,19 @@ import os
 import json
 from hashlib import blake2b
 
-coordinator = "fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d"
-league_requirement = 0
+
 
 config = classes.Config()
 db = classes.Db(config.path["ledger"])
 scores_db = classes.ScoreDb()
 
-def go(match, iterator):
+def go(match, iterator, coordinator, league_requirement=0):
     game = classes.Game()
 
 
     try:
         openfield = json.loads(match[11])
+        print(openfield)
     except:
         pass
 
@@ -45,6 +45,7 @@ def go(match, iterator):
         league = openfield["league"]
     except:
         league = match[11]
+
 
 
 

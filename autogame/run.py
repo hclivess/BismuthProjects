@@ -6,7 +6,9 @@ import time
 
 db = core.db #do not reinit
 
-block_height = 550000
+block_height = 1000115
+coordinator = "fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d"
+league_requirement = 0
 
 while True:
 
@@ -17,7 +19,7 @@ while True:
         matches = db.c.fetchall()
 
         for match in matches:
-            core.go(match, iterator)
+            core.go(match, iterator, coordinator, league_requirement)
 
         iterator += 1
 
