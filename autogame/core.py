@@ -1,21 +1,56 @@
+#openfield demo: {"delegate":"self", "league":"test"}
+#operation demo: autogame
+#operation demo: autogame:add
+
+
+import sys
+sys.path.append('../../Bismuth/')
+
 import time
 import classes
+from essentials import address_validate
 import sqlite3
 import os
 import json
 from hashlib import blake2b
 
 coordinator = "fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d"
-league_requirement = 5
+league_requirement = 0
 
 config = classes.Config()
 db = classes.Db(config.path["ledger"])
 scores_db = classes.ScoreDb()
 
 def go(match, iterator):
-
     game = classes.Game()
-    game.properties = {"seed":match[2],"block":match[0],"recipient":match[3],"amount" : match[4], "league" : match[11]}
+
+
+    try:
+        openfield = json.loads(match[11])
+    except:
+        pass
+
+    try:
+        recipient = openfield["delegate"]
+
+        if recipient == "self":
+            recipient = match[2]
+        else:
+            assert address_validate(recipient)
+
+    except:
+        recipient = match[2]
+
+    try:
+        league = openfield["league"]
+    except:
+        league = match[11]
+
+
+
+
+
+    game.properties = {"seed":recipient,"block":match[0],"recipient": match[3],"amount" : match[4], "league" : league}
 
     game.start_block = game.properties["block"]
     game.recipient = game.properties["recipient"]
@@ -25,12 +60,10 @@ def go(match, iterator):
     game.hash = blake2b((game.properties["seed"] + str(game.properties["block"])).encode(), digest_size=10).hexdigest()
     game.enemies = game.enemies
 
-
     if game.recipient == coordinator and game.bet >= league_requirement:
         game.league = game.properties["league"]
     else:
         game.league = "casual"
-
 
     game.filename_temp = "static/replays/unfinished/" + str(game.hash + ".json")
     game.filename = "static/replays/" + str(game.hash + ".json")
