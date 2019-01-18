@@ -15,11 +15,11 @@ Usage of Chaos Ring item, PvP and Ragnarök event allowed. You can read about th
 You can join by loading the following BIS URL in your wallet and sending
 the transaction. In the Bismuth wallet, go to the _send_ tab, copy and paste the following line and click _read_: 
 
-**bis://pay/fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d/0.00000000/VRdwGXJKt+/dm?0IY-ML*bY&tsB6DSIW+E&gB5Y-0XLV&FIwEv$b#iWDZDnqBG9rB/D7C_Aq$H6<&K{N6yE=}<**
+**bis://pay/fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d/0.00000000/VRdwGXJKt+/bZ>QXZeeX@Zges/Fm1fB;Td+Lda@I9&$7E(**
 
 |Data|Operation|Recipient|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
-|{"delegate":"self", "league":"tournament2"}|autogame|fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d|0|Starts a match in the tournament2 league.|
+|tournament2|autogame|fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d|0|Starts a match in the tournament2 league.|
 
 ## tournament1 (ended)
 

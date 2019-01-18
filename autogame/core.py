@@ -1,53 +1,44 @@
-#openfield demo: {"delegate":"self", "league":"test"}
+#openfield demo, optional delegate: league(:delegate)
 #operation demo: autogame
 #operation demo: autogame:add
 
 
 import sys
-sys.path.append('../../Bismuth/')
 
 import time
 import classes
-from essentials import address_validate
 import sqlite3
 import os
 import json
 from hashlib import blake2b
-
-
+import sys
 
 config = classes.Config()
+sys.path.append(config.path["modules"])
+import essentials
+
 db = classes.Db(config.path["ledger"])
 scores_db = classes.ScoreDb()
+
+
 
 def go(match, iterator, coordinator, league_requirement=0):
     game = classes.Game()
 
 
-    try:
-        openfield = json.loads(match[11])
-        print(openfield)
-    except:
-        pass
 
     try:
-        recipient = openfield["delegate"]
-
-        if recipient == "self":
-            recipient = match[2]
-        else:
-            assert address_validate(recipient)
-
+        assert ":" in match[11]
+        recipient = match[11].split(":")[1]
+        league = match[11].split(":")[0]
     except:
         recipient = match[2]
-
-    try:
-        league = openfield["league"]
-    except:
         league = match[11]
 
-
-
+    try:
+        assert essentials.address_validate(recipient)
+    except:
+        recipient = match[2]
 
 
 

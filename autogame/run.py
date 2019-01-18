@@ -6,7 +6,7 @@ import time
 
 db = core.db #do not reinit
 
-block_height = 1000115
+block_height = 1000110
 coordinator = "fefb575972cd8fdb086e2300b51f727bb0cbfc33282f1542e19a8f1d"
 league_requirement = 0
 
