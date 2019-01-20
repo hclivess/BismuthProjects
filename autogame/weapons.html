@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enemies</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script >
+
+</head>
+<body>
+
+<div class="jumbotron text-center">
+    <h1>Weapons</h1>
+</div>
+
+<div class="container">
+
+    <table class='table table-responsive'>
+        <tr>
+            <th>Name</th>
+            <th>Trigger</th>
+            <th>Damage</th>
+        </tr>
+        {% for weapon in weapons %}
+        <tr>
+            <td>{{weapon.name}}
+            <td>{{weapon.trigger}}
+            <td>{{weapon.damage}}
+        </td></tr>
+        {% end %}
+    </table>
+</div>
+
+</body>
+</html>
