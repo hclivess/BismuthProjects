@@ -48,7 +48,7 @@ the league.
 blessing or a negative curse** based on the structure of the current step in the world.
 
 - They can summon global events that happen across all leagues for all players, currently 
-**Ragnarök, which adds new types of enemies to the currently running matches.**
+**Ragnarök, which adds new types of enemies to the currently running matches. If you start a game after Ragnarök begins, you are not affected.**
 
 |Data|Operation|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|
