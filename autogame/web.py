@@ -79,7 +79,7 @@ class GetApiSeedHandler(tornado.web.RequestHandler):
         self.db = classes.ScoreDb()
         self.db.c.execute("SELECT hash FROM scores WHERE seed = ?", (seed,))
 
-        self.db_seed_matches = self.db.c.fetchall()
+        self.db_seed_matches = [h[0] for h in self.db_seed_matches]
 
         self.write(json.dumps(self.db_seed_matches))
         self.set_header('Content-Type', 'application/json')  # send the matching header for paranoid clients
