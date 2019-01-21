@@ -35,7 +35,7 @@ class Game:
         self.current_block = None
         self.hash = None
         self.finished = False
-        self.story = {}
+        self.story = []
         self.step = 0
         self.quit = False
         self.filename_temp = None

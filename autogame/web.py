@@ -70,7 +70,7 @@ class GetApiReplayHandler(tornado.web.RequestHandler):
     def get(self, hash):
         with open(f"static/replays/{hash}.json") as file:
             api_dict = json.loads(file.read())
-        self.write(json.dumps(api_dict))
+        self.write(json.dumps(list(api_dict.values())))
         self.set_header('Content-Type', 'application/json')  # send the matching header for paranoid clients
         self.finish()
 
