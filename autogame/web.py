@@ -52,13 +52,13 @@ class GetApiDbHandler(tornado.web.RequestHandler):
         api_dict["finished"] = self.db_hashes[10]
 
         print(api_dict)
-        self.render("api.html",text=api_dict)
+        self.write(json.dumps(api_dict))
 
 class GetApiReplayHandler(tornado.web.RequestHandler):
     def get(self, hash):
         with open(f"static/replays/{hash}.json") as file:
             api_dict = json.loads(file.read())
-        self.render("api.html", text=api_dict)
+        self.write(json.dumps(api_dict))
 
 class GetApiSeedHandler(tornado.web.RequestHandler):
     def get(self, seed):
@@ -66,17 +66,10 @@ class GetApiSeedHandler(tornado.web.RequestHandler):
         self.db.c.execute("SELECT hash FROM scores WHERE seed = ?", (seed,))
 
         self.db_seed_matches = self.db.c.fetchall()
-        print(self.db_seed_matches)
 
-        api_dict = {}
-
-        i = 1
-        for entry in self.db_seed_matches:
-            api_dict[str(i)] = entry[0]
-            i += 1
 
         # TODO: api.html is not in the repo
-        self.render("api.html",text=api_dict)
+        self.write(json.dumps(self.db_seed_matches))
 
 
 class GetTournamentHandler(tornado.web.RequestHandler):
