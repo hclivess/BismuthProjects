@@ -43,22 +43,36 @@ class GetApiDbHandler(tornado.web.RequestHandler):
         api_dict["hash"] = self.db_hashes[1]
         api_dict["seed"] = self.db_hashes[2]
         api_dict["experience"] = self.db_hashes[3]
-        api_dict["inventory"] = self.db_hashes[4]
+        try:  # Not sure the try is needed, to be checked.
+            # decode inventory, stored as a single json-encoded in the db
+            api_dict["inventory"] = json.loads(self.db_hashes[4])
+        except:
+            pass
         api_dict["league"] = self.db_hashes[5]
         api_dict["bet"] = self.db_hashes[6]
-        api_dict["damage"] = self.db_hashes[7]
-        api_dict["defense"] = self.db_hashes[8]
+        try:  # Not sure the try is needed, to be checked.
+            api_dict["damage"] = json.loads(self.db_hashes[7])
+        except:
+            pass
+        try:  # Not sure the try is needed, to be checked.
+            api_dict["defense"] = json.loads(self.db_hashes[8])
+        except:
+            pass
         api_dict["block_end"] = self.db_hashes[9]
         api_dict["finished"] = self.db_hashes[10]
 
         print(api_dict)
         self.write(json.dumps(api_dict))
+        self.set_header('Content-Type', 'application/json')  # send the matching header for paranoid clients
+        self.finish()
 
 class GetApiReplayHandler(tornado.web.RequestHandler):
     def get(self, hash):
         with open(f"static/replays/{hash}.json") as file:
             api_dict = json.loads(file.read())
         self.write(json.dumps(api_dict))
+        self.set_header('Content-Type', 'application/json')  # send the matching header for paranoid clients
+        self.finish()
 
 class GetApiSeedHandler(tornado.web.RequestHandler):
     def get(self, seed):
@@ -67,9 +81,9 @@ class GetApiSeedHandler(tornado.web.RequestHandler):
 
         self.db_seed_matches = self.db.c.fetchall()
 
-
-        # TODO: api.html is not in the repo
         self.write(json.dumps(self.db_seed_matches))
+        self.set_header('Content-Type', 'application/json')  # send the matching header for paranoid clients
+        self.finish()        
 
 
 class GetTournamentHandler(tornado.web.RequestHandler):
