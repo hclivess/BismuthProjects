@@ -72,9 +72,10 @@ class GetApiSeedHandler(tornado.web.RequestHandler):
 
         i = 1
         for entry in self.db_seed_matches:
-            api_dict[i] = entry[0]
+            api_dict[str(i)] = entry[0]
             i += 1
 
+        # TODO: api.html is not in the repo
         self.render("api.html",text=api_dict)
 
 
