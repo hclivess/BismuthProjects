@@ -1,7 +1,7 @@
 # Leagues
 
 ## tournament2
-##### starts on Monday, January 19 2019
+##### start to be announced
 
 This is the second event of autogame. Winners split 2500 BIS, participation is costless. This is the first tournament with PvP enabled (every player can take
 up to 3 attacks from various other players who are currently participating in the game and alive). Every address is allowed to participate
