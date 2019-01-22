@@ -59,7 +59,7 @@ blessing or a negative curse** based on the structure of the current step in the
 
 |Data|Operation|Recipient|Amount|Effect|
 |-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
-|pvp:attack|autogame:add|*player you want to attack*|Any|Attacks enemy player in all his current instances with character from your latest game, includes weapon damage, armor counts. Any player can be attacked 3 times maximum.|
+|pvp:attack|autogame:add|*player you want to attack*|_any_|Attacks enemy player in all his current instances with character from your latest game, includes weapon damage, armor counts. Any player can be attacked 3 times maximum.|
 
 ## Game progress:
 Progress of individual matches can be tracked online in real time at 
