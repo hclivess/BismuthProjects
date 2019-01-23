@@ -102,7 +102,7 @@ class GetTournamentHandler(tornado.web.RequestHandler):
 
         self.pot = self.pot_unfinished + self.pot_finished
 
-        self.db.c.execute("SELECT * FROM scores WHERE league = ? AND finished = ? ORDER BY experience DESC LIMIT 1", (league,1,))
+        self.db.c.execute("SELECT * FROM scores WHERE league = ? ORDER BY experience DESC LIMIT 1", (league,))
         self.top = self.db.c.fetchone()
         if not self.top:
             self.top = [dummy,"","","","",""]
