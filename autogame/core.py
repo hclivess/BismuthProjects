@@ -57,10 +57,18 @@ def go(match, iterator, coordinator, league_requirement=0):
     else:
         game.league = "casual"
 
-    game.filename_temp = "static/replays/unfinished/" + str(game.hash + ".json")
     game.filename = "static/replays/" + str(game.hash + ".json")
 
     hero = classes.Hero()
+
+    def game_complete():
+        try:
+            scores_db.c.execute("SELECT * FROM scores WHERE hash = ? AND finished = ? ",(game.hash,1,))
+            result = scores_db.c.fetchone()[0]
+            return True
+        except:
+            return False
+
 
     def db_output():
 
@@ -78,7 +86,7 @@ def go(match, iterator, coordinator, league_requirement=0):
             output_ring = None
 
 
-        if not game.replay_exists:
+        if not game_complete(): #complete the game
             scores_db.c.execute("DELETE FROM scores WHERE hash = ?",(game.hash,))
             scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,json.dumps(hero.damage_table),json.dumps(hero.defense_table),game.current_block,game.finished,))
             scores_db.conn.commit()
@@ -95,24 +103,14 @@ def go(match, iterator, coordinator, league_requirement=0):
             os.mkdir("static")
         if not os.path.exists("static/replays"):
             os.mkdir("static/replays")
-        if not os.path.exists("static/replays/unfinished"):
-            os.mkdir("static/replays/unfinished")
 
-
-        if game.finished and not game.replay_exists:
-            if os.path.exists (game.filename_temp):
-                os.remove(game.filename_temp)
+        if not game_complete() or not os.path.exists(game.filename):
             with open (game.filename, "w") as file:
                 file.write(json.dumps(game.story))
 
-        elif not game.finished:
-            with open(game.filename_temp, "w") as file:
-                file.write(json.dumps(game.story))
-
-    if os.path.exists(game.filename):
+    if game_complete():
         game.finished = True
         game.quit = True
-        game.replay_exists = True
         output(f"Replay for {game.hash} already present, skipping match")
 
 

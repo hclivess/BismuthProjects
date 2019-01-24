@@ -126,13 +126,6 @@ class GetGameByIdHandler(tornado.web.RequestHandler):
             text = json.loads(file.read())
         self.render("replay.html", title="Replay", text=text)
 
-class GetUnfinishedByIdHandler(tornado.web.RequestHandler):
-
-    def get(self, hash):
-        with open(f"static/replays/unfinished/{hash}.json") as file:
-            text = json.loads(file.read())
-        self.render("unfinished.html", title="Replay", text=text)
-
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.db = classes.ScoreDb()
@@ -162,7 +155,6 @@ def make_app():
         (r"/", MainHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
         (r"/replay/(.*)", GetGameByIdHandler),
-        (r"/unfinished/(.*)", GetUnfinishedByIdHandler),
         (r"/enemies", GetEnemyHandler),
         (r"/weapons", GetWeaponHandler),
         (r"/league/(.*)", GetTournamentHandler),
