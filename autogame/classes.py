@@ -18,7 +18,7 @@ class ScoreDb:
         self.conn.text_factory = str
         self.c = self.conn.cursor()
 
-        self.c.execute("CREATE TABLE IF NOT EXISTS scores (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT, damage TEXT, defense TEXT, block_end INTEGER, finished INT2)")
+        self.c.execute("CREATE TABLE IF NOT EXISTS scores (block_start INTEGER, hash TEXT, seed TEXT, experience INT, inventory TEXT, league TEXT,bet TEXT, damage TEXT, defense TEXT, block_end INTEGER, finished INT2, saved INT2)")
 
 class Game:
 
@@ -47,6 +47,7 @@ class Game:
         self.league = None
         self.coordinator = None
         self.interaction_string = "autogame:add"
+        self.saved = False
 
 class Hero:
     def __init__(self):

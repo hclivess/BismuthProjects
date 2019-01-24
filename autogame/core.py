@@ -25,7 +25,54 @@ scores_db = classes.ScoreDb()
 def go(match, iterator, coordinator, league_requirement=0):
     game = classes.Game()
 
+    def game_saved():
+        try:
+            scores_db.c.execute("SELECT * FROM scores WHERE hash = ? AND saved = ? ",(game.hash,1,))
+            result = scores_db.c.fetchone()[0]
+            return True
+        except:
+            return False
 
+
+    def db_output():
+
+        try:
+            output_weapon = hero.weapon.name
+        except:
+            output_weapon = None
+        try:
+            output_armor = hero.armor.name
+        except:
+            output_armor = None
+        try:
+            output_ring = hero.ring.name
+        except:
+            output_ring = None
+
+
+        if not game_saved():
+            scores_db.c.execute("DELETE FROM scores WHERE hash = ?",(game.hash,))
+            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,json.dumps(hero.damage_table),json.dumps(hero.defense_table),game.current_block,game.finished,game.saved))
+            scores_db.conn.commit()
+
+
+    def output(entry):
+        game.step += 1
+        print(entry)
+        game.story[game.step] = entry
+
+    def replay_save():
+        if not os.path.exists("static"):
+            os.mkdir("static")
+        if not os.path.exists("static/replays"):
+            os.mkdir("static/replays")
+
+        if not game_saved():
+            with open (game.filename, "w") as file:
+                file.write(json.dumps(game.story))
+                scores_db.c.execute("UPDATE scores SET saved = 1 WHERE hash = ?", (game.hash,))
+                scores_db.conn.commit()
+                game.saved = True
 
     try:
         assert ":" in match[11]
@@ -61,59 +108,10 @@ def go(match, iterator, coordinator, league_requirement=0):
 
     hero = classes.Hero()
 
-    def game_complete():
-        try:
-            scores_db.c.execute("SELECT * FROM scores WHERE hash = ? AND finished = ? ",(game.hash,1,))
-            result = scores_db.c.fetchone()[0]
-            return True
-        except:
-            return False
-
-
-    def db_output():
-
-        try:
-            output_weapon = hero.weapon.name
-        except:
-            output_weapon = None
-        try:
-            output_armor = hero.armor.name
-        except:
-            output_armor = None
-        try:
-            output_ring = hero.ring.name
-        except:
-            output_ring = None
-
-
-        if not game_complete(): #complete the game
-            scores_db.c.execute("DELETE FROM scores WHERE hash = ?",(game.hash,))
-            scores_db.c.execute("INSERT INTO scores VALUES (?,?,?,?,?,?,?,?,?,?,?)", (game.properties["block"], game.hash, game.seed, hero.experience, json.dumps({"weapon" : output_weapon, "armor" : output_armor, "ring" : output_ring}),game.league,game.bet,json.dumps(hero.damage_table),json.dumps(hero.defense_table),game.current_block,game.finished,))
-            scores_db.conn.commit()
-
-
-    def output(entry):
-        game.step += 1
-        print(entry)
-        game.story[game.step] = entry
-
-    def replay_save():
-
-        if not os.path.exists("static"):
-            os.mkdir("static")
-        if not os.path.exists("static/replays"):
-            os.mkdir("static/replays")
-
-        if not game_complete() or not os.path.exists(game.filename):
-            with open (game.filename, "w") as file:
-                file.write(json.dumps(game.story))
-
-    if game_complete():
+    if game_saved():
         game.finished = True
         game.quit = True
-        output(f"Replay for {game.hash} already present, skipping match")
-
-
+        print(f"Replay for {game.hash} already present, skipping match")
 
 
     #trigger is followed by events affected by modifiers
@@ -317,8 +315,10 @@ def go(match, iterator, coordinator, league_requirement=0):
 
         game.current_block = game.current_block + 1
 
-    if iterator == 2:  # db iteration finished, now save the story (player interactions serial, based on db)
+    if iterator == 2 and not game.saved:  # db iteration finished, now save the story (player interactions serial, based on db)
         replay_save()
+
+
 
     db_output()
 
