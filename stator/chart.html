@@ -30,12 +30,27 @@
 		var config = {
 			type: 'line',
 			data: {
-				labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+				labels: [
+					{% for items in diffs %}
+						{% for subitem in items %}
+							{{subitem[0]}},
+						{% end %}
+					{% end %}
+				],
 				datasets: [{
-					label: 'My First dataset',
+					label: 'Difficulty',
 					backgroundColor: window.chartColors.red,
 					borderColor: window.chartColors.red,
-					data: [],
+					data: [
+
+					{% for items in diffs %}
+						{% for subitem in items %}
+							{{subitem[1]}},
+						{% end %}
+					{% end %}
+
+
+					],
 					fill: false,
 				}]
 			},
@@ -59,7 +74,7 @@
 						display: true,
 						scaleLabel: {
 							display: true,
-							labelString: 'Month'
+							labelString: 'Block'
 						}
 					}],
 					yAxes: [{
@@ -76,12 +91,25 @@
 		var config2 = {
 			type: 'line',
 			data: {
-				labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+				labels: [
+					{% for items in blocks %}
+						{% for subitem in items %}
+							{{subitem[0]}},
+						{% end %}
+					{% end %}
+				],
 				datasets: [{
 					label: 'My First dataset',
 					backgroundColor: window.chartColors.red,
 					borderColor: window.chartColors.red,
-					data: [],
+					data: [
+					{% for items in blocks %}
+						{% for subitem in items %}
+							{{subitem[1]}},
+						{% end %}
+					{% end %}
+
+					],
 					fill: false,
 				}]
 			},
@@ -105,7 +133,7 @@
 						display: true,
 						scaleLabel: {
 							display: true,
-							labelString: 'Month'
+							labelString: 'Block'
 						}
 					}],
 					yAxes: [{

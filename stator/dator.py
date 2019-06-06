@@ -47,29 +47,45 @@ class Status():
 
 class History():
     def __init__(self):
-        self.blocks = None
-        self.diffs = None
+        self.blocks = []
+        self.diffs = []
         self.stata = []
-    def turncate(self):
-        del self.stata[:100]
+
+    def truncate(self):
+        self.stata = self.stata[:10]
 
 
 class Updater():
     def __init__(self):
-        self.socket = Socket()
         self.status = Status()
         self.history = History()
+        self.last_block = None
 
     def update(self):
-        self.history.turncate()
+        self.socket = Socket()
 
-        self.history.stata.append(self.status.refresh(self.socket))
-        self.history.blocks = (self.socket.get_blocksafter(self.status.blocks - 10))
-        self.history.diffs = (self.socket.get_diffsafter(self.status.blocks - 10))
+        self.history.truncate()
 
-        print(self.history.stata)
+        new_data = self.status.refresh(self.socket)
+
+        if self.last_block != new_data["blocks"]: #if new block, can skip blocks when syncing, better do it through plugins
+            self.history.stata.append(new_data)
+            self.last_block = new_data["blocks"]
+
+        del self.history.blocks[:]
+        self.history.blocks.append(self.socket.get_blocksafter(self.status.blocks - 30))
+        self.history.blocks.append(self.socket.get_blocksafter(self.status.blocks - 20))
+        self.history.blocks.append(self.socket.get_blocksafter(self.status.blocks - 10))
+
+        del self.history.diffs[:]
+        self.history.diffs.append(self.socket.get_diffsafter(self.status.blocks - 30))
+        self.history.diffs.append(self.socket.get_diffsafter(self.status.blocks - 20))
+        self.history.diffs.append(self.socket.get_diffsafter(self.status.blocks - 10))
+
         print(self.history.diffs)
-        print(self.history.blocks)
 
+        #print(self.history.stata)
+        #print(self.history.diffs)
+        #print(self.history.blocks)
 if __name__ == "__main__":
     update = Updater()

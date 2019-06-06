@@ -15,8 +15,11 @@ class MainHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
+        print(self.updater.history.diffs)
         self.render("chart.html",
-                    stata = self.updater.history.stata,
+                    diffs = self.updater.history.diffs,
+                    blocks = self.updater.history.blocks,
+                    stata = self.updater.history.stata
                     )
 
 def make_app():
