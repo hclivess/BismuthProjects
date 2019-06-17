@@ -13,13 +13,13 @@ class Socket():
         return reply
 
     def get_blocksafter(self, block):
-        send(self.s, "api_getblocksince")
+        send(self.s, "api_getblockrange")
         send(self.s, block)
         reply = receive(self.s)
         return reply
 
     def get_diffsafter(self, block):
-        send(self.s, "api_getdiffsafter")
+        send(self.s, "api_getdiffrange")
         send(self.s, block)
         reply = receive(self.s)
         return reply
@@ -59,7 +59,7 @@ class Updater():
     def __init__(self):
         self.status = Status()
         self.history = History()
-        self.last_block = None
+        self.last_block = 0
 
     def update(self):
         self.socket = Socket()
@@ -68,7 +68,7 @@ class Updater():
 
         new_data = self.status.refresh(self.socket)
 
-        if self.last_block != new_data["blocks"]: #if new block, can skip blocks when syncing, better do it through plugins
+        if self.last_block < new_data["blocks"]: #if new block, can skip blocks when syncing, better do it through plugins
             self.history.stata.append(new_data)
             self.last_block = new_data["blocks"]
 
