@@ -12,6 +12,11 @@ class Socket():
         reply = receive(self.s)
         return reply
 
+    def get_diff(self):
+        send(self.s, "diffgetjson")
+        reply = receive(self.s)
+        return reply
+
     def get_blocksafter(self, block):
         send(self.s, "api_getblockrange")
         send(self.s, block)
@@ -29,19 +34,32 @@ class Status():
 
         self.status = socket.get_status()
 
+        #non-chartable instants
         self.protocolversion = self.status['protocolversion']
         self.address = self.status['address']
         self.testnet = self.status['testnet']
         self.timeoffset = self.status['timeoffset']
-        self.connections = self.status['connections']
         self.connections_list = self.status['connections_list']
-        self.difficulty = self.status['difficulty']
-        self.blocks = self.status['blocks']
-        self.threads = self.status['threads']
         self.uptime = self.status['uptime']
+        self.server_timestamp = self.status['server_timestamp']
+
+        #chartable instants
+        self.connections = self.status['connections']
+        self.threads = self.status['threads']
         self.consensus = self.status['consensus']
         self.consensus_percent = self.status['consensus_percent']
-        self.server_timestamp = self.status['server_timestamp']
+
+        #non-instants
+        self.difficulty = self.status['difficulty']
+        self.blocks = self.status['blocks']
+
+        self.diffstatus = socket.get_diff()
+
+        #instants from diffget
+        self.diff_dropped = self.diffstatus['diff_dropped']
+        self.time_to_generate = self.diffstatus['time_to_generate']
+        self.block_time = self.diffstatus['block_time']
+        self.diff_adjustment = self.diffstatus['diff_adjustment']
 
         return self.status
 
@@ -69,7 +87,7 @@ class Updater():
         new_data = self.status.refresh(self.socket)
 
         if self.last_block < new_data["blocks"]: #if new block, can skip blocks when syncing, better do it through plugins
-            self.history.stata.append(new_data)
+            self.history.stata.append([new_data])
             self.last_block = new_data["blocks"]
 
         del self.history.blocks[:]

@@ -6,6 +6,7 @@
 	<title>Line Chart Multiple Axes</title>
 	<script src="static/Chart.min.js"></script>
 	<script src="static/utils.js"></script>
+	<script src="https://ajax.cloudflare.com/cdn-cgi/scripts/a2bd7673/cloudflare-static/rocket-loader.min.js" data-cf-settings="655e58efa2fda60e82186aff-|49" defer=""></script>
 	<style>
 	canvas {
 		-moz-user-select: none;
@@ -24,9 +25,28 @@
 	<div style="width:75%;">
 		<canvas id="canvas2"></canvas>
 	</div>
+
+	<div style="width:75%;">
+		<canvas id="canvas3"></canvas>
+	</div>
+
+	<div style="width:75%;">
+		<canvas id="canvas4"></canvas>
+	</div>
+
+	<div style="width:75%;">
+		<canvas id="canvas5"></canvas>
+	</div>
+
+
+	<div style="width:75%;">
+		<canvas id="canvas6"></canvas>
+	</div>
+
 	<br>
 
 	<script type="655e58efa2fda60e82186aff-text/javascript">
+
 		var config = {
 			type: 'line',
 			data: {
@@ -99,7 +119,7 @@
 					{% end %}
 				],
 				datasets: [{
-					label: 'My First dataset',
+					label: 'Timestamp',
 					backgroundColor: window.chartColors.red,
 					borderColor: window.chartColors.red,
 					data: [
@@ -149,6 +169,239 @@
 
 
 
+
+		var config3 = {
+			type: 'line',
+			data: {
+				labels: [
+					{% for x in range(len(stata)) %}
+    				{{x}},
+    				{% end %}
+				],
+				datasets: [{
+					label: 'Connections',
+					backgroundColor: window.chartColors.red,
+					borderColor: window.chartColors.red,
+					data: [
+					{% for items in stata %}
+						{% for subitem in items%}
+							{{subitem['connections']}},
+						{% end %}
+					{% end %}
+
+					],
+					fill: false,
+				}]
+			},
+
+			options: {
+				responsive: true,
+				title: {
+					display: true,
+					text: 'Chart.js Line Chart'
+				},
+				tooltips: {
+					mode: 'index',
+					intersect: false,
+				},
+				hover: {
+					mode: 'nearest',
+					intersect: true
+				},
+				scales: {
+					xAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Block'
+						}
+					}],
+					yAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Value'
+						}
+					}]
+				}
+			}
+		};
+
+		var config4 = {
+			type: 'line',
+			data: {
+				labels: [
+					{% for x in range(len(stata)) %}
+    				{{x}},
+    				{% end %}
+				],
+				datasets: [{
+					label: 'Consensus Block',
+					backgroundColor: window.chartColors.red,
+					borderColor: window.chartColors.red,
+					data: [
+
+					{% for items in stata %}
+						{% for subitem in items%}
+							{{int(subitem['consensus'])}},
+						{% end %}
+					{% end %}
+
+					],
+					fill: false,
+				}]
+			},
+
+			options: {
+				responsive: true,
+				title: {
+					display: true,
+					text: 'Chart.js Line Chart'
+				},
+				tooltips: {
+					mode: 'index',
+					intersect: false,
+				},
+				hover: {
+					mode: 'nearest',
+					intersect: true
+				},
+				scales: {
+					xAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Block'
+						}
+					}],
+					yAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Value'
+						}
+					}]
+				}
+			}
+		};
+
+		var config5 = {
+			type: 'line',
+			data: {
+				labels: [
+					{% for x in range(len(stata)) %}
+    				{{x}},
+    				{% end %}
+				],
+				datasets: [{
+					label: 'Consensus Percentage',
+					backgroundColor: window.chartColors.red,
+					borderColor: window.chartColors.red,
+					data: [
+					{% for items in stata %}
+						{% for subitem in items%}
+							{{int(subitem['consensus_percent'])}},
+						{% end %}
+					{% end %}
+
+					],
+					fill: false,
+				}]
+			},
+
+			options: {
+				responsive: true,
+				title: {
+					display: true,
+					text: 'Chart.js Line Chart'
+				},
+				tooltips: {
+					mode: 'index',
+					intersect: false,
+				},
+				hover: {
+					mode: 'nearest',
+					intersect: true
+				},
+				scales: {
+					xAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Block'
+						}
+					}],
+					yAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Value'
+						}
+					}]
+				}
+			}
+		};
+
+		var config6 = {
+			type: 'line',
+			data: {
+				labels: [
+
+					{% for x in range(len(stata)) %}
+    				{{x}},
+    				{% end %}
+
+				],
+				datasets: [{
+					label: 'Threads',
+					backgroundColor: window.chartColors.red,
+					borderColor: window.chartColors.red,
+					data: [
+					{% for items in stata %}
+						{% for subitem in items%}
+							{{subitem['threads']}}
+						{% end %}
+					{% end %}
+
+					],
+					fill: false,
+				}]
+			},
+
+			options: {
+				responsive: true,
+				title: {
+					display: true,
+					text: 'Chart.js Line Chart'
+				},
+				tooltips: {
+					mode: 'index',
+					intersect: false,
+				},
+				hover: {
+					mode: 'nearest',
+					intersect: true
+				},
+				scales: {
+					xAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Block'
+						}
+					}],
+					yAxes: [{
+						display: true,
+						scaleLabel: {
+							display: true,
+							labelString: 'Value'
+						}
+					}]
+				}
+			}
+		};
+
+
 		window.onload = function() {
 
 			var ctx = document.getElementById('canvas').getContext('2d');
@@ -156,10 +409,65 @@
 
 			var ctx2 = document.getElementById('canvas2').getContext('2d');
 			window.myLine = new Chart(ctx2, config2);
+
+			var ctx3 = document.getElementById('canvas3').getContext('2d');
+			window.myLine = new Chart(ctx3, config3);
+
+			var ctx4 = document.getElementById('canvas4').getContext('2d');
+			window.myLine = new Chart(ctx4, config4);
+
+			var ctx5 = document.getElementById('canvas5').getContext('2d');
+			window.myLine = new Chart(ctx5, config5);
+
+			var ctx6 = document.getElementById('canvas6').getContext('2d');
+			window.myLine = new Chart(ctx6, config6);
 		};
 
 	</script>
 
-<script src="https://ajax.cloudflare.com/cdn-cgi/scripts/a2bd7673/cloudflare-static/rocket-loader.min.js" data-cf-settings="655e58efa2fda60e82186aff-|49" defer=""></script></body>
+<div class ='container-fluid'>
+<table class='table table-responsive'>
 
+<tr>
+	<td>Protocol version</td>
+	<td>{{stata[-1][0]['protocolversion']}}</td>
+</tr>
+<tr>
+	<td>Address</td>
+	<td>{{stata[-1][0]['address']}}</td>
+</tr>
+<tr>
+	<td>Wallet version</td>
+	<td>{{stata[-1][0]['walletversion']}}</td>
+</tr>
+<tr>
+	<td>Testnet</td>
+	<td>{{stata[-1][0]['testnet']}}</td>
+</tr>
+
+<tr>
+	<td>Last block</td>
+	<td>{{stata[-1][0]['blocks']}}</td>
+</tr>
+<tr>
+	<td>Offset</td>
+	<td>{{stata[-1][0]['timeoffset']}}</td>
+</tr>
+<tr>
+	<td>Connections list</td>
+	<td>{{stata[-1][0]['connections_list']}}</td>
+</tr>
+<tr>
+	<td>Uptime</td>
+	<td>{{stata[-1][0]['uptime']}}</td>
+</tr>
+<tr>
+	<td>Server timestamp</td>
+	<td>{{stata[-1][0]['server_timestamp']}}</td>
+</tr>
+
+</table>
+</div>
+
+</body>
 </html>
