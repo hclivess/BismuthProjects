@@ -1,10 +1,18 @@
 import socks
 from bisbasic.connections import send, receive
+from bisbasic.essentials import format_raw_tx
+import diff_simple
 import time
 
 class Socket():
     def __init__(self):
         self.connect()
+
+    def format_raw_blocks(self, raw_list_txs):
+        return_list = []
+        for transaciton in raw_list_txs:
+            return_list.append(format_raw_tx(transaciton))
+        return return_list
 
     def connect(self):
         self.s = socks.socksocket()
@@ -22,45 +30,25 @@ class Socket():
                 print(f"Error: {e}")
                 self.connect()
 
-    def get_diff(self):
-        responded = False
-        while not responded:
-            try:
-                send(self.s, "diffgetjson")
-                reply = receive(self.s, timeout=1)
-                responded = True
-                return reply
-            except Exception as e:
-                print(f"Error: {e}")
-                self.connect()
-
-
-    def get_blocksafter(self, block):
+    def get_getblockrange(self, block, limit):
         responded = False
         while not responded:
             try:
                 send(self.s, "api_getblockrange")
                 send(self.s, block)
+                send(self.s, limit)
+
                 reply = receive(self.s, timeout=1)
+
                 responded = True
+
                 return reply
             except Exception as e:
                 print(f"Error: {e}")
                 self.connect()
 
 
-    def get_diffsafter(self, block):
-        responded = False
-        while not responded:
-            try:
-                send(self.s, "api_getdiffrange")
-                send(self.s, block)
-                reply = receive(self.s, timeout=1)
-                responded = True
-                return reply
-            except Exception as e:
-                print(f"Error: {e}")
-                self.connect()
+
 
 class Status():
     def refresh(self, socket):
@@ -80,31 +68,30 @@ class Status():
         self.connections = self.status['connections']
         self.threads = self.status['threads']
         self.consensus = self.status['consensus']
-        print(self.consensus)
         self.consensus_percent = self.status['consensus_percent']
 
         #non-instants
         self.difficulty = self.status['difficulty']
         self.blocks = self.status['blocks']
 
-        self.diffstatus = socket.get_diff()
+        #self.diffstatus = socket.get_diff()
 
         #instants from diffget
-        self.diff_dropped = self.diffstatus['diff_dropped']
-        self.time_to_generate = self.diffstatus['time_to_generate']
-        self.block_time = self.diffstatus['block_time']
-        self.diff_adjustment = self.diffstatus['diff_adjustment']
-        self.hashrate = self.diffstatus['hashrate']
+        #self.diff_dropped = self.diffstatus['diff_dropped']
+        #self.time_to_generate = self.diffstatus['time_to_generate']
+        #self.block_time = self.diffstatus['block_time']
+        #self.diff_adjustment = self.diffstatus['diff_adjustment']
+        #self.hashrate = self.diffstatus['hashrate']
 
-        self.joined_dict = {**self.status, **self.diffstatus}
 
-        print(self.joined_dict)
-        return self.joined_dict
+
+
+        return self.status
 
 class History():
+    """saves status calls and the last block range call"""
     def __init__(self):
         self.blocks = []
-        self.diffs = []
         self.stata = []
 
     def truncate(self):
@@ -124,25 +111,14 @@ class Updater():
 
         new_data = self.status.refresh(self.socket)
 
-        if self.last_block < new_data["blocks"]: #if new block, can skip blocks when syncing, better do it through plugins
+        if self.last_block < new_data["blocks"]: #if new block, status part can skip blocks when syncing
             self.history.stata.append([new_data])
             self.last_block = new_data["blocks"]
 
         del self.history.blocks[:]
-        self.history.blocks.append(self.socket.get_blocksafter(self.status.blocks - 30))
-        self.history.blocks.append(self.socket.get_blocksafter(self.status.blocks - 20))
-        self.history.blocks.append(self.socket.get_blocksafter(self.status.blocks - 10))
+        self.history.blocks.extend(self.socket.get_getblockrange(self.status.blocks - 50, 50))
 
-        del self.history.diffs[:]
-        self.history.diffs.append(self.socket.get_diffsafter(self.status.blocks - 30))
-        self.history.diffs.append(self.socket.get_diffsafter(self.status.blocks - 20))
-        self.history.diffs.append(self.socket.get_diffsafter(self.status.blocks - 10))
-
-        print(self.history.diffs)
-
-        #print(self.history.stata)
-        #print(self.history.diffs)
-        #print(self.history.blocks)
+        print(self.history.blocks)
 
 if __name__ == "__main__":
     update = Updater()

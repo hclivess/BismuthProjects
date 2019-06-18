@@ -15,15 +15,13 @@ class difficultyHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
 
         y_axis = []
         x_axis = []
 
-        for items in self.updater.history.diffs:
-            for subitem in items:
-                x_axis.append(int(subitem[0]))
-                y_axis.append(float(subitem[1]))
+        for items in self.updater.history.blocks:
+            x_axis.append(float(items['block_height']))
+            y_axis.append(float(items['difficulty']))
 
         self.render("chart.html",
                     y_axis = y_axis,
@@ -42,15 +40,14 @@ class block_timestampsHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
+        
 
         y_axis = []
         x_axis = []
 
         for items in self.updater.history.blocks:
-            for subitem in items:
-                x_axis.append(int(subitem[0]))
-                y_axis.append(float(subitem[1]))
+            x_axis.append(float(items['block_height']))
+            y_axis.append(float(items['timestamp']))
 
         self.render("chart.html",
                     y_axis = y_axis,
@@ -68,7 +65,6 @@ class connectionsHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
 
         y_axis = []
         x_axis = []
@@ -96,7 +92,7 @@ class consensusHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
+        
 
         y_axis = []
         x_axis = []
@@ -124,7 +120,7 @@ class consensus_percentHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
+        
 
         y_axis = []
         x_axis = []
@@ -154,7 +150,7 @@ class threadsHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
+        
 
         y_axis = []
         x_axis = []
@@ -182,7 +178,7 @@ class diff_droppedHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
+        
 
         y_axis = []
         x_axis = []
@@ -210,7 +206,7 @@ class block_timeHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
+
 
         y_axis = []
         x_axis = []
@@ -238,7 +234,7 @@ class time_to_generateHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
+        
 
         y_axis = []
         x_axis = []
@@ -266,7 +262,7 @@ class diff_adjustmentHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        print(self.updater.history.diffs)
+        
 
         y_axis = []
         x_axis = []
