@@ -4,30 +4,63 @@ import time
 
 class Socket():
     def __init__(self):
+        self.connect()
+
+    def connect(self):
         self.s = socks.socksocket()
         self.s.connect(("127.0.0.1", 5658))
 
     def get_status(self):
-        send(self.s, "statusjson")
-        reply = receive(self.s)
-        return reply
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "statusjson")
+                reply = receive(self.s, timeout=1)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
 
     def get_diff(self):
-        send(self.s, "diffgetjson")
-        reply = receive(self.s)
-        return reply
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "diffgetjson")
+                reply = receive(self.s, timeout=1)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
 
     def get_blocksafter(self, block):
-        send(self.s, "api_getblockrange")
-        send(self.s, block)
-        reply = receive(self.s)
-        return reply
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_getblockrange")
+                send(self.s, block)
+                reply = receive(self.s, timeout=1)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
 
     def get_diffsafter(self, block):
-        send(self.s, "api_getdiffrange")
-        send(self.s, block)
-        reply = receive(self.s)
-        return reply
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_getdiffrange")
+                send(self.s, block)
+                reply = receive(self.s, timeout=1)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
 
 class Status():
     def refresh(self, socket):
@@ -47,6 +80,7 @@ class Status():
         self.connections = self.status['connections']
         self.threads = self.status['threads']
         self.consensus = self.status['consensus']
+        print(self.consensus)
         self.consensus_percent = self.status['consensus_percent']
 
         #non-instants
@@ -109,5 +143,6 @@ class Updater():
         #print(self.history.stata)
         #print(self.history.diffs)
         #print(self.history.blocks)
+
 if __name__ == "__main__":
     update = Updater()

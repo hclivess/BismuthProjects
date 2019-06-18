@@ -37,66 +37,49 @@
 <a href='/' class='btn btn-info' role='button'>Stats</a>
 </div>
 
-	<div class="chart-container" style="position: relative; height:40vh; width:80vw; margin: 0 auto">
-		<canvas id="canvas"></canvas>
-	</div>
+<div class ='container-fluid'>
+<table class='table table-responsive'>
 
-	<script type="655e58efa2fda60e82186aff-text/javascript">
+<tr>
+	<td>Protocol version</td>
+	<td>{{stata[-1][0]['protocolversion']}}</td>
+</tr>
+<tr>
+	<td>Address</td>
+	<td>{{stata[-1][0]['address']}}</td>
+</tr>
+<tr>
+	<td>Wallet version</td>
+	<td>{{stata[-1][0]['walletversion']}}</td>
+</tr>
+<tr>
+	<td>Testnet</td>
+	<td>{{stata[-1][0]['testnet']}}</td>
+</tr>
 
-		var config = {
-			type: 'line',
-			data: {
-				labels: {{x_axis}},
-				datasets: [{
-					label: '{{y_label}}',
-					backgroundColor: window.chartColors.red,
-					borderColor: window.chartColors.red,
-					data: {{y_axis}},
-					fill: false,
-				}]
-			},
+<tr>
+	<td>Last block</td>
+	<td>{{stata[-1][0]['blocks']}}</td>
+</tr>
+<tr>
+	<td>Offset</td>
+	<td>{{stata[-1][0]['timeoffset']}}</td>
+</tr>
+<tr>
+	<td>Connections list</td>
+	<td>{{stata[-1][0]['connections_list']}}</td>
+</tr>
+<tr>
+	<td>Uptime</td>
+	<td>{{stata[-1][0]['uptime']}}</td>
+</tr>
+<tr>
+	<td>Server timestamp</td>
+	<td>{{stata[-1][0]['server_timestamp']}}</td>
+</tr>
 
-			options: {
-				responsive: true,
-				title: {
-					display: true,
-					text: '{{y_label}}'
-				},
-				tooltips: {
-					mode: 'index',
-					intersect: false,
-				},
-				hover: {
-					mode: 'nearest',
-					intersect: true
-				},
-				scales: {
-					xAxes: [{
-						display: true,
-						scaleLabel: {
-							display: true,
-							labelString: '{{x_label}}'
-						}
-					}],
-					yAxes: [{
-						display: true,
-						scaleLabel: {
-							display: true,
-							labelString: '{{y_label}}'
-						}
-					}]
-				}
-			}
-		};
-
-		window.onload = function() {
-
-			var ctx = document.getElementById('canvas').getContext('2d');
-			window.myLine = new Chart(ctx, config);
-		};
-
-
-	</script>
+</table>
+</div>
 
 </body>
 </html>

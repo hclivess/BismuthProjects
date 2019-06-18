@@ -5,7 +5,7 @@ import dator
 import threading
 import time
 
-class MainHandler(tornado.web.RequestHandler):
+class difficultyHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
         self.updater = updater
         #self.updater.update()
@@ -16,16 +16,328 @@ class MainHandler(tornado.web.RequestHandler):
 
         #render
         print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for items in self.updater.history.diffs:
+            for subitem in items:
+                x_axis.append(int(subitem[0]))
+                y_axis.append(float(subitem[1]))
+
         self.render("chart.html",
-                    diffs = self.updater.history.diffs,
-                    blocks = self.updater.history.blocks,
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Difficulty",
+                    x_label="Block")
+
+
+class block_timestampsHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for items in self.updater.history.blocks:
+            for subitem in items:
+                x_axis.append(int(subitem[0]))
+                y_axis.append(float(subitem[1]))
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Timestamp",
+                    x_label="Block")
+
+class connectionsHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['connections'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Connections",
+                    x_label="Interval")
+
+class consensusHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['consensus'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Consensus",
+                    x_label="Interval")
+
+class consensus_percentHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['consensus_percent'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Consensus Percentage",
+                    x_label="Interval")
+
+
+class threadsHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['threads'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Threads",
+                    x_label="Interval")
+
+class diff_droppedHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['diff_dropped'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Difficulty After Readjustment",
+                    x_label="Interval")
+
+class block_timeHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['block_time'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Block Time",
+                    x_label="Interval")
+
+class time_to_generateHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['time_to_generate'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Seconds",
+                    x_label="Interval")
+
+class diff_adjustmentHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        #render
+        print(self.updater.history.diffs)
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['diff_adjustment'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label = "Difficulty Readjustment",
+                    x_label = "Interval (min. 1 block)")
+
+class hashrateHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+        y_axis = []
+        x_axis = []
+
+        for x in range(len(self.updater.history.stata)):
+            x_axis.append(int(x))
+
+        for items in self.updater.history.stata:
+            for subitem in items:
+                y_axis.append(subitem['hashrate'])
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label = "Hashrate",
+                    x_label = "Interval (min. 1 block)")
+
+class statsHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        self.updater.update()
+
+
+        self.render("stats.html",
                     stata = self.updater.history.stata
                     )
 
 def make_app():
     return tornado.web.Application([
-        (r"/", MainHandler, {'updater': updater}),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
+        (r"/difficulty", difficultyHandler, {'updater': updater}),
+        (r"/block_timestamps", block_timestampsHandler, {'updater': updater}),
+        (r"/connections", connectionsHandler, {'updater': updater}),
+        (r"/consensus", consensusHandler, {'updater': updater}),
+        (r"/consensus_percent", consensus_percentHandler, {'updater': updater}),
+        (r"/threads", threadsHandler, {'updater': updater}),
+        (r"/diff_dropped", diff_droppedHandler, {'updater': updater}),
+        (r"/block_time", block_timeHandler, {'updater': updater}),
+        (r"/time_to_generate", time_to_generateHandler, {'updater': updater}),
+        (r"/diff_adjustment", diff_adjustmentHandler, {'updater': updater}),
+        (r"/hashrate", hashrateHandler, {'updater': updater}),
+        (r"/", statsHandler, {'updater': updater}),
     ])
 
 class ThreadedClient(threading.Thread):
