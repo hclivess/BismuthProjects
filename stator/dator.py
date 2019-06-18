@@ -60,8 +60,12 @@ class Status():
         self.time_to_generate = self.diffstatus['time_to_generate']
         self.block_time = self.diffstatus['block_time']
         self.diff_adjustment = self.diffstatus['diff_adjustment']
+        self.hashrate = self.diffstatus['hashrate']
 
-        return self.status
+        self.joined_dict = {**self.status, **self.diffstatus}
+
+        print(self.joined_dict)
+        return self.joined_dict
 
 class History():
     def __init__(self):
