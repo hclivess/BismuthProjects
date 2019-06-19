@@ -1,18 +1,12 @@
 import socks
 from bisbasic.connections import send, receive
 from bisbasic.essentials import format_raw_tx
-import diff_simple
+from diff_simple import difficulty
 import time
 
 class Socket():
     def __init__(self):
         self.connect()
-
-    def format_raw_blocks(self, raw_list_txs):
-        return_list = []
-        for transaciton in raw_list_txs:
-            return_list.append(format_raw_tx(transaciton))
-        return return_list
 
     def connect(self):
         self.s = socks.socksocket()
@@ -83,9 +77,6 @@ class Status():
         #self.diff_adjustment = self.diffstatus['diff_adjustment']
         #self.hashrate = self.diffstatus['hashrate']
 
-
-
-
         return self.status
 
 class History():
@@ -115,8 +106,11 @@ class Updater():
             self.history.stata.append([new_data])
             self.last_block = new_data["blocks"]
 
-        del self.history.blocks[:]
-        self.history.blocks.extend(self.socket.get_getblockrange(self.status.blocks - 50, 50))
+        self.history.blocks = self.socket.get_getblockrange(self.status.blocks -50, 50)
+        print (self.history.blocks) #last block
+
+
+        #difficulty()
 
         print(self.history.blocks)
 
