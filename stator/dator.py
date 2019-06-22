@@ -1,3 +1,4 @@
+import json
 import socks
 from bisbasic.connections import send, receive
 from bisbasic.essentials import format_raw_tx
@@ -106,9 +107,8 @@ class Updater():
             self.history.stata.append([new_data])
             self.last_block = new_data["blocks"]
 
-        self.history.blocks = self.socket.get_getblockrange(self.status.blocks -50, 50)
+        self.history.blocks = json.loads(self.socket.get_getblockrange(self.status.blocks -50, 50))
         print (self.history.blocks) #last block
-
 
         #difficulty()
 

@@ -19,9 +19,9 @@ class difficultyHandler(tornado.web.RequestHandler):
         y_axis = []
         x_axis = []
 
-        for items in self.updater.history.blocks:
-            x_axis.append(float(items['block_height']))
-            y_axis.append(float(items['difficulty']))
+        for block, data in self.updater.history.blocks.items():
+            x_axis.append(float(block))
+            y_axis.append(float(data['mining_tx']['difficulty']))
 
         self.render("chart.html",
                     y_axis = y_axis,
@@ -45,9 +45,9 @@ class block_timestampsHandler(tornado.web.RequestHandler):
         y_axis = []
         x_axis = []
 
-        for items in self.updater.history.blocks:
-            x_axis.append(float(items['block_height']))
-            y_axis.append(float(items['timestamp']))
+        for block, data in self.updater.history.blocks.items():
+            x_axis.append(float(block))
+            y_axis.append(float(data['mining_tx']['timestamp']))
 
         self.render("chart.html",
                     y_axis = y_axis,
@@ -178,7 +178,6 @@ class diff_droppedHandler(tornado.web.RequestHandler):
         self.updater.update()
 
         #render
-        
 
         y_axis = []
         x_axis = []
