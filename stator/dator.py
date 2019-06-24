@@ -85,10 +85,34 @@ class History():
     def __init__(self):
         self.blocks = []
         self.stata = []
+        self.diffs = []
 
     def truncate(self):
         self.stata = self.stata[:10]
 
+
+class DiffCalculator():
+    @staticmethod
+    def calculate(diff_blocks, diff_blocks_minus_1440):
+        try:
+            print("Calculating difficulty")
+            #print("diff_blocks", diff_blocks)
+
+            block_minus_1 = (list(diff_blocks.keys())[0])
+            block = (list(diff_blocks.keys())[1])
+            block_minus_1440 = (list(diff_blocks_minus_1440.keys())[0])
+
+            last_block_timestamp = diff_blocks[block]["mining_tx"]["timestamp"]
+            block_minus_1_timestamp = diff_blocks[block_minus_1]["mining_tx"]["timestamp"]
+            block_minus_1_difficulty = diff_blocks[block_minus_1]["mining_tx"]["difficulty"]
+            block_minus_1441_timestamp = diff_blocks_minus_1440[block_minus_1440]["mining_tx"]["difficulty"]
+
+            diff = difficulty(float(last_block_timestamp),float(block_minus_1_timestamp), float(block_minus_1_difficulty),float(block_minus_1441_timestamp))
+            return {int(block) : diff}
+
+        except Exception as e:
+            print(f"issue with {e}")
+            pass
 
 class Updater():
     def __init__(self):
@@ -110,9 +134,18 @@ class Updater():
         self.history.blocks = json.loads(self.socket.get_getblockrange(self.status.blocks -50, 50))
         print (self.history.blocks) #last block
 
-        #difficulty()
+
+        for number in range (-51,1):
+            #difficulty
+            diff_blocks = json.loads(self.socket.get_getblockrange(self.status.blocks + number, 2)) # number is negative
+            diff_blocks_minus_1440 = json.loads(self.socket.get_getblockrange(self.status.blocks - 1440 + number, 1)) # number is negative
+
+            self.history.diffs.append(DiffCalculator.calculate(diff_blocks, diff_blocks_minus_1440))
+            #/difficulty
+
 
         print(self.history.blocks)
+        print(self.history.diffs)
 
 if __name__ == "__main__":
-    update = Updater()
+    updater = Updater()
