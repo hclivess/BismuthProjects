@@ -23,7 +23,7 @@ class difficultyHandler(tornado.web.RequestHandler):
             print(block)
             print(data)
 
-            x_axis.append(float(block))
+            x_axis.append(int(block))
             y_axis.append(float(data['mining_tx']['difficulty']))
 
         self.render("chart.html",
@@ -48,7 +48,7 @@ class block_timestampsHandler(tornado.web.RequestHandler):
         x_axis = []
 
         for block, data in self.updater.history.blocks.items():
-            x_axis.append(float(block))
+            x_axis.append(int(block))
             y_axis.append(float(data['mining_tx']['timestamp']))
 
         self.render("chart.html",
@@ -186,7 +186,7 @@ class diff_droppedHandler(tornado.web.RequestHandler):
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
-                x_axis.append(block)
+                x_axis.append(int(block))
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
@@ -215,7 +215,7 @@ class block_timeHandler(tornado.web.RequestHandler):
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
-                x_axis.append(block)
+                x_axis.append(int(block))
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
@@ -244,7 +244,7 @@ class time_to_generateHandler(tornado.web.RequestHandler):
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
-                x_axis.append(block)
+                x_axis.append(int(block))
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
@@ -273,7 +273,7 @@ class diff_adjustmentHandler(tornado.web.RequestHandler):
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
-                x_axis.append(block)
+                x_axis.append(int(block))
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
@@ -299,7 +299,7 @@ class hashrateHandler(tornado.web.RequestHandler):
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():
-                x_axis.append(block)
+                x_axis.append(int(block))
 
         for item in self.updater.history.diffs:
             for block, difficulty in item.items():

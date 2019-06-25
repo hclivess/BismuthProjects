@@ -105,7 +105,7 @@ class DiffCalculator():
             block_minus_1441_timestamp = diff_blocks_minus_1440[block_minus_1440]["mining_tx"]["difficulty"]
 
             diff = difficulty(float(last_block_timestamp),float(block_minus_1_timestamp), float(block_minus_1_difficulty),float(block_minus_1441_timestamp))
-            return {int(block) : diff}
+            return {block : diff}
 
         except Exception as e:
             print(f"issue with {e}")
