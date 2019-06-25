@@ -88,7 +88,8 @@ class History():
         self.diffs = []
 
     def truncate(self):
-        self.stata = self.stata[:10]
+        self.stata = self.stata[:50]
+        self.diffs = self.diffs[:50]
 
 
 class DiffCalculator():
@@ -123,9 +124,8 @@ class Updater():
 
         new_data = self.status.refresh(self.socket)
 
-        if self.last_block < new_data["blocks"]: #if new block, status part can skip blocks when syncing
-            self.history.stata.append([new_data])
-            self.last_block = new_data["blocks"]
+        self.history.stata.append([new_data])
+        self.last_block = new_data["blocks"]
 
         self.history.blocks = json.loads(self.socket.get_getblockrange(self.status.blocks -50, 50))
         print (self.history.blocks) #last block
