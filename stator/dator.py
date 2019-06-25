@@ -93,14 +93,10 @@ class History():
 
 class DiffCalculator():
     @staticmethod
-    def calculate(diff_blocks, diff_blocks_minus_1440):
+    def calculate(diff_blocks, diff_blocks_minus_1440, block : str, block_minus_1 : str, block_minus_1440 : str):
         try:
             print("Calculating difficulty")
-            #print("diff_blocks", diff_blocks)
-
-            block_minus_1 = (list(diff_blocks.keys())[0])
-            block = (list(diff_blocks.keys())[1])
-            block_minus_1440 = (list(diff_blocks_minus_1440.keys())[0])
+            print("diff_blocks", diff_blocks)
 
             last_block_timestamp = diff_blocks[block]["mining_tx"]["timestamp"]
             block_minus_1_timestamp = diff_blocks[block_minus_1]["mining_tx"]["timestamp"]
@@ -112,7 +108,7 @@ class DiffCalculator():
 
         except Exception as e:
             print(f"issue with {e}")
-            pass
+            raise
 
 class Updater():
     def __init__(self):
@@ -135,13 +131,15 @@ class Updater():
         print (self.history.blocks) #last block
 
 
-        for number in range (-51,1):
+        for number in range (-51,0):
             #difficulty
+
             diff_blocks = json.loads(self.socket.get_getblockrange(self.status.blocks + number, 2)) # number is negative
             diff_blocks_minus_1440 = json.loads(self.socket.get_getblockrange(self.status.blocks - 1440 + number, 1)) # number is negative
 
-            self.history.diffs.append(DiffCalculator.calculate(diff_blocks, diff_blocks_minus_1440))
+            self.history.diffs.append(DiffCalculator.calculate(diff_blocks, diff_blocks_minus_1440, str(self.status.blocks + number + 1), str(self.status.blocks + number), str(self.status.blocks - 1440 + number)))
             #/difficulty
+
 
 
         print(self.history.blocks)
