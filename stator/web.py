@@ -71,14 +71,11 @@ class tx_timestampsHandler(tornado.web.RequestHandler):
         y_axis = []
         x_axis = []
 
-        print("lol")
         for block, data in self.updater.history.blocks.items():
             print(block)
             print(data)
-            print (len(data['transactions']))
 
             x_axis.append(int(block))
-
             for transaction in data['transactions']:
                 y_axis.append(float(transaction['timestamp']))
 
