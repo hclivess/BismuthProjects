@@ -57,6 +57,37 @@ class block_timestampsHandler(tornado.web.RequestHandler):
                     y_label="Timestamp",
                     x_label="Block")
 
+class tx_timestampsHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        #self.updater.update()
+
+        #render
+
+        y_axis = []
+        x_axis = []
+
+        print("lol")
+        for block, data in self.updater.history.blocks.items():
+            print(block)
+            print(data)
+            print (len(data['transactions']))
+
+            x_axis.append(int(block))
+
+            for transaction in data['transactions']:
+                y_axis.append(float(transaction['timestamp']))
+
+        self.render("chart.html",
+                    y_axis = y_axis,
+                    x_axis = x_axis,
+                    y_label="Timestamp",
+                    x_label="Block")
+
 class connectionsHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
         self.updater = updater
@@ -330,6 +361,7 @@ def make_app():
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
         (r"/difficulty", difficultyHandler, {'updater': updater}),
         (r"/block_timestamps", block_timestampsHandler, {'updater': updater}),
+        (r"/tx_timestamps", tx_timestampsHandler, {'updater': updater}),
         (r"/connections", connectionsHandler, {'updater': updater}),
         (r"/consensus", consensusHandler, {'updater': updater}),
         (r"/consensus_percent", consensus_percentHandler, {'updater': updater}),
