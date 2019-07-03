@@ -5,6 +5,39 @@ import dator
 import threading
 import time
 
+class addressHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self, address):
+        #call fetcher
+        #self.updater.update()
+
+        #render
+
+        socket = dator.Socket()
+        address = socket.get_address("952cfda35b32e2eac3e3431f566b80a0c47c6c512d3f283c1e57aee3")
+
+
+        self.render("address.html",
+                    address = address)
+
+class blockdisplayHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self):
+        #call fetcher
+        #self.updater.update()
+
+        #render
+
+
+        self.render("exp.html",
+                    data = self.updater.history.blocks.items())
+
 class difficultyHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
         self.updater = updater
@@ -356,6 +389,8 @@ class statsHandler(tornado.web.RequestHandler):
 def make_app():
     return tornado.web.Application([
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
+        (r"/explorer", blockdisplayHandler, {'updater': updater}),
+        (r"/explorer/address/(.*)", addressHandler, {'updater': updater}),
         (r"/difficulty", difficultyHandler, {'updater': updater}),
         (r"/block_timestamps", block_timestampsHandler, {'updater': updater}),
         (r"/tx_timestamps", tx_timestampsHandler, {'updater': updater}),
