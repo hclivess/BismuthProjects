@@ -13,6 +13,21 @@ class Socket():
         self.s = socks.socksocket()
         self.s.connect(("127.0.0.1", 5658))
 
+    def get_address(self, address):
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_getaddressrange")
+                send(self.s, address)
+                send(self.s, "0")
+                send(self.s, "50")
+                reply = receive(self.s)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
     def get_status(self):
         responded = False
         while not responded:
