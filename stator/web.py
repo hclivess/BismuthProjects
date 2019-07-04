@@ -17,11 +17,11 @@ class addressHandler(tornado.web.RequestHandler):
         #render
 
         socket = dator.Socket()
-        address = socket.get_address("952cfda35b32e2eac3e3431f566b80a0c47c6c512d3f283c1e57aee3")
+        result = socket.get_address(address)
 
 
         self.render("address.html",
-                    address = address)
+                    data = result)
 
 class blockdisplayHandler(tornado.web.RequestHandler):
     def initialize(self, updater):

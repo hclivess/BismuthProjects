@@ -19,8 +19,9 @@ class Socket():
             try:
                 send(self.s, "api_getaddressrange")
                 send(self.s, address)
-                send(self.s, "0")
-                send(self.s, "50")
+                send(self.s, 0)
+                send(self.s, 100)
+
                 reply = receive(self.s)
                 responded = True
                 return reply
