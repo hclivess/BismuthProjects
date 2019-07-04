@@ -35,7 +35,7 @@ class blockdisplayHandler(tornado.web.RequestHandler):
         #render
 
 
-        self.render("exp.html",
+        self.render("explorer.html",
                     data = self.updater.history.blocks.items())
 
 class difficultyHandler(tornado.web.RequestHandler):
