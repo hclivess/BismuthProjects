@@ -17,13 +17,13 @@ import time
 
 config = options.Get()
 config.read()
-debug_level = config.debug_level_conf
-ledger_path_conf = config.ledger_path_conf
-full_ledger = config.full_ledger_conf
-ledger_path = config.ledger_path_conf
-hyper_path = config.hyper_path_conf
+debug_level = config.debug_level
+ledger_path = config.ledger_path
+full_ledger = config.full_ledger
+ledger_path = config.ledger_path
+hyper_path = config.hyper_path
 terminal_output=config.terminal_output
-version = config.version_conf
+version = config.version
 
 file = open ('secret.json', 'r').read ()
 parsed = json.loads (file)
