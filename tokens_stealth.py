@@ -1,17 +1,29 @@
 # operation: token:issue
-# openfield: token_name:total_number(:key)
-# - optional key is a hash of password + operation
+# openfield: token_name:total_number(:slave_key)
+# - optional slave key is a hash of password + own address
 
 # operation: token:transfer
-# openfield: token_name:amount(:key)
-# - optional key is a hash of password + operation
+# openfield: token_name:amount(:slave_key)
+# - optional slave key is a hash of password + own address
 
 import sqlite3
 import log
 from hashlib import blake2b
+import json
 
 __version__ = '0.0.2'
 
+def load_token_master_key(token):
+    with open('token_keys.json') as token_keys:
+        keys_loaded = json.loads(token_keys.read())
+    for key, value in keys_loaded.items():
+        if key == token:
+            return value
+
+def slave_key_generate(master_key, address):
+    if master_key and address:
+        slave_key = blake2b(repr((master_key,address)).encode(), digest_size=7).hexdigest()
+        return slave_key
 
 def blake2bhash_generate(data):
     # new hash
@@ -212,6 +224,18 @@ if __name__ == "__main__":
     from libs import node,logger
     import dbhandler
 
+
+    #stealth tokens
+    stealth_token = "test_stealth2"
+    address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
+
+    master_key = load_token_master_key(stealth_token)
+    slave_key = slave_key_generate(master_key, address)
+
+    print(master_key)
+    print(slave_key)
+    # stealth tokens
+
     node = node.Node()
     node.debug_level = "WARNING"
     node.terminal_output = True
@@ -220,7 +244,7 @@ if __name__ == "__main__":
     node.logger.app_log = log.log("stealth.log", node.debug_level, node.terminal_output)
     node.logger.app_log.warning("Configuration settings loaded")
 
-    db_handler = dbhandler.DbHandler("static/index_reg.db","static/regmode.db","static/regmode.db", False, None, node.logger, False)
+    db_handler = dbhandler.DbHandler("D:/Bismuth/static/index_reg.db","D:/Bismuth/static/regmode.db","D:/Bismuth/static/regmode.db", False, None, node.logger, False)
     #index var is automatically overwritten in regmode
 
     tokens_update(node, db_handler)
