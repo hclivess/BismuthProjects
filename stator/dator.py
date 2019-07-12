@@ -104,9 +104,11 @@ class History():
         self.diffs = []
 
     def truncate(self):
-        self.stata = self.stata[56:]
-        self.diffs = self.diffs[56:]
 
+        if len(self.stata) > 56:
+            self.stata = self.stata[56:]
+        if len(self.diffs) > 56:
+            self.diffs = self.diffs[56:]
 
 class DiffCalculator():
     @staticmethod
