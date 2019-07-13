@@ -105,10 +105,10 @@ class History():
 
     def truncate(self):
 
-        if len(self.stata) > 56:
-            self.stata = self.stata[56:]
-        if len(self.diffs) > 56:
-            self.diffs = self.diffs[56:]
+        if len(self.stata) > 50:
+            self.stata = self.stata[50:]
+        if len(self.diffs) > 50:
+            self.diffs = self.diffs[50:]
 
 class DiffCalculator():
     @staticmethod
@@ -127,7 +127,6 @@ class DiffCalculator():
 
         except Exception as e:
             print(f"issue with {e}")
-            raise
 
 class Updater():
     def __init__(self):
@@ -149,7 +148,7 @@ class Updater():
         print (self.history.blocks) #last block
 
 
-        for number in range (-51,0):
+        for number in range (-50,1):
             #difficulty
 
             diff_blocks = json.loads(self.socket.get_getblockrange(self.status.blocks + number, 2)) # number is negative
