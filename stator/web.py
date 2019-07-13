@@ -413,7 +413,7 @@ class ThreadedClient(threading.Thread):
     def run(self):
        while True:
            updater.update()
-           time.sleep(360)
+           time.sleep(0)
 
 
 
