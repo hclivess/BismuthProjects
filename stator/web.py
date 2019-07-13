@@ -257,7 +257,7 @@ class diff_droppedHandler(tornado.web.RequestHandler):
                     y_axis = y_axis,
                     x_axis = x_axis,
                     y_label="Difficulty After Readjustment",
-                    x_label="Interval")
+                    x_label="Block")
 
 class block_timeHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
@@ -286,7 +286,7 @@ class block_timeHandler(tornado.web.RequestHandler):
                     y_axis = y_axis,
                     x_axis = x_axis,
                     y_label="Block Time",
-                    x_label="Interval")
+                    x_label="Block")
 
 class time_to_generateHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
@@ -315,7 +315,7 @@ class time_to_generateHandler(tornado.web.RequestHandler):
                     y_axis = y_axis,
                     x_axis = x_axis,
                     y_label="Seconds",
-                    x_label="Interval")
+                    x_label="Block")
 
 class diff_adjustmentHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
@@ -344,7 +344,7 @@ class diff_adjustmentHandler(tornado.web.RequestHandler):
                     y_axis = y_axis,
                     x_axis = x_axis,
                     y_label = "Difficulty Readjustment",
-                    x_label = "Interval (min. 1 block)")
+                    x_label = "Block")
 
 class hashrateHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
@@ -370,7 +370,7 @@ class hashrateHandler(tornado.web.RequestHandler):
                     y_axis = y_axis,
                     x_axis = x_axis,
                     y_label = "Hashrate",
-                    x_label = "Interval (min. 1 block)")
+                    x_label = "Block")
 
 class statsHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
