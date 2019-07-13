@@ -104,10 +104,10 @@ class History():
         self.diffs = []
 
     def truncate(self):
-
-        if len(self.stata) > 50:
+        if len(self.stata) >= 50:
             self.stata = self.stata[50:]
-        if len(self.diffs) > 50:
+
+        if len(self.diffs) >= 50:
             self.diffs = self.diffs[50:]
 
 class DiffCalculator():
@@ -157,8 +157,6 @@ class Updater():
 
             self.history.diffs.append(DiffCalculator.calculate(diff_blocks, diff_blocks_minus_1440, str(self.status.blocks + number + 1), str(self.status.blocks + number), str(self.status.blocks - 1440 + number)))
             #/difficulty
-
-
 
         print(self.history.blocks)
         print(self.history.diffs)
