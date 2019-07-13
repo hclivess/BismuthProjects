@@ -127,6 +127,7 @@ class DiffCalculator():
 
         except Exception as e:
             print(f"issue with {e}")
+            raise
 
 class Updater():
     def __init__(self):
@@ -148,7 +149,7 @@ class Updater():
         print (self.history.blocks) #last block
 
 
-        for number in range (-50,1):
+        for number in range (-50,0):
             #difficulty
 
             diff_blocks = json.loads(self.socket.get_getblockrange(self.status.blocks + number, 2)) # number is negative
