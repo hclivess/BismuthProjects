@@ -13,11 +13,53 @@ class Socket():
         self.s = socks.socksocket()
         self.s.connect(("127.0.0.1", 5658))
 
+    def get_address(self, address):
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_getaddressrange")
+                send(self.s, address)
+                send(self.s, 0)
+                send(self.s, 100)
+
+                reply = receive(self.s)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
     def get_status(self):
         responded = False
         while not responded:
             try:
                 send(self.s, "statusjson")
+                reply = receive(self.s, timeout=1)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
+    def get_blockfromhash(self, hash):
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_getblockfromhash")
+                send(self.s, hash)
+                reply = receive(self.s, timeout=1)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
+    def get_blockfromheight(self, height):
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_getblockfromheight")
+                send(self.s, height)
                 reply = receive(self.s, timeout=1)
                 responded = True
                 return reply
@@ -41,8 +83,6 @@ class Socket():
             except Exception as e:
                 print(f"Error: {e}")
                 self.connect()
-
-
 
 
 class Status():
@@ -85,10 +125,33 @@ class History():
     def __init__(self):
         self.blocks = []
         self.stata = []
+        self.diffs = []
 
     def truncate(self):
-        self.stata = self.stata[:10]
+        if len(self.stata) >= 50:
+            self.stata = self.stata[50:]
 
+        if len(self.diffs) >= 50:
+            self.diffs = self.diffs[50:]
+
+class DiffCalculator():
+    @staticmethod
+    def calculate(diff_blocks, diff_blocks_minus_1440, block : str, block_minus_1 : str, block_minus_1440 : str):
+        try:
+            print("Calculating difficulty")
+            print("diff_blocks", diff_blocks)
+
+            last_block_timestamp = diff_blocks[block]["mining_tx"]["timestamp"]
+            block_minus_1_timestamp = diff_blocks[block_minus_1]["mining_tx"]["timestamp"]
+            block_minus_1_difficulty = diff_blocks[block_minus_1]["mining_tx"]["difficulty"]
+            block_minus_1441_timestamp = diff_blocks_minus_1440[block_minus_1440]["mining_tx"]["difficulty"]
+
+            diff = difficulty(float(last_block_timestamp),float(block_minus_1_timestamp), float(block_minus_1_difficulty),float(block_minus_1441_timestamp))
+            return {block : diff}
+
+        except Exception as e:
+            print(f"issue with {e}")
+            raise
 
 class Updater():
     def __init__(self):
@@ -103,16 +166,24 @@ class Updater():
 
         new_data = self.status.refresh(self.socket)
 
-        if self.last_block < new_data["blocks"]: #if new block, status part can skip blocks when syncing
-            self.history.stata.append([new_data])
-            self.last_block = new_data["blocks"]
+        self.history.stata.append([new_data])
+        self.last_block = new_data["blocks"]
 
         self.history.blocks = json.loads(self.socket.get_getblockrange(self.status.blocks -50, 50))
         print (self.history.blocks) #last block
 
-        #difficulty()
+
+        for number in range (-50,0):
+            #difficulty
+
+            diff_blocks = json.loads(self.socket.get_getblockrange(self.status.blocks + number, 2)) # number is negative
+            diff_blocks_minus_1440 = json.loads(self.socket.get_getblockrange(self.status.blocks - 1440 + number, 1)) # number is negative
+
+            self.history.diffs.append(DiffCalculator.calculate(diff_blocks, diff_blocks_minus_1440, str(self.status.blocks + number + 1), str(self.status.blocks + number), str(self.status.blocks - 1440 + number)))
+            #/difficulty
 
         print(self.history.blocks)
+        print(self.history.diffs)
 
 if __name__ == "__main__":
-    update = Updater()
+    updater = Updater()
