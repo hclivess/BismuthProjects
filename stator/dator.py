@@ -41,6 +41,19 @@ class Socket():
                 print(f"Error: {e}")
                 self.connect()
 
+    def get_blockfromhash(self, hash):
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_getblockfromhash")
+                send(self.s, hash)
+                reply = receive(self.s, timeout=1)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
     def get_getblockrange(self, block, limit):
         responded = False
         while not responded:
@@ -104,9 +117,11 @@ class History():
         self.diffs = []
 
     def truncate(self):
-        self.stata = self.stata[56:]
-        self.diffs = self.diffs[56:]
+        if len(self.stata) >= 50:
+            self.stata = self.stata[50:]
 
+        if len(self.diffs) >= 50:
+            self.diffs = self.diffs[50:]
 
 class DiffCalculator():
     @staticmethod
@@ -147,7 +162,7 @@ class Updater():
         print (self.history.blocks) #last block
 
 
-        for number in range (-51,0):
+        for number in range (-50,0):
             #difficulty
 
             diff_blocks = json.loads(self.socket.get_getblockrange(self.status.blocks + number, 2)) # number is negative
@@ -155,8 +170,6 @@ class Updater():
 
             self.history.diffs.append(DiffCalculator.calculate(diff_blocks, diff_blocks_minus_1440, str(self.status.blocks + number + 1), str(self.status.blocks + number), str(self.status.blocks - 1440 + number)))
             #/difficulty
-
-
 
         print(self.history.blocks)
         print(self.history.diffs)
