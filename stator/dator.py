@@ -41,6 +41,19 @@ class Socket():
                 print(f"Error: {e}")
                 self.connect()
 
+    def get_blockfromhash(self, hash):
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_getblockfromhash")
+                send(self.s, hash)
+                reply = receive(self.s, timeout=1)
+                responded = True
+                return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
     def get_getblockrange(self, block, limit):
         responded = False
         while not responded:
