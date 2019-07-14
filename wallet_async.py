@@ -1,95 +1,72 @@
+"""
+Deprecated, main code changes made it incompatible
+"""
+
 # add manual refresh, objectify
 
 # icons created using http://www.winterdrache.de/freeware/png2ico/
 
-import threading
+import ast
+import asyncio
+import base64
 import csv
 import glob
+import hashlib
 import os
 import platform
+import re
+import sys
 import tarfile
+import threading
 import time
 import webbrowser
 from datetime import datetime
-from decimal import *
-# from operator import itemgetter
-from tkinter import *
-from tkinter import filedialog, messagebox, ttk
-import ast
+from decimal import Decimal, getcontext
+from tkinter import (DISABLED, END, INSERT, LEFT, NORMAL, NW, WORD, BooleanVar,
+                     Button, Canvas, Checkbutton, E, Entry, Frame, Label,
+                     Listbox, Menu, N, S, Scrollbar, StringVar, Text, Tk,
+                     Toplevel, W, filedialog, messagebox, ttk)
 
+import matplotlib
+import PIL.Image
+import PIL.ImageTk
+import pyqrcode
 import socks
 from Cryptodome.Cipher import AES, PKCS1_OAEP
 from Cryptodome.Hash import SHA
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Signature import PKCS1_v1_5
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
+                                               NavigationToolbar2Tk)
+from matplotlib.figure import Figure
 
-import connections
+import async_client
 import essentials
+import icons
 import log
-import lwbench
 import options
 import recovery
-import requests
-from bisurl import *
+from bisurl import create_url, read_url
 from essentials import fee_calculate
 from quantizer import quantize_eight
-from simplecrypt import encrypt, decrypt
-from tokensv2 import *
+from simplecrypt import decrypt, encrypt
+from lwbench import time_measure
 
+# from tokensv2 import *
+# import sqlite3
+# from random import shuffle
+# from tornado.ioloop import IOLoop
+# import aioprocessing
+# import connections
 
-class Keys:
-    def __init__(self):
-        self.key = None
-        self.public_key_readable = None
-        self.private_key_readable = None
-        self.encrypted = None
-        self.unlocked = None
-        self.public_key_hashed = None
-        self.myaddress = None
-        self.keyfile = None
-
-
-# Wallet needs a version for itself
-__version__ = '0.8.3'
-
-# upgrade wallet location after nuitka-required "files" folder introduction
-if os.path.exists("../wallet.der") and not os.path.exists("wallet.der") and "Windows" in platform.system():
-    print("Upgrading wallet location")
-    os.rename("../wallet.der", "wallet.der")
-# upgrade wallet location after nuitka-required "files" folder introduction
-
-
-"""nuitka
-import PIL.Image, PIL.ImageTk, pyqrcode
-import matplotlib
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 matplotlib.use('TkAgg')
-from matplotlib.figure import Figure3
-"""
 
-
-# import keys
-
-class Wallet():
-    def __init__(self):
-        self.block_height_old = None
-        self.statusget = None
-        self.s = None
-
-        self.ip = None
-        self.port = None
-
-        self.tx_tree = None
-
-        self.balance = None
-        self.block_height_old = None
-        self.mempool_total = None
-        self.stats_timestamp = None
+__version__ = "1.0.4"
 
 
 def mempool_clear(s):
-    connections.send(s, "mpclear", 10)
+    async_client.connection.send("mpclear")
 
 
 def mempool_get(s):
@@ -122,7 +99,7 @@ def mempool_get(s):
         mp_tree.grid(sticky=N + S + W + E)
         # table
 
-        for tx in wallet.mempool_total:
+        for tx in mempool_total:
             mp_tree.insert('', 'end', text=datetime.fromtimestamp(float(tx[0])).strftime('%y-%m-%d %H:%M'), values=(tx[1], tx[2], tx[3]))
 
         clear_mempool_b = Button(mempool_window, text="Clear Mempool", command=lambda: mempool_clear(s), height=1, width=20, font=("Tahoma", 8))
@@ -137,21 +114,14 @@ def mempool_get(s):
             root.after(10000, refresh_mp_auto)
 
         except Exception as e:
-            print("Mempool window closed, disabling auto-refresh ({})".format(e))
+            print("Mempool window closed, disabling auto-refresh({})".format(e))
 
     refresh_mp_auto()
 
 
 def recover():
-    result = recovery.recover(keyring.key)
+    result = recovery.recover(key)
     messagebox.showinfo("Recovery Result", result)
-
-
-def address_validate(address):
-    if re.match('[abcdef0123456789]{56}', address):
-        return True
-    else:
-        return False
 
 
 def create_url_clicked(app_log, command, recipient, amount, operation, openfield):
@@ -164,7 +134,7 @@ def create_url_clicked(app_log, command, recipient, amount, operation, openfield
 
 def read_url_clicked(app_log, url):
     """isolated function so no GUI leftovers are in bisurl.py"""
-    result = (read_url(app_log, url))
+    result =(read_url(app_log, url))
 
     recipient.delete(0, END)
     amount.delete(0, END)
@@ -178,59 +148,6 @@ def read_url_clicked(app_log, url):
     openfield.insert(INSERT, result[4])  # openfield
 
 
-def convert_ip_port(ip):
-    """
-    Get ip and port, but extract port from ip if ip was as ip:port
-    :param ip:
-    :param some_port: default port
-    :return: (ip, port)
-    """
-    if ':' in ip:
-        ip, port = ip.split(':')
-
-    return ip, port
-
-
-def node_connect():
-    keep_trying = True
-    while keep_trying:
-        for pair in light_ip:
-            try:
-                connect_ip, connect_port = convert_ip_port(pair)
-                wallet.ip = connect_ip
-                app_log.warning("Status: Attempting to connect to {}:{} out of {}".format(connect_ip, connect_port, light_ip))
-                wallet.s = socks.socksocket()
-                wallet.s.settimeout(3)
-                wallet.s.connect((connect_ip, int(connect_port)))
-                connections.send(wallet.s, "statusget", 10)
-                result = connections.receive(wallet.s, 10)  # validate the connection
-                app_log.warning("Connection OK")
-                app_log.warning("Status: Wallet connected to {}:{}".format(connect_ip, connect_port))
-                ip_connected_var.set("{}:{}".format(connect_ip, connect_port))
-                keep_trying = False
-                break
-            except Exception as e:
-                app_log.warning("Status: Cannot connect to {}:{}".format(connect_ip, connect_port))
-                time.sleep(1)
-
-
-def node_connect_once(ip):  # Connect a light-wallet-ip directly from menu
-    try:
-        connect_ip, connect_port = convert_ip_port(ip)
-        wallet.ip = connect_ip
-        app_log.warning("Status: Attempting to connect to {}:{} out of {}".format(ip, connect_port, light_ip))
-        wallet.s = socks.socksocket()
-        wallet.s.settimeout(3)
-        wallet.s.connect((connect_ip, int(connect_port)))
-        connections.send(wallet.s, "statusget", 10)
-        result = connections.receive(wallet.s, 10)  # validate the connection
-        app_log.warning("Connection OK")
-        app_log.warning("Status: Wallet connected to {}:{}".format(connect_ip, connect_port))
-        ip_connected_var.set("{}:{}".format(connect_ip, connect_port))
-    except Exception as e:
-        app_log.warning("Status: Cannot connect to {}:{}".format(connect_ip, connect_port))
-        node_connect()
-
 
 def replace_regex(string, replace):
     replaced_string = re.sub(r'^{}'.format(replace), "", string)
@@ -238,13 +155,11 @@ def replace_regex(string, replace):
 
 
 def alias_register(alias_desired):
-    connections.send(wallet.s, "aliascheck", 10)
-    connections.send(wallet.s, alias_desired, 10)
-
-    result = connections.receive(wallet.s, 10)
+    # This will freeze, but let say it's ok, we're waiting for a feedback.
+    result = async_client.connection.command("aliascheck", alias_desired)
 
     if result == "Alias free":
-        send("0", keyring.myaddress, "", "alias=" + alias_desired)
+        send("0", myaddress, "", "alias=" + alias_desired)
         pass
     else:
         messagebox.showinfo("Conflict", "Name already registered")
@@ -307,57 +222,51 @@ def all_spend_check():
 
         fee_from_all = fee_calculate(openfield_fee_calc)
         amount.delete(0, END)
-        amount.insert(0, (Decimal(balance_raw.get()) - Decimal(fee_from_all)))
+        amount.insert(0,(Decimal(balance_raw.get()) - Decimal(fee_from_all)))
 
 
 def fingerprint():
     root.filename = filedialog.askopenfilename(multiple=True, initialdir="", title="Select files for fingerprinting")
 
-    dict = {}
+    data_dict = {}
 
-    for file in root.filename:
-        with open(file, 'rb') as fp:
+    for f in root.filename:
+        with open(f, 'rb') as fp:
             data = hashlib.blake2b(fp.read()).hexdigest()
-            dict[os.path.split(file)[-1]] = data
+            data_dict[os.path.split(f)[-1]] = data
 
-    openfield.insert(INSERT, dict)
-
-
-def keys_untar(archive):
-    with open(archive, "r") as archive_file:
-        tar = tarfile.open(archive_file.name)
-        name = tar.getnames()
-        tar.extractall()
-    app_log.warning("{} file untarred successfully".format(name))
-    return name
+    openfield.insert(INSERT, data_dict)
 
 
 def keys_load_dialog():
-    wallet_load = filedialog.askopenfilename(multiple=False, initialdir="", title="Select wallet")
+    global key
+    global private_key_readable
+    global encrypted
+    global unlocked
+    global public_key_b64encoded
+    global myaddress
+    global private_key_load
+    global public_key_load
+    wallet_load = filedialog.askopenfilename(multiple=False, initialdir="", title="Select private key")
 
-    if wallet_load.endswith('.gz'):
-        print(wallet_load)
-        wallet_load = keys_untar(wallet_load)[0]
-
-    keyring.key, keyring.public_key_readable, keyring.private_key_readable, keyring.encrypted, keyring.unlocked, keyring.public_key_hashed, keyring.myaddress, keyring.keyfile = essentials.keys_load_new(wallet_load)  # upgrade later, remove blanks
+    key, _, private_key_readable, encrypted, unlocked, public_key_b64encoded, myaddress, keyfile = essentials.keys_load_new(wallet_load)  # upgrade later, remove blanks
 
     encryption_button_refresh()
 
     gui_address_t.delete(0, END)
-    gui_address_t.insert(INSERT, keyring.myaddress)
+    gui_address_t.insert(INSERT, myaddress)
 
     recipient_address.config(state=NORMAL)
     recipient_address.delete(0, END)
-    recipient_address.insert(INSERT, keyring.myaddress)
+    recipient_address.insert(INSERT, myaddress)
     recipient_address.config(state=DISABLED)
 
     sender_address.config(state=NORMAL)
     sender_address.delete(0, END)
-    sender_address.insert(INSERT, keyring.myaddress)
+    sender_address.insert(INSERT, myaddress)
     sender_address.config(state=DISABLED)
 
-    t = threading.Thread(target=refresh, args=(keyring.myaddress, wallet.s))
-    t.start()
+    refresh(myaddress, s)
 
 
 def keys_backup():
@@ -369,23 +278,20 @@ def keys_backup():
 
         der_files = glob.glob("*.der")
 
-        tar = tarfile.open(root.filename, "w:gz")
-        for der_file in der_files:
-            tar.add(der_file, arcname=der_file)
-        tar.close()
+        with tarfile.open(root.filename, "w:gz") as tar:
+            for der_file in der_files:
+                tar.add(der_file, arcname=der_file)
 
 
 def watch():
     address = gui_address_t.get()
-    t = threading.Thread(target=refresh, args=(address, wallet.s))
-    t.start()
+    refresh(address, s)
 
 
 def unwatch():
     gui_address_t.delete(0, END)
-    gui_address_t.insert(INSERT, keyring.myaddress)
-    t = threading.Thread(target=refresh, args=(keyring.myaddress, wallet.s))
-    t.start()
+    gui_address_t.insert(INSERT, myaddress)
+    refresh(myaddress, s)
 
 
 def aliases_list():
@@ -394,10 +300,8 @@ def aliases_list():
     aliases_box = Text(top12, width=100)
     aliases_box.grid(row=0, pady=0)
 
-    connections.send(wallet.s, "aliasget", 10)
-    connections.send(wallet.s, keyring.myaddress, 10)
-
-    aliases_self = connections.receive(wallet.s, 10)
+    # This will freeze, but let say it's ok, we're waiting for a feedback.
+    aliases_self = async_client.connection.command("aliasget", myaddress)
 
     for x in aliases_self:
         aliases_box.insert(INSERT, replace_regex(x[0], "alias="))
@@ -434,7 +338,7 @@ def url_insert():
 
 def address_copy():
     root.clipboard_clear()
-    root.clipboard_append(keyring.myaddress)
+    root.clipboard_append(myaddress)
 
 
 def url_copy():
@@ -445,11 +349,6 @@ def url_copy():
 def recipient_copy():
     root.clipboard_clear()
     root.clipboard_append(recipient.get())
-
-
-def percentage(percent, whole):
-    return (Decimal(percent) * Decimal(whole) / 100)
-
 
 def alias():
     alias_var = StringVar()
@@ -472,10 +371,6 @@ def alias():
 
 
 def encrypt_get_password():
-    if keyring.encrypted:
-        messagebox.showwarning("Error", "Already encrypted")
-        return
-
     # enter password
     top3 = Toplevel()
     top3.title("Enter Password")
@@ -483,14 +378,12 @@ def encrypt_get_password():
     password_label = Label(top3, text="Input password")
     password_label.grid(row=0, column=0, sticky=N + W, padx=15, pady=(5, 0))
 
-    password_var_enc.set("")
     input_password = Entry(top3, textvariable=password_var_enc, show='*')
     input_password.grid(row=1, column=0, sticky=N + E, padx=15, pady=(0, 5))
 
     confirm_label = Label(top3, text="Confirm password")
     confirm_label.grid(row=2, column=0, sticky=N + W, padx=15, pady=(5, 0))
 
-    password_var_con.set("")
     input_password_con = Entry(top3, textvariable=password_var_con, show='*')
     input_password_con.grid(row=3, column=0, sticky=N + E, padx=15, pady=(0, 5))
 
@@ -503,7 +396,7 @@ def encrypt_get_password():
 
 
 def lock_fn(button):
-    key = None
+    # key = None
     decrypt_b.configure(text="Unlock", state=NORMAL)
     lock_b.configure(text="Locked", state=DISABLED)
     messagemenu.entryconfig("Sign Messages", state=DISABLED)  # messages
@@ -512,23 +405,21 @@ def lock_fn(button):
 
 
 def encrypt_fn(destroy_this):
+    global key, public_key_readable, private_key_readable, encrypted, unlocked, public_key_b64encoded, myaddress
     password = password_var_enc.get()
-    password_conf = password_var_con.get()
+    password = password_var_con.get()
 
-    if password == password_conf:
-        busy(destroy_this)
-        try:
-            ciphertext = encrypt(password, keyring.private_key_readable)
-            ciphertext_export = base64.b64encode(ciphertext).decode()
-            essentials.keys_save(ciphertext_export, keyring.public_key_readable, keyring.myaddress, keyring.keyfile)
+    if password == password:
 
-            # encrypt_b.configure(text="Encrypted", state=DISABLED)
+        ciphertext = encrypt(password, private_key_readable)
+        ciphertext_export = base64.b64encode(ciphertext).decode()
+        essentials.keys_save(ciphertext_export, public_key_readable, myaddress, keyfile)
 
-            keyring.key, keyring.public_key_readable, keyring.private_key_readable, keyring.encrypted, keyring.unlocked, keyring.public_key_hashed, keyring.myaddress, keyring.keyfile = essentials.keys_load_new(keyring.keyfile.name)
+        # encrypt_b.configure(text="Encrypted", state=DISABLED)
 
-            encryption_button_refresh()
-        finally:
-            notbusy(destroy_this)
+        key, public_key_readable, private_key_readable, encrypted, unlocked, public_key_b64encoded, myaddress, keyfile = essentials.keys_load(private_key_load, public_key_load)
+        encryption_button_refresh()
+
         destroy_this.destroy()
         # lock_b.configure(text="Lock", state=NORMAL)
     else:
@@ -552,15 +443,14 @@ def decrypt_get_password():
 
 
 def decrypt_fn(destroy_this):
-    busy(destroy_this)
+    global key
     try:
-        keyring.password = password_var_dec.get()
+        password = password_var_dec.get()
 
-        keyring.decrypted_privkey = decrypt(keyring.password, base64.b64decode(keyring.private_key_readable))  # decrypt privkey
+        decrypted_privkey = decrypt(password, base64.b64decode(private_key_readable))  # decrypt privkey
 
-        keyring.key = RSA.importKey(keyring.decrypted_privkey)  # be able to sign
+        key = RSA.importKey(decrypted_privkey)  # be able to sign
 
-        notbusy(destroy_this)
         destroy_this.destroy()
 
         decrypt_b.configure(text="Unlocked", state=DISABLED)
@@ -568,13 +458,12 @@ def decrypt_fn(destroy_this):
         messagemenu.entryconfig("Sign Messages", state=NORMAL)  # messages
         walletmenu.entryconfig("Recovery", state=NORMAL)  # recover
     except:
-        notbusy(destroy_this)
         messagebox.showwarning("Locked", "Wrong password")
 
-    password_var_dec.set("")
+    return key
 
 
-def send_confirm(amount_input, recipient_input, operation_input, openfield_input):
+def sendirm(amount_input, recipient_input, operation_input, openfield_input):
     amount_input = quantize_eight(amount_input)
 
     # Exchange check
@@ -584,32 +473,40 @@ def send_confirm(amount_input, recipient_input, operation_input, openfield_input
     }
     if recipient_input in exchange_addresses and len(openfield_input) < 16:
         messagebox.showinfo("Cannot send",
-                            "Identification message is missing for {}, please include it"
-                            .format(exchange_addresses[recipient_input]))
+            "Identification message is missing for {}, please include it"
+            .format(exchange_addresses[recipient_input]))
         return
 
     top10 = Toplevel()
     top10.title("Confirm")
 
     if alias_cb_var.get():  # alias check
-        connections.send(wallet.s, "addfromalias", 10)
-        connections.send(wallet.s, recipient_input, 10)
-        recipient_input = connections.receive(wallet.s, 10)
+        """
+        connections.send(s, "addfromalias", 10)
+        connections.send(s, recipient_input, 10)
+        recipient_input = connections.receive(s, 10)
+        """
+        # This will freeze, but let say it's ok, we're waiting for a feedback.
+        recipient_input = async_client.connection.command("addfromalias", recipient_input)
+
 
     # encr check
     if encrypt_var.get():
         # get recipient's public key
+        """
+        connections.send(s, "pubkeyget", 10)
+        connections.send(s, recipient_input, 10)
+        target_public_key_b64encoded = connections.receive(s, 10)
+        """
+        # This will freeze, but let say it's ok, we're waiting for a feedback.
+        target_public_key_b64encoded = async_client.connection.command("pubkeyget", recipient_input)
 
-        connections.send(wallet.s, "pubkeyget", 10)
-        connections.send(wallet.s, recipient_input, 10)
-        target_public_key_hashed = connections.receive(wallet.s, 10)
-
-        recipient_key = RSA.importKey(base64.b64decode(target_public_key_hashed).decode("utf-8"))
+        recipient_key = RSA.importKey(base64.b64decode(target_public_key_b64encoded).decode("utf-8"))
 
         # openfield_input = str(target_public_key.encrypt(openfield_input.encode("utf-8"), 32))
 
         data = openfield_input.encode("utf-8")
-        # print (open("pubkey.der").read())
+        # print(open("pubkey.der").read())
         session_key = get_random_bytes(16)
         cipher_aes = AES.new(session_key, AES.MODE_EAX)
 
@@ -618,8 +515,8 @@ def send_confirm(amount_input, recipient_input, operation_input, openfield_input
 
         # Encrypt the data with the AES session key
         ciphertext, tag = cipher_aes.encrypt_and_digest(data)
-        enc_session_key = (cipher_rsa.encrypt(session_key))
-        openfield_input = str([x for x in (cipher_aes.nonce, tag, ciphertext, enc_session_key)])
+        enc_session_key =(cipher_rsa.encrypt(session_key))
+        openfield_input = str([x for x in(cipher_aes.nonce, tag, ciphertext, enc_session_key)])
 
     # encr check
 
@@ -632,21 +529,21 @@ def send_confirm(amount_input, recipient_input, operation_input, openfield_input
     if encrypt_var.get():
         openfield_input = "enc=" + str(openfield_input)
 
-    fee = fee_calculate(openfield_input, operation_input)
+    fee = fee_calculate(openfield_input)
 
     confirmation_dialog = Text(top10, width=100)
-    confirmation_dialog.insert(INSERT, ("Amount: {}\nFee: {}\nTotal: {}\nTo: {}\nOperation: {}\nData: {}".format('{:.8f}'.format(amount_input), '{:.8f}'.format(fee), '{:.8f}'.format(Decimal(amount_input) + Decimal(fee)), recipient_input, operation_input, openfield_input)))
+    confirmation_dialog.insert(INSERT,("Amount: {}\nFee: {}\nTotal: {}\nTo: {}\nOperation: {}\nData: {}".format('{:.8f}'.format(amount_input), '{:.8f}'.format(fee), '{:.8f}'.format(Decimal(amount_input) + Decimal(fee)), recipient_input, operation_input, openfield_input)))
     confirmation_dialog.configure(state="disabled")
     confirmation_dialog.grid(row=0, pady=0)
 
-    enter = Button(top10, text="Confirm", command=lambda: send_confirmed(amount_input, recipient_input, operation_input, openfield_input, top10))
+    enter = Button(top10, text="Confirm", command=lambda: sendirmed(amount_input, recipient_input, operation_input, openfield_input, top10))
     enter.grid(row=1, column=0, sticky=W + E, padx=15, pady=(5, 5))
 
     done = Button(top10, text="Cancel", command=top10.destroy)
     done.grid(row=2, column=0, sticky=W + E, padx=15, pady=(5, 5))
 
 
-def send_confirmed(amount_input, recipient_input, operation_input, openfield_input, top10):
+def sendirmed(amount_input, recipient_input, operation_input ,openfield_input, top10):
     send(amount_input, recipient_input, operation_input, openfield_input)
     top10.destroy()
 
@@ -654,7 +551,7 @@ def send_confirmed(amount_input, recipient_input, operation_input, openfield_inp
 def send(amount_input, recipient_input, operation_input, openfield_input):
     all_spend_check()
 
-    if keyring.key is None:
+    if key is None:
         messagebox.showerror("Locked", "Wallet is locked")
 
     app_log.warning("Received tx command")
@@ -668,7 +565,7 @@ def send(amount_input, recipient_input, operation_input, openfield_input):
 
     # alias check
 
-    if not address_validate(recipient_input):
+    if not essentials.address_validate(recipient_input):
         messagebox.showerror("Invalid Address", "Invalid address format")
     else:
 
@@ -676,38 +573,41 @@ def send(amount_input, recipient_input, operation_input, openfield_input):
         app_log.warning("Recipient: {}".format(recipient_input))
         app_log.warning("Data: {}".format(openfield_input))
 
-        tx_timestamp = '%.2f' % (float(wallet.stats_timestamp) - abs(float(wallet.stats_timestamp) - time.time()))  # randomize timestamp for unique signatures
-        transaction = (str(tx_timestamp), str(keyring.myaddress), str(recipient_input), '%.8f' % float(amount_input), str(operation_input), str(openfield_input))  # this is signed, float kept for compatibility
+        tx_timestamp = '%.2f' %(float(stats_timestamp) - abs(float(stats_timestamp) - time.time())) #randomize timestamp for unique signatures
+        transaction =(str(tx_timestamp), str(myaddress), str(recipient_input), '%.8f' % float(amount_input), str(operation_input), str(openfield_input))  # this is signed, float kept for compatibility
 
         h = SHA.new(str(transaction).encode("utf-8"))
-        signer = PKCS1_v1_5.new(keyring.key)
+        signer = PKCS1_v1_5.new(key)
         signature = signer.sign(h)
         signature_enc = base64.b64encode(signature)
         app_log.warning("Client: Encoded Signature: {}".format(signature_enc.decode("utf-8")))
 
-        verifier = PKCS1_v1_5.new(keyring.key)
+        verifier = PKCS1_v1_5.new(key)
 
         if verifier.verify(h, signature):
 
             app_log.warning("Client: The signature is valid, proceeding to save transaction, signature, new txhash and the public key to mempool")
 
-            # print(str(timestamp), str(address), str(recipient_input), '%.8f' % float(amount_input),str(signature_enc), str(public_key_hashed), str(keep_input), str(openfield_input))
-            tx_submit = str(tx_timestamp), str(keyring.myaddress), str(recipient_input), '%.8f' % float(amount_input), str(signature_enc.decode("utf-8")), str(keyring.public_key_hashed.decode("utf-8")), str(operation_input), str(openfield_input)  # float kept for compatibility
+            # print(str(timestamp), str(address), str(recipient_input), '%.8f' % float(amount_input),str(signature_enc), str(public_key_b64encoded), str(keep_input), str(openfield_input))
+            tx_submit = str(tx_timestamp), str(myaddress), str(recipient_input), '%.8f' % float(amount_input), str(signature_enc.decode("utf-8")), str(public_key_b64encoded.decode("utf-8")), str(operation_input), str(openfield_input)  # float kept for compatibility
 
             while True:
-                connections.send(wallet.s, "mpinsert", 10)
-                connections.send(wallet.s, tx_submit, 10)
-                reply = connections.receive(wallet.s, 10)
+                """
+                connections.send(s, "mpinsert", 10)
+                connections.send(s, tx_submit, 10)
+                reply = connections.receive(s, 10)
+                """
+                # This will freeze, but let say it's ok, we're waiting for a feedback.
+                reply = async_client.connection.command("mpinsert", tx_submit)
+
                 app_log.warning("Client: {}".format(reply))
                 if reply[-1] == "Success":
-                    messagebox.showinfo("OK", "Transaction accepted to mempool")
+                    messagebox.showinfo("OK","Transaction accepted to mempool")
                 else:
-                    messagebox.showerror("Error", "There was a problem with transaction processing. Full message: {}".format(reply))
+                    messagebox.showerror("Error","There was a problem with transaction processing. Full message: {}".format(reply))
                 break
 
-            t = threading.Thread(target=refresh, args=(gui_address_t.get(), wallet.s))
-            t.start()
-
+            refresh(gui_address_t.get(), s)
         else:
             app_log.warning("Client: Invalid signature")
         # enter transaction end
@@ -719,7 +619,6 @@ def send(amount_input, recipient_input, operation_input, openfield_input):
 
 
 def qr(address):
-    """nuitka
     address_qr = pyqrcode.create(address)
     address_qr.png('address_qr.png')
 
@@ -727,9 +626,8 @@ def qr(address):
     top = Toplevel()
     top.title("Address QR Code")
 
-    im = PIL.Image.open("address_qr.png")
-
-    photo = PIL.ImageTk.PhotoImage(im.resize((320, 320)))
+    with PIL.Image.open("address_qr.png") as im:
+        photo = PIL.ImageTk.PhotoImage(im.resize((320, 320)))
     label = Label(top, image=photo)
     label.image = photo  # keep a reference!
     label.pack()
@@ -740,13 +638,16 @@ def qr(address):
     button = Button(top, text="Dismiss", command=top.destroy)
     button.pack()
     # popup
-    """
 
 
 def msg_dialogue(address):
-    connections.send(wallet.s, "addlist", 10)
-    connections.send(wallet.s, keyring.myaddress, 10)
-    addlist = connections.receive(wallet.s, 10)
+    """
+    connections.send(s, "addlist", 10)
+    connections.send(s, myaddress, 10)
+    addlist = connections.receive(s, 10)
+    """
+    # This will freeze, but let say it's ok, we're waiting for a feedback.
+    addlist = async_client.connection.command("addlist", myaddress)
     print(addlist)
 
     def msg_received_get(addlist):
@@ -754,11 +655,13 @@ def msg_dialogue(address):
         for x in addlist:
             if x[11].startswith(("msg=", "bmsg=", "enc=msg=", "enc=bmsg=")) and x[3] == address:
                 # print(x[11])
-
-                connections.send(wallet.s, "aliasget", 10)
-                connections.send(wallet.s, x[2], 10)
-
-                msg_address = connections.receive(wallet.s, 10)[0][0]
+                """
+                connections.send(s, "aliasget", 10)
+                connections.send(s, x[2], 10)
+                msg_address = connections.receive(s, 10)[0][0]
+                """
+                # We could/should use the cache, but say we do a live request for now.
+                msg_address = async_client.connection.command("aliasget", x[2])
 
                 if x[11].startswith("enc=msg="):
                     msg_received_digest = replace_regex(x[11], "enc=msg=")
@@ -767,7 +670,7 @@ def msg_dialogue(address):
 
                         (cipher_aes_nonce, tag, ciphertext, enc_session_key) = ast.literal_eval(msg_received_digest)
                         # Decrypt the session key with the public RSA key
-                        cipher_rsa = PKCS1_OAEP.new(keyring.key)
+                        cipher_rsa = PKCS1_OAEP.new(key)
                         session_key = cipher_rsa.decrypt(enc_session_key)
                         # Decrypt the data with the AES session key
                         cipher_aes = AES.new(session_key, AES.MODE_EAX, cipher_aes_nonce)
@@ -784,7 +687,7 @@ def msg_dialogue(address):
                         # msg_received_digest = key.decrypt(ast.literal_eval(msg_received_digest)).decode("utf-8")
                         (cipher_aes_nonce, tag, ciphertext, enc_session_key) = ast.literal_eval(msg_received_digest)
                         # Decrypt the session key with the public RSA key
-                        cipher_rsa = PKCS1_OAEP.new(keyring.key)
+                        cipher_rsa = PKCS1_OAEP.new(key)
                         session_key = cipher_rsa.decrypt(enc_session_key)
                         # Decrypt the data with the AES session key
                         cipher_aes = AES.new(session_key, AES.MODE_EAX, cipher_aes_nonce)
@@ -804,17 +707,21 @@ def msg_dialogue(address):
                 elif x[11].startswith("msg="):
                     msg_received_digest = replace_regex(x[11], "msg=")
 
-                msg_received.insert(INSERT, ((time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(Decimal(x[1])))) + " From " + replace_regex(msg_address, "alias=") + ": " + msg_received_digest) + "\n")
+                msg_received.insert(INSERT,((time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(Decimal(x[1])))) + " From " + replace_regex(msg_address, "alias=") + ": " + msg_received_digest) + "\n")
 
     def msg_sent_get(addlist):
 
         for x in addlist:
             if x[11].startswith(("msg=", "bmsg=", "enc=msg=", "enc=bmsg=")) and x[2] == address:
                 # print(x[11])
+                """
+                connections.send(s, "aliasget", 10)
+                connections.send(s, x[3], 10)
+                received_aliases = connections.receive(s, 10)
+                """
+                # We could/should use the cache, but say we do a live request for now.
+                received_aliases = async_client.connection.command("aliasget", x[3])
 
-                connections.send(wallet.s, "aliasget", 10)
-                connections.send(wallet.s, x[3], 10)
-                received_aliases = connections.receive(wallet.s, 10)
                 msg_recipient = received_aliases[0][0]
 
                 if x[11].startswith("enc=msg="):
@@ -823,7 +730,7 @@ def msg_dialogue(address):
                         # msg_sent_digest = key.decrypt(ast.literal_eval(msg_sent_digest)).decode("utf-8")
                         (cipher_aes_nonce, tag, ciphertext, enc_session_key) = ast.literal_eval(msg_sent_digest)
                         # Decrypt the session key with the public RSA key
-                        cipher_rsa = PKCS1_OAEP.new(keyring.key)
+                        cipher_rsa = PKCS1_OAEP.new(key)
                         session_key = cipher_rsa.decrypt(enc_session_key)
                         # Decrypt the data with the AES session key
                         cipher_aes = AES.new(session_key, AES.MODE_EAX, cipher_aes_nonce)
@@ -840,7 +747,7 @@ def msg_dialogue(address):
                         # msg_sent_digest = key.decrypt(ast.literal_eval(msg_sent_digest)).decode("utf-8")
                         (cipher_aes_nonce, tag, ciphertext, enc_session_key) = ast.literal_eval(msg_sent_digest)
                         # Decrypt the session key with the public RSA key
-                        cipher_rsa = PKCS1_OAEP.new(keyring.key)
+                        cipher_rsa = PKCS1_OAEP.new(key)
                         session_key = cipher_rsa.decrypt(enc_session_key)
                         # Decrypt the data with the AES session key
                         cipher_aes = AES.new(session_key, AES.MODE_EAX, cipher_aes_nonce)
@@ -858,7 +765,7 @@ def msg_dialogue(address):
                 elif x[11].startswith("msg="):
                     msg_sent_digest = replace_regex(x[11], "msg=")
 
-                msg_sent.insert(INSERT, ((time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(Decimal(x[1])))) + " To " + replace_regex(msg_recipient, "alias=") + ": " + msg_sent_digest) + "\n")
+                msg_sent.insert(INSERT,((time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(Decimal(x[1])))) + " To " + replace_regex(msg_recipient, "alias=") + ": " + msg_sent_digest) + "\n")
 
     # popup
     top11 = Toplevel()
@@ -883,18 +790,30 @@ def msg_dialogue(address):
 
 
 def refresh_auto():
-    t = threading.Thread(target=refresh, args=(gui_address_t.get(), wallet.s))
-    root.after(0, t.start())
-
-    root.after(30000, refresh_auto)
+    status = async_client.connection.loop_status()
+    if status != True:
+        #benchmark light_ip-list
+        benchmark_lightip(app_log)
+        #restart loop
+        restart_loop()
+    root.after(0, refresh(gui_address_t.get(), s))
+    root.after(10000, refresh_auto)
 
 
 def stats():
-    """nuitka
-
     stats_window = Toplevel()
     stats_window.title("Node Statistics")
     stats_window.resizable(0, 0)
+
+    # canvas_stats_bg = Canvas(root, highlightthickness=0)
+    # canvas_stats_bg.grid(row=0, column=0, rowspan=200, columnspan=200, sticky=W + E + S + N)
+
+    # stats_window.update()
+    # width_stats = stats_window.winfo_width()
+    # height_stats = stats_window.winfo_height()
+
+    # img_stats_bg = PhotoImage(file="graphics/brushed.png")
+    # canvas_bg.create_image(width_stats, height_stats, image=img_stats_bg)
 
     frame_chart = Frame(stats_window, height=100, width=100)
     frame_chart.grid(row=0, column=1, rowspan=999)
@@ -914,54 +833,54 @@ def stats():
 
         # f.remove(first)
         first = f.add_subplot(rows, columns, 1)
-        first.plot((range(len(stats_nodes_count_list))), (stats_nodes_count_list))
+        first.plot((range(len(stats_nodes_count_list))),(stats_nodes_count_list))
         first.ticklabel_format(useOffset=False)
 
         first_2 = f.add_subplot(rows, columns, 1)
-        first_2.plot((range(len(stats_thread_count_list))), (stats_thread_count_list))
+        first_2.plot((range(len(stats_thread_count_list))),(stats_thread_count_list))
         first_2.ticklabel_format(useOffset=False)
         first.legend(('Nodes', 'Threads'), loc='best', shadow=True)
 
         second = f.add_subplot(rows, columns, 2)
-        second.plot((range(len(stats_consensus_list))), (stats_consensus_list))
+        second.plot((range(len(stats_consensus_list))),(stats_consensus_list))
         second.legend(('Consensus Block',), loc='best', shadow=True)
         second.ticklabel_format(useOffset=False)
 
         third = f.add_subplot(rows, columns, 3)
-        third.plot((range(len(stats_consensus_percentage_list))), (stats_consensus_percentage_list))
+        third.plot((range(len(stats_consensus_percentage_list))),(stats_consensus_percentage_list))
         third.legend(('Consensus Level',), loc='best', shadow=True)
         third.ticklabel_format(useOffset=False)
 
         fourth = f.add_subplot(rows, columns, 4)
-        fourth.plot((range(len(stats_diff_list_2))), (stats_diff_list_2))
+        fourth.plot((range(len(stats_diff_list_2))),(stats_diff_list_2))
         fourth.legend(('Time To Generate Block',), loc='best', shadow=True)
         fourth.ticklabel_format(useOffset=False)
 
         fifth = f.add_subplot(rows, columns, 5)
-        fifth.plot((range(len(stats_diff_list_0))), (stats_diff_list_0))
+        fifth.plot((range(len(stats_diff_list_0))),(stats_diff_list_0))
         fifth.ticklabel_format(useOffset=False)
 
         fifth_2 = f.add_subplot(rows, columns, 5)
-        fifth_2.plot((range(len(stats_diff_list_1))), (stats_diff_list_1))
+        fifth_2.plot((range(len(stats_diff_list_1))),(stats_diff_list_1))
         fifth_2.ticklabel_format(useOffset=False)
 
         fifth_3 = f.add_subplot(rows, columns, 5)
-        fifth_3.plot((range(len(stats_diff_list_3))), (stats_diff_list_3))
+        fifth_3.plot((range(len(stats_diff_list_3))),(stats_diff_list_3))
         fifth_3.ticklabel_format(useOffset=False)
         fifth.legend(('Diff 1', 'Diff 2', 'Diff Current',), loc='best', shadow=True)
 
         sixth = f.add_subplot(rows, columns, 6)
-        sixth.plot((range(len(stats_diff_list_4))), (stats_diff_list_4))
+        sixth.plot((range(len(stats_diff_list_4))),(stats_diff_list_4))
         sixth.legend(('Block Time',), loc='best', shadow=True)
         sixth.ticklabel_format(useOffset=False)
 
         seventh = f.add_subplot(rows, columns, 7)
-        seventh.plot((range(len(stats_diff_list_5))), (stats_diff_list_5))
+        seventh.plot((range(len(stats_diff_list_5))),(stats_diff_list_5))
         seventh.legend(('Hashrate',), loc='best', shadow=True)
         seventh.ticklabel_format(useOffset=False)
 
         eigth = f.add_subplot(rows, columns, 8)
-        eigth.plot((range(len(stats_diff_list_6))), (stats_diff_list_6))
+        eigth.plot((range(len(stats_diff_list_6))),(stats_diff_list_6))
         eigth.legend(('Difficulty Adjustment',), loc='best', shadow=True)
         eigth.ticklabel_format(useOffset=False)
 
@@ -980,6 +899,7 @@ def stats():
         stats_version = statusget[7]
         stats_diff = statusget[8]
 
+
         stats_address_label_var.set("Node Address: {}".format(stats_address))
         stats_nodes_count_label_var.set("Number of Nodes: {}".format(stats_nodes_count))
         stats_nodes_list_text_var.delete(0, END)
@@ -991,7 +911,7 @@ def stats():
         stats_uptime_var.set("Uptime: {:.2f} hours".format(stats_uptime / 60 / 60))
         stats_consensus_var.set("Consensus Block: {}".format(stats_consensus))
         stats_consensus_consensus_percentage_var.set("Consensus Level: {:.2f}%".format(stats_consensus_percentage))
-        stats_version_var.set("Node: {}".format(stats_version))
+        stats_version_var.set("Version: {}".format(stats_version))
         stats_diff_var_0.set("Difficulty 1: {}".format(stats_diff[0]))
         stats_diff_var_1.set("Difficulty 2: {}".format(stats_diff[1]))
         stats_diff_var_2.set("Time to Generate Block: {}".format(stats_diff[2]))
@@ -1069,18 +989,20 @@ def stats():
 
             chart_fill()
         except Exception as e:
-            print("Statistics window closed, disabling auto-refresh ({})".format(e))
+            print("Statistics window closed, disabling auto-refresh({})".format(e))
 
     refresh_stats_auto()
-    """
 
 
 def csv_export(s):
+    """
     connections.send(s, "addlist", 10)  # senders
-    connections.send(s, keyring.myaddress, 10)
-
+    connections.send(s, myaddress, 10)
     tx_list = connections.receive(s, 10)
     print(tx_list)
+    """
+    # This will freeze, but let say it's ok, we're waiting for a feedback.
+    tx_list = async_client.connection.command("addlist", myaddress)
 
     root.filename = filedialog.asksaveasfilename(initialdir="", title="Select CSV file")
 
@@ -1100,7 +1022,7 @@ def token_transfer(token, amount, window):
     openfield.insert(INSERT, "{}:{}".format(token, amount))
     window.destroy()
 
-    send_confirm(0, recipient.get(), "token:transfer", "{}:{}".format(token, amount))
+    sendirm(0, recipient.get(),"token:transfer", "{}:{}".format(token, amount))
 
 
 def token_issue(token, amount, window):
@@ -1110,40 +1032,40 @@ def token_issue(token, amount, window):
     openfield.delete('1.0', END)  # remove previous
     openfield.insert(INSERT, "{}:{}".format(token, amount))
     recipient.delete(0, END)
-    recipient.insert(INSERT, keyring.myaddress)
+    recipient.insert(INSERT, myaddress)
     window.destroy()
 
-    send_confirm(0, recipient.get(), "token:issue", "{}:{}".format(token, amount))
+    sendirm(0, recipient.get(),"token:issue", "{}:{}".format(token, amount))
 
 
 def tokens():
-    tokens_main = Frame(tab_tokens, relief='ridge', borderwidth=0)
-    tokens_main.grid(row=0, column=0, pady=5, padx=5, sticky=N + W + E + S)
-    # tokens_main.title ("Tokens")
-
-    token_box = Listbox(tokens_main, width=100)
-    token_box.grid(row=0, pady=0)
+    tokens_main = Frame (tab_tokens, relief='ridge', borderwidth=0)
+    tokens_main.grid (row=0, column=0, pady=5, padx=5, sticky=N + W + E + S)
+    #tokens_main.title("Tokens")
+    token_box = Listbox (tokens_main, width=100)
+    token_box.grid (row=0, pady=0)
 
     scrollbar_v = Scrollbar(tokens_main, command=token_box.yview)
     scrollbar_v.grid(row=0, column=1, sticky=N + S + E)
 
-    connections.send(wallet.s, "tokensget", 10)
-    connections.send(wallet.s, gui_address_t.get(), 10)
-    tokens_results = connections.receive(wallet.s, 10)
+    """
+    connections.send(s, "tokensget", 10)
+    connections.send(s, gui_address_t.get(), 10)
+    tokens_results = connections.receive(s, 10)
+    """
+    # This will freeze, but let say it's ok, we're waiting for a feedback.
+    tokens_results = async_client.connection.command("tokensget", gui_address_t.get())
+
     print(tokens_results)
 
     for pair in tokens_results:
-        try:
-            token = pair[0]
-            balance = pair[1]
-            token_box.insert(END, (token, ":", balance))
-        except:
-            app_log.warning("There was an issue fetching tokens")
-            pass
+        token = pair[0]
+        balance = pair[1]
+        token_box.insert(END,(token, ":", balance))
 
     # callback
     def callback(event):
-        token_select = (token_box.get(token_box.curselection()[0]))
+        token_select =(token_box.get(token_box.curselection()[0]))
         token_name_var.set(token_select[0])
         token_amount_var.set(token_select[2])
 
@@ -1178,38 +1100,41 @@ def tokens():
     issue = Button(tokens_main, text="Issue", command=lambda: token_issue(token_name_var.get(), token_amount_var.get(), tokens_main))
     issue.grid(row=5, column=0, sticky=W + E, padx=5)
 
-    # cancel = Button (tokens_main, text="Cancel", command=tokens_main.destroy)
-    # cancel.grid (row=6, column=0, sticky=W + E, padx=5)
+    #cancel = Button(tokens_main, text="Cancel", command=tokens_main.destroy)
+    #cancel.grid(row=6, column=0, sticky=W + E, padx=5)
 
 
 def tx_tree_define():
-    wallet.tx_tree = ttk.Treeview(tab_transactions, selectmode="extended", columns=('sender', 'recipient', 'amount', 'type'), height=20)
-    wallet.tx_tree.grid(row=1, column=0)
+    global tx_tree
+
+    tx_tree = ttk.Treeview(tab_transactions, selectmode="extended", columns=('sender', 'recipient', 'amount', 'type'), height=20)
+    tx_tree.grid(row=1, column=0)
 
     # table
-    wallet.tx_tree.heading("#0", text='time')
-    wallet.tx_tree.column("#0", anchor='center', width=100)
+    tx_tree.heading("#0", text='time')
+    tx_tree.column("#0", anchor='center', width=100)
 
-    wallet.tx_tree.heading("#1", text='sender')
-    wallet.tx_tree.column("#1", anchor='center', width=347)
+    tx_tree.heading("#1", text='sender')
+    tx_tree.column("#1", anchor='center', width=347)
 
-    wallet.tx_tree.heading("#2", text='recipient')
-    wallet.tx_tree.column("#2", anchor='center', width=347)
+    tx_tree.heading("#2", text='recipient')
+    tx_tree.column("#2", anchor='center', width=347)
 
-    wallet.tx_tree.heading("#3", text='amount')
-    wallet.tx_tree.column("#3", anchor='center', width=35)
+    tx_tree.heading("#3", text='amount')
+    tx_tree.column("#3", anchor='center', width=35)
 
-    wallet.tx_tree.heading("#4", text='type')
-    wallet.tx_tree.column("#4", anchor='center', width=40)
+    tx_tree.heading("#4", text='type')
+    tx_tree.column("#4", anchor='center', width=40)
 
-    wallet.tx_tree.grid(sticky=N + S + W + E)
+    tx_tree.grid(sticky=N + S + W + E)
 
 
 def table(address, addlist_20, mempool_total):
+    global tx_tree
     # transaction table
     # data
     try:
-        wallet.tx_tree.destroy()
+        tx_tree.destroy()
     except:
         pass
     tx_tree_define()
@@ -1218,48 +1143,32 @@ def table(address, addlist_20, mempool_total):
         tag = "mempool"
 
         if tx[1] == address:
-            wallet.tx_tree.insert('', 'end', text=datetime.fromtimestamp(float(tx[0])).strftime('%y-%m-%d %H:%M'), values=(tx[1], tx[2], tx[3], "?"), tags=tag)
-
-    # aliases
-    addlist_addressess = []
-    reclist_addressess = []
-
-    for tx in addlist_20:
-        addlist_addressess.append(tx[2])  # append address
-        reclist_addressess.append(tx[3])  # append recipient
+            tx_tree.insert('', 'end', text=datetime.fromtimestamp(float(tx[0])).strftime('%y-%m-%d %H:%M'), values=(tx[1], tx[2], tx[3], "?"), tags=tag)
 
     if resolve_var.get():
-        connections.send(wallet.s, "aliasesget", 10)  # senders
-        connections.send(wallet.s, addlist_addressess, 10)
-        aliases_address_results = connections.receive(wallet.s, 10)
+        # aliases
+        #  local address
+        needed_aliases = [gui_address_t.get()]
+        for tx in addlist_20:
+            needed_aliases.append(tx[2])  # append address
+            needed_aliases.append(tx[3])  # append recipient
+        # no need to ask the same alias twice
+        needed_aliases = set(needed_aliases)
+        # ask for the cached version and trigger update in background
+        aliases = async_client.connection.aliases(needed_aliases)
 
-        connections.send(wallet.s, "aliasesget", 10)  # recipients
-        connections.send(wallet.s, reclist_addressess, 10)
-        aliases_rec_results = connections.receive(wallet.s, 10)
+        for tx in addlist_20:
+            tx[2], tx[3] = aliases[tx[2]], aliases[tx[3]]
 
-        for index, tx in enumerate(addlist_20):
-            tx[2] = aliases_address_results[index]
-            tx[3] = aliases_rec_results[index]
-    # aliases
-
-    # bind local address to local alias
-    if resolve_var.get():
-        connections.send(wallet.s, "aliasesget", 10)  # local
-        connections.send(wallet.s, [gui_address_t.get()], 10)
-        alias_local_result = connections.receive(wallet.s, 10)[0]
-    # bind local address to local alias
-
+    local_address = gui_address_t.get()
     for tx in addlist_20:
-        if tx[3] == gui_address_t.get():
+        if tx[3] == local_address:
             tag = "received"
         else:
             tag = "sent"
-
         # case for alias = this address
-        if resolve_var.get():
-            print(tx[3], alias_local_result)
-            if tx[3] == alias_local_result:
-                tag = "received"
+        if resolve_var.get() and tx[3] == aliases[local_address]:
+            tag = "received"
         # case for alias = this address
 
         if Decimal(tx[9]) > 0:
@@ -1271,26 +1180,47 @@ def table(address, addlist_20, mempool_total):
         else:
             symbol = "TX"
 
-        wallet.tx_tree.insert('', 'end', text=datetime.fromtimestamp(float(tx[1])).strftime('%y-%m-%d %H:%M'), values=(tx[2], tx[3], tx[4], symbol), tags=tag)
+        tx_tree.insert('', 'end', text=datetime.fromtimestamp(float(tx[1])).strftime('%y-%m-%d %H:%M'), values=(tx[2], tx[3], tx[4], symbol), tags=tag)
 
-        wallet.tx_tree.tag_configure("received", background='palegreen1')
-        wallet.tx_tree.tag_configure("sent", background='chocolate1')
+        tx_tree.tagigure("received", background='palegreen1')
+        tx_tree.tagigure("sent", background='chocolate1')
 
     # table
 
 
-def refresh(address, s):
+def refresh(address, s=None):
+    global balance
+    global statusget
+    global block_height_old
+    global mempool_total
+    global stats_timestamp
+
+    status = async_client.connection.status(address)
+    if not async_client.connection.connected:
+        app_log.warning("Not connected yet, please wait")
+        ip_connected_var.set("Connecting...")
+        frame_bottom.config(bg="red")
+        return
+    if not "stats_account" in status:
+        app_log.warning("No info yet, please wait")
+        ip_connected_var.set("Syncing...")
+        frame_bottom.config(bg="orange")
+        return
+
+    ip_connected_var.set(async_client.connection.ip_port)
+    frame_bottom.config(bg="")
+    # TEMP
+    # print("Status", status)
+
     # print "refresh triggered"
     try:
-        connections.send(s, "statusget", 10)
-        wallet.statusget = connections.receive(s, 10)
-        wallet.status_version = wallet.statusget[7]
-        wallet.stats_timestamp = wallet.statusget[9]
-        server_timestamp_var.set("GMT: {}".format(time.strftime("%H:%M:%S", time.gmtime(int(float(wallet.stats_timestamp))))))
+        statusget = status['statusget']
+        status_version = statusget[7]
+        stats_timestamp = statusget[9]
+
+        server_timestamp_var.set("GMT: {}".format(time.strftime("%H:%M:%S", time.gmtime(int(float(stats_timestamp))))))
 
         # data for charts
-
-        """
         block_height = statusget[8][7]  # move chart only if the block height changes, returned from diff 7
         try:
             block_height_old
@@ -1317,11 +1247,8 @@ def refresh(address, s):
         else:
             print("Chart update skipped, block hasn't moved")
         # data for charts
-        """
 
-        connections.send(s, "balanceget", 10)
-        connections.send(s, address, 10)  # change address here to view other people's transactions
-        stats_account = connections.receive(s, 10)
+        stats_account = status['stats_account']
         balance = stats_account[0]
         credit = stats_account[1]
         debit = stats_account[2]
@@ -1330,17 +1257,13 @@ def refresh(address, s):
 
         app_log.warning("Transaction address balance: {}".format(balance))
 
-        # 0000000011"statusget"
-        # 0000000011"blocklast"
-        connections.send(s, "blocklast", 10)
-        block_get = connections.receive(s, 10)
+        block_get = status['block_get']
         bl_height = block_get[0]
         db_timestamp_last = block_get[1]
         hash_last = block_get[7]
 
         # check difficulty
-        connections.send(s, "diffget", 10)
-        diff = connections.receive(s, 10)
+        diff = status['diffget']
         # check difficulty
 
         print(diff)
@@ -1358,14 +1281,12 @@ def refresh(address, s):
 
         # network status
 
-        connections.send(s, "mpget", 10)  # senders
-        wallet.mempool_total = connections.receive(s, 10)
-        print(wallet.mempool_total)
+        mempool_total = status['mpget']
+        # print(mempool_total)
 
         # fees_current_var.set("Current Fee: {}".format('%.8f' % float(fee)))
         balance_var.set("Balance: {:.8f} BIS".format(Decimal(balance)))
         balance_raw.set(balance)
-        # address_var.set("Address: {}".format(address))
         debit_var.set("Sent Total: {:.8f} BIS".format(Decimal(debit)))
         credit_var.set("Received Total: {:.8f} BIS".format(Decimal(credit)))
         fees_var.set("Fees Paid: {:.8f} BIS".format(Decimal(fees)))
@@ -1375,44 +1296,37 @@ def refresh(address, s):
         sync_msg_var.set(sync_msg)
 
         hash_var.set("Hash: {}...".format(hash_last[:6]))
-        mempool_count_var.set("Mempool txs: {}".format(len(wallet.mempool_total)))
+        mempool_count_var.set("Mempool txs: {}".format(len(mempool_total)))
 
-        connections.send(s, "annverget", 10)
-        annverget = connections.receive(s, 10)
-        version_var.set("Node: {}/{}".format(wallet.status_version, annverget))
+        annverget = status['annverget']
+        version_var.set("Version: {}/{}".format(status_version, annverget))
 
         # if status_version != annverget:
         #    version_color = "red"
         # else:
         #    version_color = "green"
-        # version_var_label.config (fg=version_color)
+        # version_var_label.config(fg=version_color)
 
-        connections.send(s, "addlistlim", 10)
-        connections.send(s, address, 10)
-        connections.send(s, "20", 10)
-        addlist = connections.receive(s, 10)
-        print(addlist)
+        addlist = status['addlist']
 
-        table(address, addlist, wallet.mempool_total)
+        table(address, addlist, mempool_total)
         # root.after(1000, refresh)
 
         # canvas bg
         root.update()
-        width_root = root.winfo_width()
-        height_root = root.winfo_height()
+        # width_root = root.winfo_width()
+        # height_root = root.winfo_height()
 
         # frame_main.update()
         width_main = tab_main.winfo_width()
         height_main = tab_main.winfo_height()
 
         canvas_main.configure(width=width_main, height=height_main)
-        # photo_main.resize (width_main,height_main)
+        # photo_main.resize(width_main,height_main)
 
         # canvas bg
 
-        connections.send(s, "annget", 10)
-        annget = connections.receive(s, 10)
-
+        annget = status['annget']
         ann_var_text.config(state=NORMAL)
         ann_var_text.delete('1.0', END)
         ann_var_text.insert(INSERT, annget)
@@ -1423,7 +1337,10 @@ def refresh(address, s):
 
     except Exception as e:
         app_log.warning(e)
-        node_connect()
+        exc_type, _, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+        # node_connect()
 
 
 def sign():
@@ -1431,19 +1348,19 @@ def sign():
         try:
             received_public_key = RSA.importKey(public_key_gui.get("1.0", END))
             verifier = PKCS1_v1_5.new(received_public_key)
-            hash = SHA.new(input_text.get("1.0", END).encode("utf-8"))
+            h = SHA.new(input_text.get("1.0", END).encode("utf-8"))
             received_signature_dec = base64.b64decode(output_signature.get("1.0", END))
 
-            if verifier.verify(hash, received_signature_dec):
+            if verifier.verify(h, received_signature_dec):
                 messagebox.showinfo("Validation Result", "Signature valid")
             else:
-                messagebox.showinfo("Validation Result", "Signature invalid")
+                raise ValueError("Invalid Signature")
         except:
             messagebox.showerror("Validation Result", "Signature invalid")
 
     def sign_this():
         h = SHA.new(input_text.get("1.0", END).encode("utf-8"))
-        signer = PKCS1_v1_5.new(keyring.key)
+        signer = PKCS1_v1_5.new(key)
         signature = signer.sign(h)
         signature_enc = base64.b64encode(signature)
 
@@ -1453,7 +1370,7 @@ def sign():
     # popup
     top = Toplevel()
     top.title("Sign message")
-    # top.geometry("%dx%d%+d%+d" % (800, 600, 0, 0))
+    # top.geometry("%dx%d%+d%+d" %(800, 600, 0, 0))
     # top.grid_propagate(False)
 
     Label(top, text="Message:", width=20).grid(row=0, pady=0)
@@ -1463,7 +1380,7 @@ def sign():
 
     Label(top, text="Public Key:", width=20).grid(row=2, pady=0)
     public_key_gui = Text(top, height=10)
-    public_key_gui.insert(INSERT, keyring.public_key_readable)
+    public_key_gui.insert(INSERT, public_key_readable)
     public_key_gui.grid(row=3, column=0, sticky=N + E, padx=15, pady=(0, 0))
 
     Label(top, text="Signature:", width=20).grid(row=4, pady=0)
@@ -1503,31 +1420,34 @@ def hyperlink_bct():
     url = "https://bitcointalk.org/index.php?topic=1896497.0"
     webbrowser.open(url, new=1)
 
-
 def support_collection(sync_msg_var, version_var):
     sup_col = Toplevel()
     sup_col.title("Collection of Basic Information")
     collection_box = Text(sup_col, width=100)
     collection_box.grid(row=0, pady=0)
 
-    version = wallet.statusget[7]
-    stats_timestamp = wallet.statusget[9]
-    connections.send(wallet.s, "blocklast", 10)
-    block_get = connections.receive(wallet.s, 10)
-    bl_height = block_get[0]
+    version = statusget[7]
+    stats_timestamp = statusget[9]
+    """
+    connections.send(s, "blocklast", 10)
+    block_get = connections.receive(s, 10)
+    """
+    # This will freeze, but let say it's ok, we're waiting for a feedback.
+    block_get = async_client.connection.command("blocklast")
 
-    connections.send(wallet.s, "blocklast", 10)
-    blocklast = connections.receive(wallet.s, 10)
-    db_timestamp_last = blocklast[1]
+    bl_height = block_get[0]
+    db_timestamp_last = block_get[1]
     time_now = float(time.time())
     last_block_ago = int(time_now - db_timestamp_last)
+    ip = 'N/A'
+
 
     collection_box.config(wrap=WORD)
     collection_box.insert(INSERT, "If you have questions or want to report a problem, please copy the information below to provide it.")
     collection_box.insert(INSERT, "\n\n")
     collection_box.insert(INSERT, "Your OS: {} {}".format(platform.system(), platform.release()))
     collection_box.insert(INSERT, "\nNode Version: {}".format(version))
-    collection_box.insert(INSERT, "\nConnected to: {}".format(wallet.ip))
+    collection_box.insert(INSERT, "\nConnected to: {}".format(ip))
     collection_box.insert(INSERT, "\nLast Block: {}".format(bl_height))
     collection_box.insert(INSERT, "\nSeconds since Last Block: {}".format(last_block_ago))
     collection_box.insert(INSERT, "\nNode GMT: {}".format(time.strftime("%H:%M:%S", time.gmtime(int(float(stats_timestamp))))))
@@ -1536,14 +1456,7 @@ def support_collection(sync_msg_var, version_var):
     close.grid(row=3, column=0, sticky=W + E)
 
 
-def click_on_tab_tokens(event):
-    if str(nbtabs.index(nbtabs.select())) == "4":
-        tokens()
-
-
 def themes(theme):
-    """nuitka
-
     # global photo_bg, photo_main
     global photo_main
 
@@ -1552,93 +1465,82 @@ def themes(theme):
         canvas_main.delete("all")
 
     else:
-        # img_bg = PIL.Image.open ("themes/{}_bg.jpg".format(theme))
-        # photo_bg = PIL.ImageTk.PhotoImage (img_bg)
-        # canvas_bg.create_image (0, 0, image=photo_bg, anchor=NW)
+        # img_bg = PIL.Image.open("themes/{}_bg.jpg".format(theme))
+        # photo_bg = PIL.ImageTk.PhotoImage(img_bg)
+        # canvas_bg.create_image(0, 0, image=photo_bg, anchor=NW)
 
         width_main = tab_main.winfo_width()
         height_main = tab_main.winfo_height()
 
-        main_bg = PIL.Image.open("themes/{}.jpg".format(theme)).resize((width_main, height_main), PIL.Image.ANTIALIAS)
-        photo_main = PIL.ImageTk.PhotoImage(main_bg)
+        with PIL.Image.open("themes/{}.jpg".format(theme)) as main_bg:
+            photo_main = PIL.ImageTk.PhotoImage(main_bg.resize((width_main, height_main), PIL.Image.ANTIALIAS))
         canvas_main.create_image(0, 0, image=photo_main, anchor=NW)
 
     with open("theme", "w") as theme_file:
         theme_file.write(theme)
-    """
+
 
 
 def encryption_button_refresh():
-    if keyring.unlocked:
+    if unlocked:
         decrypt_b.configure(text="Unlocked", state=DISABLED)
-    if not keyring.unlocked:
+    if not unlocked:
         decrypt_b.configure(text="Unlock", state=NORMAL)
         messagemenu.entryconfig("Sign Messages", state="disabled")  # messages
         walletmenu.entryconfig("Recovery", state="disabled")  # recover
-    if not keyring.encrypted:
+    if not encrypted:
         encrypt_b.configure(text="Encrypt", state=NORMAL)
-    if keyring.encrypted:
+    if encrypted:
         encrypt_b.configure(text="Encrypted", state=DISABLED)
-    lock_b.configure(text="Lock", state=DISABLED)
 
 
-def get_best_ipport_to_use(light_ip_list):
-    """Use different methods to return the best possible ip:port"""
-    while True:
-        # If we have 127.0.0.1 in the list, first try it
-        if '127.0.0.1:5658' in light_ip_list or '127.0.0.1' in light_ip_list:
-            if lwbench.connectible('127.0.0.1:5658'):
-                # No need to go further.
-                return ['127.0.0.1:5658']
-
-        # Then try the new API
-        wallets = []
+def connection_thread():
+    """
+    This is running the connection client ioloop in a thread
+    :return:
+    """
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        async_client.connection = async_client.AsyncClient(light_ip, app_log, loop, rebench_timer, address=myaddress)
+        loop.create_task(async_client.connection.background())
         try:
-            rep = requests.get("http://api.bismuth.live/servers/wallet/legacy.json")
-            if rep.status_code == 200:
-                wallets = rep.json()
-                # print(wallets)
-        except Exception as e:
-            app_log.warning("Error {} getting Server list from API, using lwbench instead".format(e))
-
-        if not wallets:
-            # no help from api, use previous benchmark
-            ipport_list = lwbench.time_measure(light_ip_list, app_log)
-            return ipport_list
-
-        # We have a server list, order by load
-        sorted_wallets = sorted([wallet for wallet in wallets if wallet['active']], key=lambda k: (k['clients'] + 1) / (k['total_slots'] + 2))
-        # print(sorted_wallets)
-        """
-        # try to connect in sequence, keep the first one ok.
-        for wallet in sorted_wallets:
-            print(wallet)
-            ipport = "{}:{}".format(wallet['ip'], wallet['port'])
-            print(ipport)
-            if lwbench.connectible(ipport):
-                return [ipport]
-        """
-        if sorted_wallets:
-            return ["{}:{}".format(wallet['ip'], wallet['port']) for wallet in sorted_wallets]
-
-        # If we get here, all hope is lost!
-        app_log.warning("No connectible server... let try again in a few sec")
-        time.sleep(10)
+            loop.run_forever()
+        except KeyboardInterrupt:
+            loop.stop()
+            app_log.info("exited from loop")
+    except Exception as e:
+        print("ect", e)
 
 
-def busy(an_item=None):
-    an_item = an_item if an_item else root
-    an_item.config(cursor="watch")
+def restart_loop():
+    loop = threading.Thread(target=connection_thread)
+    loop.daemon = True
+    loop.start()
 
 
-def notbusy(an_item=None):
-    an_item = an_item if an_item else root
-    an_item.config(cursor="")
+def benchmark_lightip(app_log):
+    global light_ip
+    global rebench_timer
+    #benchmark light_ip-list
+    light_ip = time_measure(light_ip, app_log)
+    rebench_timer = time.time()
+
 
 
 if __name__ == "__main__":
-    keyring = Keys()
-    wallet = Wallet()
+    # globalize
+    global block_height_old
+    global statusget
+    global key
+    global private_key_readable
+    global encrypted
+    global unlocked
+    global public_key_b64encoded
+    global myaddress
+    global private_key_load
+    global public_key_load
+    global s
 
     # data for charts
     stats_nodes_count_list = []
@@ -1658,50 +1560,46 @@ if __name__ == "__main__":
         private_key_load = "privkey.der"
     else:
         private_key_load = "privkey_encrypted.der"
+
     public_key_load = "pubkey.der"
 
-    # print(getcontext())
-    config = options.Get()
+    print(getcontext())
 
+    config = options.Get()
     config.read()
-    debug_level = config.debug_level
+    port = config.port
     light_ip = config.light_ip
-    node_ip = config.node_ip
     version = config.version
-    terminal_output = config.terminal_output
     gui_scaling = config.gui_scaling
 
-    wallet.port = config.port
+
     if "testnet" in version:
-        wallet.port = 2829
+        port = 2829
         light_ip = ["127.0.0.1"]
 
-    app_log = log.log("wallet.log", debug_level, terminal_output)
+    # app_log = log.log("gui.log", debug_level)
+    app_log = log.log("wallet.log", config.debug_level, config.terminal_output)
 
     essentials.keys_check(app_log, "wallet.der")
+    essentials.db_check(app_log)
 
-    keyring.key, keyring.public_key_readable, keyring.private_key_readable, keyring.encrypted, keyring.unlocked, keyring.public_key_hashed, keyring.myaddress, keyring.keyfile = essentials.keys_load(private_key_load, public_key_load)
-    print("Keyfile: {}".format(keyring.keyfile))
+    key, public_key_readable, private_key_readable, encrypted, unlocked, public_key_b64encoded, myaddress, keyfile = essentials.keys_load(private_key_load, public_key_load)
 
-    light_ip_conf = light_ip
+    #benchmark light_ip-list
+    benchmark_lightip(app_log)
 
-    light_ip = get_best_ipport_to_use(light_ip_conf)
-    # light_ip.insert(0,node_ip)
-    # light_ip = "127.0.0.1:8150"
+    # Build TK INTERFACE
 
     root = Tk()
 
-    root.wm_title("Bismuth Light Wallet - v{}".format(__version__))
+    root.wm_title("Bismuth Light Wallet")
     # root.geometry("1310x700") #You want the size of the app to be 500x500
-
+    root.resizable(0, 0)  # Don't allow resizing in the x or y direction / resize
     # root['bg']="black"
 
-    """nuitka
-    root.resizable(0, 0)  # Don't allow resizing in the x or y direction / resize #nuitka
-    img_icon = PIL.Image.open("graphics/icon.jpg") #nuitka
-    photo_icon = PIL.ImageTk.PhotoImage(img_icon) #nuitka
-    root.tk.call('wm', 'iconphoto', root._w, photo_icon, ) #nuitka
-    """
+    with PIL.Image.open("graphics/icon.jpg") as img_icon:
+        photo_icon = PIL.ImageTk.PhotoImage(img_icon)
+    root.tk.call('wm', 'iconphoto', root._w, photo_icon, )
 
     if gui_scaling == "adapt":
         dpi_value = root.winfo_fpixels('1i')
@@ -1713,6 +1611,9 @@ if __name__ == "__main__":
     password_var_enc = StringVar()
     password_var_con = StringVar()
     password_var_dec = StringVar()
+
+    # canvas_bg = Canvas(root,highlightthickness=0)
+    # canvas_bg.grid(row=0, column=0, rowspan=200,columnspan=200,sticky=W + E + S + N)
 
     frame_bottom = Frame(root, relief='sunken', borderwidth=1)
     frame_bottom.grid(row=5, column=0, sticky='NESW', pady=5, padx=5)
@@ -1779,8 +1680,8 @@ if __name__ == "__main__":
     frame_entries_r = Frame(tab_receive, relief='ridge', borderwidth=0)
     frame_entries_r.grid(row=0, column=0, pady=5, padx=5, sticky=N + W + E + S)
 
-    recipient_address = Entry(frame_entries_r, width=60, text=keyring.myaddress)
-    recipient_address.insert(0, keyring.myaddress)
+    recipient_address = Entry(frame_entries_r, width=60, text=myaddress)
+    recipient_address.insert(0, myaddress)
 
     recipient_address.grid(row=0, column=1, sticky=W, pady=5, padx=5)
     recipient_address.configure(state=DISABLED)
@@ -1798,12 +1699,19 @@ if __name__ == "__main__":
     url_r = Entry(frame_entries_r, width=60)
     url_r.grid(row=5, column=1, sticky=W, pady=5, padx=5)
     url_r.insert(0, "bis://")
-
-    # tab5 tokens
+    #tab5 tokens
     tab_tokens = ttk.Frame(nbtabs)
     nbtabs.add(tab_tokens, text='Tokens')
 
+    def click_on_tab_tokens(event):
+        if str(nbtabs.index(nbtabs.select())) == "4":
+            tokens()
+
     nbtabs.bind('<<NotebookTabChanged>>', click_on_tab_tokens)
+
+    # tab_statistics statistics
+    # tab_statistics = ttk.Frame(nbtabs)
+    # nbtabs.add(tab_statistics, text='Statistics')
 
     # frames
     # menu
@@ -1812,17 +1720,15 @@ if __name__ == "__main__":
     menubar = Menu(root)
     walletmenu = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Wallet", menu=walletmenu)
-    walletmenu.add_command(label="Load Wallet...", command=keys_load_dialog)
-    walletmenu.add_command(label="Backup Wallet...", command=keys_backup)
-    walletmenu.add_command(label="Encrypt Wallet...", command=encrypt_get_password)
+    walletmenu.add_command(label="Load Wallet", command=keys_load_dialog)
+    walletmenu.add_command(label="Backup Wallet", command=keys_backup)
+    walletmenu.add_command(label="Recovery", command=lambda: recover())
     walletmenu.add_separator()
-    walletmenu.add_command(label="Recovery", command=recover)
-    walletmenu.add_separator()
-    # walletmenu.add_command(label="Spending URL QR", command=lambda: qr(url.get()))
-    # walletmenu.add_command(label="Reception URL QR", command=lambda: qr(url_r.get()))
-    walletmenu.add_command(label="Alias Registration...", command=alias)
+    walletmenu.add_command(label="Spending URL QR", command=lambda: qr(url.get()))
+    walletmenu.add_command(label="Reception URL QR", command=lambda: qr(url_r.get()))
+    walletmenu.add_command(label="Alias Registration", command=alias)
     walletmenu.add_command(label="Show Alias", command=aliases_list)
-    walletmenu.add_command(label="Fingerprint...", command=fingerprint)
+    walletmenu.add_command(label="Fingerprint", command=fingerprint)
     walletmenu.add_separator()
     walletmenu.add_command(label="Exit", command=root.quit)
 
@@ -1841,25 +1747,25 @@ if __name__ == "__main__":
     for theme_picture in glob.glob('themes/*.jpg'):
         theme_picture = os.path.basename(theme_picture).split('.jpg')[0]
         theme_list.append(theme_picture)
-        theme_menu.add_command(label=theme_picture, command=lambda theme_picture=theme_picture: themes(theme_picture))  # wow this lambda is amazing
+        theme_menu.add_command(label=theme_picture, command=lambda theme_picture=theme_picture: themes(
+            theme_picture))  # wow this lambda is amazing
 
     theme_menu.add_command(label="Barebone", command=lambda: themes("Barebone"))
     menubar.add_cascade(label="Themes", menu=theme_menu)
 
     miscmenu = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Misc", menu=miscmenu)
-    miscmenu.add_command(label="Mempool", command=lambda: mempool_get(wallet.s))
-    miscmenu.add_command(label="CSV Export...", command=lambda: csv_export(wallet.s))
+    miscmenu.add_command(label="Mempool", command=lambda: mempool_get(s))
+    miscmenu.add_command(label="CSV Export", command=lambda: csv_export(s))
     miscmenu.add_command(label="Statistics", command=lambda: stats())
     miscmenu.add_command(label="Help", command=help)
+    #connect_menu = Menu (menubar, tearoff=0)
+    #menubar.add_cascade (label="Connection", menu=connect_menu)
+    #connect_list = []
 
-    connect_menu = Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="Connection", menu=connect_menu)
-    connect_list = []
-
-    for ip_once in light_ip:
-        connect_list.append(ip_once)
-        connect_menu.add_command(label=ip_once, command=lambda ip_once=ip_once: node_connect_once(ip_once))
+    #for ip_once in light_ip:
+    #    connect_list.append (ip_once)
+    #    connect_menu.add_command(label=ip_once, command=lambda ip_once=ip_once: force_connection (ip_once))
 
     # labels
     Label(frame_entries, text="My Address:").grid(row=0, sticky=W + N, pady=5, padx=5)
@@ -1872,7 +1778,8 @@ if __name__ == "__main__":
                               "on URL field and then click 'read'."
                               "If you want to send Bismuth\n"
                               "to the shown recipient, click send and then\n"
-                              "the confirmation dialog opens.", justify=LEFT).grid(row=6, column=1, sticky=W + S, pady=1, padx=1, columnspan=2)
+                              "the confirmation dialog opens.", justify=LEFT).grid(row=6, column=1, sticky=W + S,
+                                                                                   pady=1, padx=1, columnspan=2)
 
     Label(frame_entries_r, text="Recipient:").grid(row=0, sticky=W, pady=5, padx=5)
     Label(frame_entries_r, text="Amount:").grid(row=2, sticky=W, pady=5, padx=5)
@@ -1881,12 +1788,14 @@ if __name__ == "__main__":
     Label(frame_entries_r, text="URL:").grid(row=5, sticky=W + S, pady=5, padx=5)
 
     Label(frame_entries_r, text="Enter amount and if wanted, a message in field Data.\n"
-                                "Your address is automatically used. Click create and copy the url.", justify=LEFT).grid(row=6, column=1, sticky=W + S, pady=1, padx=1, columnspan=2)
+                                "Your address is automatically used. Click create and copy the url.",
+          justify=LEFT).grid(row=6, column=1, sticky=W + S, pady=1, padx=1, columnspan=2)
 
     Label(frame_entries_t, text="Address:").grid(row=0, column=0, sticky=W + N, pady=5, padx=5)
 
     resolve_var = BooleanVar()
-    resolve = Checkbutton(frame_entries_t, text="Aliases", variable=resolve_var, command=lambda: refresh(gui_address_t.get(), wallet.s), width=14, anchor=W)
+    resolve = Checkbutton(frame_entries_t, text="Aliases", variable=resolve_var,
+                          command=lambda: refresh(gui_address_t.get(), s), width=14, anchor=W)
     resolve.grid(row=0, column=5, sticky=W)
 
     # canvas
@@ -1897,7 +1806,10 @@ if __name__ == "__main__":
 
     # buttons
 
-    send_b = Button(frame_send, text="Send Bismuth", command=lambda: send_confirm(str(amount.get()).strip(), recipient.get().strip(), operation.get().strip(), (openfield.get("1.0", END)).strip()), height=2, width=22, font=("Tahoma", 12))
+    send_b = Button(frame_send, text="Send Bismuth",
+                    command=lambda: sendirm(str(amount.get()).strip(), recipient.get().strip(),
+                                                 operation.get().strip(),(openfield.get("1.0", END)).strip()),
+                    height=2, width=22, font=("Tahoma", 12))
     send_b.grid(row=0, column=0)
 
     frame_logo_buttons = Frame(frame_send)
@@ -1907,7 +1819,8 @@ if __name__ == "__main__":
     encrypt_b.grid(row=0, column=0)
     decrypt_b = Button(frame_logo_buttons, text="Unlock", command=decrypt_get_password, height=1, width=8)
     decrypt_b.grid(row=0, column=1)
-    lock_b = Button(frame_logo_buttons, text="Locked", command=lambda: lock_fn(lock_b), height=1, width=8, state=DISABLED)
+    lock_b = Button(frame_logo_buttons, text="Locked", command=lambda: lock_fn(lock_b), height=1, width=8,
+                    state=DISABLED)
     lock_b.grid(row=0, column=2)
 
     encryption_button_refresh()
@@ -1919,31 +1832,27 @@ if __name__ == "__main__":
     balance_raw = StringVar()
     balance_var = StringVar()
 
-    # address_var = StringVar()
-    # address_var_label = Label(frame_coins, textvariable=address_var, font=("Tahoma", 8, "bold"))
-    # address_var_label.grid(row=0, column=0, sticky=S, padx=15)
-
     balance_msg_label = Label(frame_coins, textvariable=balance_var, font=("Tahoma", 16, "bold"))
-    balance_msg_label.grid(row=1, column=0, sticky=S, padx=15)
+    balance_msg_label.grid(row=0, column=0, sticky=S, padx=15)
 
     balance_msg_label_sendtab = Label(frame_send, textvariable=balance_var, font=("Tahoma", 10))
     balance_msg_label_sendtab.grid(row=3, column=0, sticky=N + S)
 
     debit_var = StringVar()
     spent_msg_label = Label(frame_coins, textvariable=debit_var, font=("Tahoma", 12))
-    spent_msg_label.grid(row=2, column=0, sticky=N + E, padx=15)
+    spent_msg_label.grid(row=1, column=0, sticky=N + E, padx=15)
 
     credit_var = StringVar()
     received_msg_label = Label(frame_coins, textvariable=credit_var, font=("Tahoma", 12))
-    received_msg_label.grid(row=3, column=0, sticky=N + E, padx=15)
+    received_msg_label.grid(row=2, column=0, sticky=N + E, padx=15)
 
     fees_var = StringVar()
     fees_paid_msg_label = Label(frame_coins, textvariable=fees_var, font=("Tahoma", 12))
-    fees_paid_msg_label.grid(row=4, column=0, sticky=N + E, padx=15)
+    fees_paid_msg_label.grid(row=3, column=0, sticky=N + E, padx=15)
 
     rewards_var = StringVar()
     rewards_paid_msg_label = Label(frame_coins, textvariable=rewards_var, font=("Tahoma", 12))
-    rewards_paid_msg_label.grid(row=5, column=0, sticky=N + E, padx=15)
+    rewards_paid_msg_label.grid(row=4, column=0, sticky=N + E, padx=15)
 
     bl_height_var = StringVar()
     block_height_label = Label(frame_bottom, textvariable=bl_height_var)
@@ -2005,7 +1914,8 @@ if __name__ == "__main__":
     # gui_help = Button(frame_entries, text="Help", command=help, font=("Tahoma", 7))
     # gui_help.grid(row=4, column=2, sticky=W + E, padx=(5, 0))
 
-    gui_all_spend = Checkbutton(frame_entries, text="All", variable=all_spend_var, command=all_spend, font=("Tahoma", 7))
+    gui_all_spend = Checkbutton(frame_entries, text="All", variable=all_spend_var, command=all_spend,
+                                font=("Tahoma", 7))
     gui_all_spend.grid(row=2, column=2, sticky=W)
 
     gui_all_spend_clear = Button(frame_entries, text="Clear", command=all_spend_clear, font=("Tahoma", 7))
@@ -2020,7 +1930,8 @@ if __name__ == "__main__":
     url_insert_clipboard = Button(frame_entries, text="Paste", command=url_insert, font=("Tahoma", 7))
     url_insert_clipboard.grid(row=5, column=2, sticky=W)
 
-    read_url_b = Button(frame_entries, text="Read", command=lambda: read_url_clicked(app_log, url.get()), font=("Tahoma", 7))
+    read_url_b = Button(frame_entries, text="Read", command=lambda: read_url_clicked(app_log, url.get()),
+                        font=("Tahoma", 7))
     read_url_b.grid(row=5, column=3, sticky=W)
 
     data_insert_clipboard = Button(frame_entries_r, text="Paste", command=data_insert_r, font=("Tahoma", 7))
@@ -2035,7 +1946,10 @@ if __name__ == "__main__":
     gui_copy_url_r = Button(frame_entries_r, text="Copy", command=url_copy, font=("Tahoma", 7))
     gui_copy_url_r.grid(row=5, column=3, sticky=W)
 
-    create_url_b = Button(frame_entries_r, text="Create", command=lambda: create_url_clicked(app_log, "pay", gui_address_t.get(), amount_r.get(), operation_r.get(), openfield_r.get("1.0", END).strip()), font=("Tahoma", 7))
+    create_url_b = Button(frame_entries_r, text="Create",
+                          command=lambda: create_url_clicked(app_log, "pay", gui_address_t.get(), amount_r.get(),
+                                                             operation_r.get(), openfield_r.get("1.0", END).strip()),
+                          font=("Tahoma", 7))
     create_url_b.grid(row=5, column=2, sticky=W)
 
     gui_paste_address = Button(frame_entries_t, text="Paste", command=address_insert, font=("Tahoma", 7))
@@ -2062,16 +1976,17 @@ if __name__ == "__main__":
     # hyperlinks
 
     # supportbutton
-    dev_support = Button(frame_support, text="Collect Info for Support", command=lambda: support_collection(str(sync_msg_var), str(version_var)), font=("Tahoma", 7))
+    dev_support = Button(frame_support, text="Collect Info for Support",
+                         command=lambda: support_collection(str(sync_msg_var), str(version_var)), font=("Tahoma", 7))
     dev_support.grid(row=98, column=98, sticky=N + E + S + W, padx=1, pady=1)
     # supportbutton
 
     gui_address_t = Entry(frame_entries_t, width=60)
     gui_address_t.grid(row=0, column=1, sticky=W, pady=5, padx=5)
-    gui_address_t.insert(0, keyring.myaddress)
+    gui_address_t.insert(0, myaddress)
 
     sender_address = Entry(frame_entries, width=60)
-    sender_address.insert(0, keyring.myaddress)
+    sender_address.insert(0, myaddress)
     sender_address.grid(row=0, column=1, sticky=W, pady=5, padx=5)
     sender_address.configure(state=DISABLED)
 
@@ -2095,7 +2010,7 @@ if __name__ == "__main__":
     encode = Checkbutton(frame_tick, text="Base64 Encoding", variable=encode_var, command=all_spend_check, width=14, anchor=W)
     encode.grid(row=0, column=0, sticky=W)
 
-    msg = Checkbutton(frame_tick, text="Message", variable=msg_var, command=all_spend_check, width=14, anchor=W)
+    msg = Checkbutton(frame_tick, text="Mark as Message", variable=msg_var, command=all_spend_check, width=14, anchor=W)
     msg.grid(row=1, column=0, sticky=W)
 
     encr = Checkbutton(frame_tick, text="Encrypt with PK", variable=encrypt_var, command=all_spend_check, width=14, anchor=W)
@@ -2112,18 +2027,27 @@ if __name__ == "__main__":
     # logo_hash_decoded = base64.b64decode(icons.logo_hash)
     # logo = PhotoImage(data="graphics/logo.png")
 
-    """nuitka
-    logo_img = PIL.Image.open("graphics/logo.png")
-    logo = PIL.ImageTk.PhotoImage(logo_img)
+    with PIL.Image.open("graphics/logo.png") as logo_img:
+        logo = PIL.ImageTk.PhotoImage(logo_img)
 
     Label(frame_logo, image=logo).grid(column=0, row=0)
     # logo
-    """
-    node_connect()
+
+    # / Build TK INTERFACE
+
+    # Run the threaded ioloop that handles the connection and refresh in the background
+    loop = threading.Thread(target=connection_thread)
+    loop.daemon = True
+    loop.start()
+    # let the object take a coffee and wake up.
+    time.sleep(0.1)
+
+    s = None  # Temp hack
     refresh_auto()
 
     try:
-        themes(open("theme", "r").read())  # load last selected theme
+        with open('theme', 'r') as theme_file:
+            themes(theme_file.read())  # load last selected theme
     except:
         with open("theme", "w") as theme_file:
             theme_file.write("Barebone")
