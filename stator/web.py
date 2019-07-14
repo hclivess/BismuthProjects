@@ -5,6 +5,23 @@ import dator
 import threading
 import time
 
+class heightHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self, height):
+        #call fetcher
+        #self.updater.update()
+
+        #render
+
+        socket = dator.Socket()
+        result = socket.get_blockfromheight(height)
+
+        self.render("address.html",
+                    data = result)
+
 class hashHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
         self.updater = updater
@@ -409,6 +426,7 @@ def make_app():
         (r"/explorer", blockdisplayHandler, {'updater': updater}),
         (r"/explorer/address/(.*)", addressHandler, {'updater': updater}),
         (r"/explorer/hash/(.*)", hashHandler, {'updater': updater}),
+        (r"/explorer/height/(.*)", heightHandler, {'updater': updater}),
         (r"/difficulty", difficultyHandler, {'updater': updater}),
         (r"/block_timestamps", block_timestampsHandler, {'updater': updater}),
         (r"/tx_timestamps", tx_timestampsHandler, {'updater': updater}),
