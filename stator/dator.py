@@ -72,8 +72,6 @@ class Socket():
                 self.connect()
 
 
-
-
 class Status():
     def refresh(self, socket):
 
