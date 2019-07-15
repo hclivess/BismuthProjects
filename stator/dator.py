@@ -13,6 +13,21 @@ class Socket():
         self.s = socks.socksocket()
         self.s.connect(("127.0.0.1", 5658))
 
+    def get_txid(self, txid):
+        responded = False
+        while not responded:
+            try:
+                send(self.s, "api_gettransaction")
+                send(self.s, txid)
+
+                reply = receive(self.s)
+                if not reply == "*":
+                    responded = True
+                    return reply
+            except Exception as e:
+                print(f"Error: {e}")
+                self.connect()
+
     def get_address(self, address):
         responded = False
         while not responded:
@@ -23,8 +38,9 @@ class Socket():
                 send(self.s, 100)
 
                 reply = receive(self.s)
-                responded = True
-                return reply
+                if not reply == "*":
+                    responded = True
+                    return reply
             except Exception as e:
                 print(f"Error: {e}")
                 self.connect()
@@ -35,8 +51,9 @@ class Socket():
             try:
                 send(self.s, "statusjson")
                 reply = receive(self.s, timeout=1)
-                responded = True
-                return reply
+                if not reply == "*":
+                    responded = True
+                    return reply
             except Exception as e:
                 print(f"Error: {e}")
                 self.connect()
@@ -48,8 +65,9 @@ class Socket():
                 send(self.s, "api_getblockfromhash")
                 send(self.s, hash)
                 reply = receive(self.s, timeout=1)
-                responded = True
-                return reply
+                if not reply == "*":
+                    responded = True
+                    return reply
             except Exception as e:
                 print(f"Error: {e}")
                 self.connect()
@@ -61,8 +79,10 @@ class Socket():
                 send(self.s, "api_getblockfromheight")
                 send(self.s, height)
                 reply = receive(self.s, timeout=1)
-                responded = True
-                return reply
+                if not reply == "*":
+                    responded = True
+                    return reply
+
             except Exception as e:
                 print(f"Error: {e}")
                 self.connect()
@@ -77,9 +97,10 @@ class Socket():
 
                 reply = receive(self.s, timeout=1)
 
-                responded = True
+                if not reply == "*":
+                    responded = True
+                    return reply
 
-                return reply
             except Exception as e:
                 print(f"Error: {e}")
                 self.connect()

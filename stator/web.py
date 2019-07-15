@@ -5,6 +5,49 @@ import dator
 import threading
 import time
 
+class seekHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self, data):
+        #call fetcher
+        #self.updater.update()
+
+        query = seekHandler.get_argument(self,"query")
+        socket = dator.Socket()
+
+        if query.isnumeric():
+
+            result = socket.get_blockfromheight(query)
+            self.render("address.html",
+                        data=result)
+        else:
+            result = socket.get_blockfromhash(query)
+            if result:
+                self.render("address.html",
+                        data=result)
+
+            result = socket.get_txid(query)
+            if result:
+                self.write(result)
+
+            result = socket.get_address(query)
+            if result:
+                self.render("address.html",
+                        data=result)
+
+        self.write("Request not recognized")
+
+
+        #render
+        """
+        socket = dator.Socket()
+        result = socket.get_blockfromheight(height)
+
+        self.render("address.html",
+                    data = result)
+        """
 class heightHandler(tornado.web.RequestHandler):
     def initialize(self, updater):
         self.updater = updater
@@ -440,6 +483,8 @@ def make_app():
         (r"/diff_adjustment", diff_adjustmentHandler, {'updater': updater}),
         (r"/hashrate", hashrateHandler, {'updater': updater}),
         (r"/", statsHandler, {'updater': updater}),
+        (r"/explorer/seek(.*)", seekHandler, {'updater': updater}),
+
     ])
 
 class ThreadedClient(threading.Thread):

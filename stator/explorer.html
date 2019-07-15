@@ -12,8 +12,12 @@
 </head>
 <body>
 
-<style>
-</style>
+<form action="/explorer/seek">
+  First name:<br>
+  <input type="text" name="query" value="test"><br>
+  Last name:<br>
+  <input type="submit" value="Submit">
+</form>
 
     {%for key, value in data%}
     <table class='table table-responsive'>
