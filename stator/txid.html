@@ -34,6 +34,7 @@
   </div>
 </div>
 
+
 <div class="panel panel-default">
   <div class="panel-heading">Explorer</div>
   <div class="panel-body">
@@ -48,41 +49,25 @@
   </div>
 </div>
 
-<div class="panel panel-default">
-  <div class="panel-heading" >Data</div>
-  <div class="panel-body">
+<table class='table table-responsive'>
+    <tr>
+        <th bgcolor="#F2F4F4">Transaction</th>
+        <tr><td>Timestamp: {{data['time']}}</td></tr>
+        <tr><td>Address: <a href="/explorer/address/{{data['address']}}">{{data['address']}}</a></td></tr>
+        <tr><td>Recipient: <a href="/explorer/address/{{data['recipient']}}">{{data['recipient']}}</a></td></tr>
+        <tr><td>Amount: {{data['amount']}}</td></tr>
+        <tr><td>Fee: {{data['fee']}}</td></tr>
+        <tr><td>Operation: {{data['operation']}}</td></tr>
+        <tr><td>Data: {{data['openfield']}}</td></tr>
+        <tr><td>Txid:  <a href="/explorer/txid/{{data['txid']}}">{{data['txid']}}</a></td></tr>
+        <tr><td>Confirmations: {{data['confirmations']}}</td></tr>
+        <tr><td>Block Time: {{data['blocktime']}}</td></tr>
+        <tr><td>Block Miner: {{data['blockminer']}}</td></tr>
 
+    <tr>
 
-    {%for key, value in data.items()%}
-    <table class='table table-responsive'>
+</table>
 
-        <tr bgcolor="#EAECEE">
-            <th bgcolor="#F2F4F4">Block Height</th>
-            <th bgcolor="#F2F4F4">Block Hash</th>
-        </tr>
-        <tr bgcolor="#EAECED">
-            <td><a href="/explorer/height/{{value['block_height']}}">{{value['block_height']}}</a></td>
-            <td>{{value['block_hash']}}</td>
-        </tr>
-
-            {%for transaction in value['transactions']%}
-                <th bgcolor="#F2F4F4">Transaction</th>
-                    <tr><td>Timestamp: {{transaction['timestamp']}}</td></tr>
-                    <tr><td>Address: <a href="/explorer/address/{{transaction['address']}}">{{transaction['address']}}</a></td></tr>
-                    <tr><td>Recipient: <a href="/explorer/address/{{transaction['recipient']}}">{{transaction['recipient']}}</a></td></tr>
-                    <tr><td>Amount: {{transaction['amount']}}</td></tr>
-                    <tr><td>Fee: {{transaction['fee']}}</td></tr>
-                    <tr><td>Operation: {{transaction['operation']}}</td></tr>
-                    <tr><td>Data: {{transaction['openfield']}}</td></tr>
-                    <tr><td>Txid:  <a href="/explorer/txid/{{transaction['txid']}}">{{transaction['txid']}}</a></td></tr>
-
-            {%end%}
-
-    </table>
-    {%end%}
-
-    </div>
-</div>
 
 </body>
 

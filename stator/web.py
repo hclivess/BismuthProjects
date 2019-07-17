@@ -15,29 +15,42 @@ class seekHandler(tornado.web.RequestHandler):
         #self.updater.update()
 
         query = seekHandler.get_argument(self,"query")
+        print (f"Query: {query}, {type(query)}, {len(query)}")
+
         socket = dator.Socket()
 
-        if query.isnumeric():
+        try:
+            if query.strip() == "":
+                self.write("Nothing entered")
+                return
 
-            result = socket.get_blockfromheight(query)
-            self.render("address.html",
-                        data=result)
-        else:
-            result = socket.get_blockfromhash(query)
-            if result:
+
+            if query.isnumeric():
+
+                result = socket.get_blockfromheight(query)
                 self.render("address.html",
-                        data=result)
+                            data=result)
+            elif query.lower() != query:
+                print("txid")
+                result = socket.get_txid(query)
+                if result:
+                    self.render("txid.html",
+                                data=result)
+            else:
+                result = socket.get_blockfromhash(query)
+                if result:
+                    print(result)
+                    self.render("address.html",
+                            data=result)
 
-            result = socket.get_txid(query)
-            if result:
-                self.write(result)
+                result = socket.get_address(query)
+                if result:
+                    print(result)
+                    self.render("address.html",
+                            data=result)
 
-            result = socket.get_address(query)
-            if result:
-                self.render("address.html",
-                        data=result)
-
-        self.write("Request not recognized")
+        except Exception as e:
+            self.write(f"Request not recognized ({e})")
 
 
         #render
@@ -63,6 +76,23 @@ class heightHandler(tornado.web.RequestHandler):
         result = socket.get_blockfromheight(height)
 
         self.render("address.html",
+                    data = result)
+
+class txidHandler(tornado.web.RequestHandler):
+    def initialize(self, updater):
+        self.updater = updater
+        #self.updater.update()
+
+    def get(self, txid):
+        #call fetcher
+        #self.updater.update()
+
+        #render
+
+        socket = dator.Socket()
+        result = socket.get_txid(txid)
+
+        self.render("txid.html",
                     data = result)
 
 class hashHandler(tornado.web.RequestHandler):
@@ -470,6 +500,7 @@ def make_app():
         (r"/explorer/address/(.*)", addressHandler, {'updater': updater}),
         (r"/explorer/hash/(.*)", hashHandler, {'updater': updater}),
         (r"/explorer/height/(.*)", heightHandler, {'updater': updater}),
+        (r"/explorer/txid/(.*)", txidHandler, {'updater': updater}),
         (r"/difficulty", difficultyHandler, {'updater': updater}),
         (r"/block_timestamps", block_timestampsHandler, {'updater': updater}),
         (r"/tx_timestamps", tx_timestampsHandler, {'updater': updater}),

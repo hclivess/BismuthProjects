@@ -12,14 +12,48 @@
 </head>
 <body>
 
-<form action="/explorer/seek">
-  First name:<br>
-  <input type="text" name="query" value="test"><br>
-  Last name:<br>
-  <input type="submit" value="Submit">
-</form>
+<div class="panel panel-default">
+  <div class="panel-heading">Main Menu</div>
+  <div class="panel-body">
+      <div class="text-center">
+        <a href='/explorer' class='btn btn-info' role='button'>Explorer</a>
+        <a href='/difficulty' class='btn btn-info' role='button'>Difficulty</a>
+        <a href='/block_timestamps' class='btn btn-info' role='button'>Block Timestamps</a>
+        <a href='/tx_timestamps' class='btn btn-info' role='button'>Tx Timestamps</a>
+        <a href='/connections' class='btn btn-warning' role='button'>Connections</a>
+        <a href='/consensus' class='btn btn-warning' role='button'>Consensus</a>
+        <a href='/consensus_percent' class='btn btn-warning' role='button'>Consensus Percentage</a>
+        <a href='/threads' class='btn btn-warning' role='button'>Threads</a>
+        <a href='/diff_dropped' class='btn btn-danger' role='button'>Difficulty After Drop</a>
+        <a href='/block_time' class='btn btn-danger' role='button'>Block Time</a>
+        <a href='/time_to_generate' class='btn btn-danger' role='button'>Block Spacing</a>
+        <a href='/diff_adjustment' class='btn btn-danger' role='button'>Difficulty Adjustment</a>
+        <a href='/hashrate' class='btn btn-danger' role='button'>Hashrate</a>
+        <a href='/' class='btn btn-warning' role='button'>Stats</a>
+      </div>
+  </div>
+</div>
 
-    {%for key, value in data%}
+<div class="panel panel-default">
+  <div class="panel-heading">Explorer</div>
+  <div class="panel-body">
+      <form action="/explorer/seek">
+        <div class="form-group">
+            <label for="queryId">Search</label>
+            <input type="text" class="form-control" name="query" id="queryId" aria-describedby="queryHelp" placeholder="Enter what you are looking for">
+            <small id="emailHelp" class="form-text text-muted">Enter block, address, txid or hash.</small>
+        </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+  </div>
+</div>
+
+
+<div class="panel panel-default">
+  <div class="panel-heading" >Data</div>
+  <div class="panel-body">
+
+      {%for key, value in data%}
     <table class='table table-responsive'>
 
         <tr bgcolor="#EAECEE">
@@ -40,47 +74,25 @@
             <td>{{value['mining_tx']['reward']}}</td>
             <td>{{value['mining_tx']['difficulty']}}</td>
         </tr>
-
-            {%if value['transactions']%}
-            <tr bgcolor="#EAECEE">
-            <th bgcolor="#F2F4F4">Timestamp</th>
-            <th bgcolor="#F2F4F4">Address</th>
-            <th bgcolor="#F2F4F4">Recipient</th>
-            <th bgcolor="#F2F4F4">Amount</th>
-            <th bgcolor="#F2F4F4">Fee</th>
-            <th bgcolor="#F2F4F4">Operation</th>
-            <th bgcolor="#F2F4F4">Data</th>
-            <th bgcolor="#F2F4F4">Txid</th>
-            </tr>
-            {%end%}
-
             {%for transaction in value['transactions']%}
+                <th bgcolor="#F2F4F4">Transaction</th>
+                    <tr><td>Timestamp: {{transaction['timestamp']}}</td></tr>
+                    <tr><td>Address: <a href="/explorer/address/{{transaction['address']}}">{{transaction['address']}}</a></td></tr>
+                    <tr><td>Recipient: <a href="/explorer/address/{{transaction['recipient']}}">{{transaction['recipient']}}</a></td></tr>
+                    <tr><td>Amount: {{transaction['amount']}}</td></tr>
+                    <tr><td>Fee: {{transaction['fee']}}</td></tr>
+                    <tr><td>Operation: {{transaction['operation']}}</td></tr>
+                    <tr><td>Data: {{transaction['openfield']}}</td></tr>
+                    <tr><td>Txid:  <a href="/explorer/txid/{{transaction['txid']}}">{{transaction['txid']}}</a></td></tr>
 
-                <tr>
-                    <td>{{transaction['timestamp']}}</td>
-                    <td><a href="/explorer/address/{{transaction['address']}}">{{transaction['address']}}</a></td>
-                    <td><a href="/explorer/address/{{transaction['recipient']}}">{{transaction['recipient']}}</a></td>
-                    <td>{{transaction['amount']}}</td>
-                    <td>{{transaction['fee']}}</td>
-                    <td>{{transaction['operation']}}</td>
-                    <td>{{transaction['openfield']}}</td>
-                    <td>{{transaction['signature'][:56]}}</td>
-                <tr>
             {%end%}
-        </tr>
+
 
     </table>
     {%end%}
 
-<script>
-
-$(document).ready(function() {
-	$('[data-toggle="toggle"]').change(function(){
-		$(this).parents().next('.hide').toggle();
-	});
-});
-
-</script>
+    </div>
+</div>
 
 </body>
 
