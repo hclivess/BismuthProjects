@@ -10,10 +10,14 @@ class Socket():
         self.connect()
 
     def connect(self):
-        self.s = socks.socksocket()
-        self.s.connect(("127.0.0.1", 5658))
+        try:
+            self.s = socks.socksocket()
+            self.s.connect(("127.0.0.1", 5658))
+        except:
+            raise
 
     def get_txid(self, txid):
+        self.connect()
         responded = False
         while not responded:
             try:
@@ -150,7 +154,7 @@ class History():
 
     def truncate(self):
         if len(self.stata) >= 50:
-            self.stata = self.stata[50:]
+            self.stata = self.stata[-50:]
 
         if len(self.diffs) >= 50:
             self.diffs = self.diffs[50:]
@@ -183,8 +187,6 @@ class Updater():
     def update(self):
         self.socket = Socket()
 
-        self.history.truncate()
-
         new_data = self.status.refresh(self.socket)
 
         self.history.stata.append([new_data])
@@ -192,6 +194,8 @@ class Updater():
 
         self.history.blocks = json.loads(self.socket.get_getblockrange(self.status.blocks -50, 50))
         print (self.history.blocks) #last block
+
+        self.history.truncate()
 
 
         for number in range (-50,0):

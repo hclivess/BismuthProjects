@@ -20,7 +20,6 @@ config.read()
 debug_level = config.debug_level
 ledger_path = config.ledger_path
 full_ledger = config.full_ledger
-ledger_path = config.ledger_path
 hyper_path = config.hyper_path
 terminal_output=config.terminal_output
 version = config.version
