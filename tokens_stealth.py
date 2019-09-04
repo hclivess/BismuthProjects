@@ -8,7 +8,7 @@
 
 # NEW:
 
-# operation: encrypt_with_mater_key(token:issue)
+# operation: encrypt_with_mater_key(stoken:issue)
 # openfield: encrypt_with_mater_key(token_name:total_number(:slave_key))
 # - optional slave key is a hash of password + own address
 
@@ -18,28 +18,27 @@ from hashlib import blake2b
 import json
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
+from base64 import b85decode, b85encode
 
 __version__ = '0.0.1'
 
 def keygen(len=32): #AES-256 default
-    return get_random_bytes(len)
+    return b85encode(get_random_bytes(len)).decode()
 
 def encrypt(data, key):
     cipher = AES.new(key, AES.MODE_EAX)
     nonce = cipher.nonce
-
     ciphertext, tag = cipher.encrypt_and_digest(data)
-    print(ciphertext)
 
-    return nonce, ciphertext, tag
+    return b85encode(nonce).decode(), b85encode(ciphertext).decode(), b85encode(tag).decode()
 
 def decrypt(nonce, ciphertext, tag, key):
-    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
+    cipher = AES.new(key, AES.MODE_EAX, nonce=b85decode(nonce))
 
-    plaintext = cipher.decrypt(ciphertext).decode()
+    plaintext = cipher.decrypt(b85decode(ciphertext)).decode()
 
     try:
-        cipher.verify(tag)
+        cipher.verify(b85decode(tag))
         print("The message is authentic:", plaintext)
     except ValueError:
         print("Key incorrect or message corrupted")
@@ -50,6 +49,13 @@ def load_token_master_key(token):
     for key, value in keys_loaded.items():
         if key == token:
             return value
+
+def save_token_master_key(token, key):
+    with open('token_keys.json') as token_keys:
+        keys_loaded = json.loads(token_keys.read())
+        keys_loaded[token] = key
+    with open('token_keys.json',"w") as token_keys:
+        token_keys.write(json.dumps(keys_loaded))
 
 def slave_key_generate(master_key, address):
     if master_key and address:
@@ -76,7 +82,7 @@ def tokens_update(node, db_handler_instance):
     node.logger.app_log.warning("Token anchor block: {}".format(token_last_block))
 
     # node.logger.app_log.warning all token issuances
-    db_handler_instance.c.execute("SELECT block_height, timestamp, address, recipient, signature, operation, openfield FROM transactions WHERE block_height >= ? AND operation = ? AND reward = 0 ORDER BY block_height ASC;", (token_last_block, "token:issue",))
+    db_handler_instance.c.execute("SELECT block_height, timestamp, address, recipient, signature, operation, openfield FROM transactions WHERE block_height >= ? AND operation = ? AND reward = 0 ORDER BY block_height ASC;", (token_last_block, "stoken:issue",))
     token_issuances = db_handler_instance.c.fetchall()
     node.logger.app_log.warning(token_issuances)
 
@@ -141,7 +147,7 @@ def tokens_update(node, db_handler_instance):
     # token = "worthless"
 
     db_handler_instance.c.execute("SELECT operation, openfield FROM transactions WHERE (block_height >= ? OR block_height <= ?) AND operation = ? and reward = 0 ORDER BY block_height ASC;",
-              (token_last_block, -token_last_block, "token:transfer",)) #includes mirror blocks
+              (token_last_block, -token_last_block, "stoken:transfer",)) #includes mirror blocks
     openfield_transfers = db_handler_instance.c.fetchall()
     # print(openfield_transfers)
 
@@ -169,7 +175,7 @@ def tokens_update(node, db_handler_instance):
     for token in tokens_transferred:
         node.logger.app_log.warning("processing {}".format(token))
         db_handler_instance.c.execute("SELECT block_height, timestamp, address, recipient, signature, operation, openfield FROM transactions WHERE (block_height >= ? OR block_height <= ?) AND operation = ? AND openfield LIKE ? AND reward = 0 ORDER BY block_height ASC;",
-                  (token_last_block, -token_last_block, "token:transfer",token + '%',))
+                  (token_last_block, -token_last_block, "stoken:transfer",token + '%',))
         results2 = db_handler_instance.c.fetchall()
         node.logger.app_log.warning(results2)
 
@@ -260,12 +266,19 @@ if __name__ == "__main__":
     stealth_token = "test_stealth2"
     address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
 
+    print("test", keygen())
+    save_token_master_key("test", keygen())
+
     master_key = load_token_master_key(stealth_token)
     slave_key = slave_key_generate(master_key, address)
+
 
     print(master_key)
     print(slave_key)
     # stealth tokens
+
+    import time
+    time.sleep(5000)
 
     node = node.Node()
     node.debug_level = "WARNING"
