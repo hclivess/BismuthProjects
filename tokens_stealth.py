@@ -6,12 +6,43 @@
 # openfield: token_name:amount(:slave_key)
 # - optional slave key is a hash of password + own address
 
+# NEW:
+
+# operation: encrypt_with_mater_key(token:issue)
+# openfield: encrypt_with_mater_key(token_name:total_number(:slave_key))
+# - optional slave key is a hash of password + own address
+
 import sqlite3
 import log
 from hashlib import blake2b
 import json
+from Cryptodome.Cipher import AES
+from Cryptodome.Random import get_random_bytes
 
-__version__ = '0.0.2'
+__version__ = '0.0.1'
+
+def keygen(len=32): #AES-256 default
+    return get_random_bytes(len)
+
+def encrypt(data, key):
+    cipher = AES.new(key, AES.MODE_EAX)
+    nonce = cipher.nonce
+
+    ciphertext, tag = cipher.encrypt_and_digest(data)
+    print(ciphertext)
+
+    return nonce, ciphertext, tag
+
+def decrypt(nonce, ciphertext, tag, key):
+    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
+
+    plaintext = cipher.decrypt(ciphertext).decode()
+
+    try:
+        cipher.verify(tag)
+        print("The message is authentic:", plaintext)
+    except ValueError:
+        print("Key incorrect or message corrupted")
 
 def load_token_master_key(token):
     with open('token_keys.json') as token_keys:
