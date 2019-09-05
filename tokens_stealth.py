@@ -22,23 +22,23 @@ from base64 import b85decode, b85encode
 
 __version__ = '0.0.1'
 
-def keygen(len=32): #AES-256 default
-    return b85encode(get_random_bytes(len)).decode()
+def master_key_generate(len=32): #AES-256 default
+    return get_random_bytes(len)
 
 def encrypt(data, key):
     cipher = AES.new(key, AES.MODE_EAX)
     nonce = cipher.nonce
-    ciphertext, tag = cipher.encrypt_and_digest(data)
+    ciphertext, tag = cipher.encrypt_and_digest(data.encode())
 
-    return b85encode(nonce).decode(), b85encode(ciphertext).decode(), b85encode(tag).decode()
+    return {"nonce": b85encode(nonce).decode(), "ciphertext": b85encode(ciphertext).decode(),"tag": b85encode(tag).decode()}
 
-def decrypt(nonce, ciphertext, tag, key):
-    cipher = AES.new(key, AES.MODE_EAX, nonce=b85decode(nonce))
+def decrypt(enc_dict, key):
+    cipher = AES.new(key, AES.MODE_EAX, nonce=b85decode(enc_dict["nonce"]))
 
-    plaintext = cipher.decrypt(b85decode(ciphertext)).decode()
+    plaintext = cipher.decrypt(b85decode(enc_dict["ciphertext"])).decode()
 
     try:
-        cipher.verify(b85decode(tag))
+        cipher.verify(b85decode(enc_dict["tag"]))
         print("The message is authentic:", plaintext)
     except ValueError:
         print("Key incorrect or message corrupted")
@@ -48,12 +48,12 @@ def load_token_master_key(token):
         keys_loaded = json.loads(token_keys.read())
     for key, value in keys_loaded.items():
         if key == token:
-            return value
+            return b85decode(value)
 
 def save_token_master_key(token, key):
     with open('token_keys.json') as token_keys:
         keys_loaded = json.loads(token_keys.read())
-        keys_loaded[token] = key
+        keys_loaded[token] = b85encode(key).decode()
     with open('token_keys.json',"w") as token_keys:
         token_keys.write(json.dumps(keys_loaded))
 
@@ -265,16 +265,22 @@ if __name__ == "__main__":
     stealth_token = "test"
     address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
 
-    print("test", keygen())
-    save_token_master_key("test", keygen())
+    #print("test", master_key_generate())
+    save_token_master_key("test", master_key_generate())
 
     master_key = load_token_master_key(stealth_token)
     slave_key = slave_key_generate(master_key, address)
 
-
-    print(master_key)
-    print(slave_key)
+    print("master_key", master_key)
+    print("slave_key", slave_key)
     # stealth tokens
+
+    print("stoken:issue")
+    print("stest:10000")
+    encrypted = encrypt(data="stest:100000", key=master_key)
+
+    print(encrypted)
+    print(decrypt(encrypted, master_key))
 
     import time
     time.sleep(5000)
