@@ -61,7 +61,7 @@ def tweet_qualify(tweet_id, exposure=10):
         parsed_followers = parsed['user']['followers_count']
         acc_age = time.mktime (time.strptime (parsed['user']['created_at'], '%a %b %d %H:%M:%S +0000 %Y'))
 
-        if "#bismuth" and "$bis" in parsed_text.lower() and retweet_count + favorite_count > exposure and parsed_followers > 30 and acc_age < time.time() - month:
+        if "#bismuth" and "$bis" in parsed_text.lower() and retweet_count + favorite_count > exposure:
             qualifies = True
         else:
             qualifies = False

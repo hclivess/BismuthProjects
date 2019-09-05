@@ -58,9 +58,8 @@ def save_token_master_key(token, key):
         token_keys.write(json.dumps(keys_loaded))
 
 def slave_key_generate(master_key, address):
-    if master_key and address:
-        slave_key = blake2b(repr((master_key,address)).encode(), digest_size=7).hexdigest()
-        return slave_key
+    slave_key = blake2b(repr((master_key,address)).encode(), digest_size=7).hexdigest()
+    return slave_key
 
 def blake2bhash_generate(data):
     # new hash
@@ -263,7 +262,7 @@ if __name__ == "__main__":
 
 
     #stealth tokens
-    stealth_token = "test_stealth2"
+    stealth_token = "test"
     address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
 
     print("test", keygen())

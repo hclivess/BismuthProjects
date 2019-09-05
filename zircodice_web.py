@@ -1,12 +1,13 @@
-import sqlite3, time, re, keys, options
+import sqlite3, time, re, options
 from decimal import *
 import essentials
+from bismuthclient.bismuthcrypto import keys_load_new
 
 import tornado.ioloop
 import tornado.web
 from random import randint
 
-key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, keyfile = essentials.keys_load_new("wallet.der")
+key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, keyfile = keys_load_new("wallet.der")
 
 config = options.Get()
 config.read()
@@ -16,7 +17,7 @@ full_ledger = config.full_ledger
 ledger_path = config.ledger_path
 hyper_path = config.hyper_path
 
-block_anchor = 547989
+block_anchor = 1300000
 
 print("Mounting roll database...")
 roll_db = sqlite3.connect("roll.db")
@@ -96,6 +97,7 @@ class MainHandler(tornado.web.RequestHandler):
                     conn = sqlite3.connect(ledger_path)
                 else:
                     conn = sqlite3.connect(hyper_path)
+
                 c = conn.cursor()
                 print("Database mounted...")
 
