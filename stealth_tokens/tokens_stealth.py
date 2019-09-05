@@ -18,6 +18,7 @@ import json
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from base64 import b85decode, b85encode
+from bisbasic import log
 
 __version__ = '0.0.1'
 
