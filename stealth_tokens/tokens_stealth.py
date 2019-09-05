@@ -13,7 +13,6 @@
 # - optional slave key is a hash of password + own address
 
 import sqlite3
-import log
 from hashlib import blake2b
 import json
 from Cryptodome.Cipher import AES
@@ -40,6 +39,7 @@ def decrypt(enc_dict, key):
     try:
         cipher.verify(b85decode(enc_dict["tag"]))
         print("The message is authentic:", plaintext)
+        return plaintext
     except ValueError:
         print("Key incorrect or message corrupted")
 
@@ -262,11 +262,11 @@ if __name__ == "__main__":
 
 
     #stealth tokens
-    stealth_token = "test"
+    stealth_token = "stest"
     address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
 
     #print("test", master_key_generate())
-    save_token_master_key("test", master_key_generate())
+    #save_token_master_key("test", master_key_generate())
 
     master_key = load_token_master_key(stealth_token)
     slave_key = slave_key_generate(master_key, address)
@@ -275,12 +275,12 @@ if __name__ == "__main__":
     print("slave_key", slave_key)
     # stealth tokens
 
-    print("stoken:issue")
-    print("stest:10000")
-    encrypted = encrypt(data="stest:100000", key=master_key)
+    #print("stoken:issue")
+    #print("stest:10000")
+    encrypted_message = encrypt(data="stest:100000", key=master_key)
 
-    print(encrypted)
-    print(decrypt(encrypted, master_key))
+    print(encrypted_message)
+    print(decrypt(encrypted_message, master_key))
 
     import time
     time.sleep(5000)
