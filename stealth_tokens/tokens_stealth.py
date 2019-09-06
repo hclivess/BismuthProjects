@@ -17,7 +17,7 @@ from hashlib import blake2b
 import json
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
-from base64 import b85decode, b85encode
+from base64 import b64decode, b64encode
 from bisbasic import log
 
 __version__ = '0.0.1'
@@ -30,15 +30,15 @@ def encrypt(data, key):
     nonce = cipher.nonce
     ciphertext, tag = cipher.encrypt_and_digest(data.encode())
 
-    return {"nonce": b85encode(nonce).decode(), "ciphertext": b85encode(ciphertext).decode(),"tag": b85encode(tag).decode()}
+    return {"nonce": b64encode(nonce).decode(), "ciphertext": b64encode(ciphertext).decode(),"tag": b64encode(tag).decode()}
 
 def decrypt(enc_dict, key):
-    cipher = AES.new(key, AES.MODE_EAX, nonce=b85decode(enc_dict["nonce"]))
+    cipher = AES.new(key, AES.MODE_EAX, nonce=b64decode(enc_dict["nonce"]))
 
-    plaintext = cipher.decrypt(b85decode(enc_dict["ciphertext"])).decode()
+    plaintext = cipher.decrypt(b64decode(enc_dict["ciphertext"])).decode()
 
     try:
-        cipher.verify(b85decode(enc_dict["tag"]))
+        cipher.verify(b64decode(enc_dict["tag"]))
         print("The message is authentic:", plaintext)
         return plaintext
     except ValueError:
@@ -49,12 +49,12 @@ def load_token_master_key(token):
         keys_loaded = json.loads(token_keys.read())
     for key, value in keys_loaded.items():
         if key == token:
-            return b85decode(value)
+            return b64decode(value)
 
 def save_token_master_key(token, key):
     with open('token_keys.json') as token_keys:
         keys_loaded = json.loads(token_keys.read())
-        keys_loaded[token] = b85encode(key).decode()
+        keys_loaded[token] = b64encode(key).decode()
     with open('token_keys.json',"w") as token_keys:
         token_keys.write(json.dumps(keys_loaded))
 
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
 
     #print("test", master_key_generate())
-    #save_token_master_key("test", master_key_generate())
+    #save_token_master_key("stest", master_key_generate())
 
     master_key = load_token_master_key(stealth_token)
     slave_key = slave_key_generate(master_key, address)
