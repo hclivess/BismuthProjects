@@ -18,7 +18,6 @@ import base64
 import sys
 import time
 
-import socks
 from Cryptodome.Hash import SHA
 from Cryptodome.Signature import PKCS1_v1_5
 
@@ -29,9 +28,70 @@ from polysign.signerfactory import SignerFactory
 
 class TokenTransaction():
     def __init__(self):
-        self.data = ""
-        self.operation = ""
-        pass
+        self.operation_input = ""
+        self.openfield_input = ""
+        self.recipient_input = ""
+        self.amount_input = ""
+        self.request_confirmation = ""
+        self.wallet_file = ""
+        self.tx_submit = None
+
+def send_tx():
+    while True:
+        try:
+            s._send("mpinsert")
+            s._send(transaction.tx_submit)
+            reply = s._receive()
+            print("Client: {}".format(reply))
+            if reply != "*":  # response can be empty due to different timeout setting
+                break
+            else:
+                print("Connection cut, retrying")
+
+        except Exception as e:
+            print(f"A problem occurred: {e}, retrying")
+            pass
+
+def verify():
+    transaction.timestamp = '%.2f' % (time.time() - 5)  # remote proofing
+    # TODO: use transaction object, no dup code for buffer assembling
+    tx = (str(transaction.timestamp),
+          str(address),
+          str(transaction.recipient_input),
+          '%.8f' % float(transaction.amount_input),
+          str(transaction.operation_input),
+          str(transaction.openfield_input))  # this is signed
+
+    # TODO: use polysign here
+    h = SHA.new(str(tx).encode("utf-8"))
+    signer = PKCS1_v1_5.new(key)
+    signature = signer.sign(h)
+    signature_enc = base64.b64encode(signature)
+    txid = signature_enc[:56]
+
+    print(f"Encoded Signature: {signature_enc.decode('utf-8')}")
+    print(f"Transaction ID: {txid.decode('utf-8')}")
+
+    verifier = PKCS1_v1_5.new(key)
+
+    if verifier.verify(h, signature):
+        if float(transaction.amount_input) < 0:
+            print("Signature OK, but cannot use negative amounts")
+
+        elif float(transaction.amount_input) + float(fee) > float(balance):
+            print("Mempool: Sending more than owned")
+
+        else:
+            transaction.tx_submit = (str(transaction.timestamp),
+                         str(address),
+                         str(transaction.recipient_input),
+                         '%.8f' % float(transaction.amount_input),
+                         str(signature_enc.decode("utf-8")),
+                         str(public_key_b64encoded.decode("utf-8")),
+                         str(transaction.operation_input),
+                         str(transaction.openfield_input))
+    else:
+        print("Invalid signature")
 
 def connect(ip):
     if 'regnet' in config.version:
@@ -41,26 +101,54 @@ def connect(ip):
     else:
         port = 5658
 
-    print(ip, port)
     return rpcconnections.Connection((ip, int(port)))
+
+def getargs():
+    try:
+        transaction.wallet_file = sys.argv[5]
+    except:
+        transaction.wallet_file = input("Path to wallet: ")
+
+    try:
+        transaction.request_confirmation = sys.argv[6]
+    except:
+        transaction.request_confirmation = False
+
+    try:
+        transaction.amount_input = sys.argv[1]
+    except IndexError:
+        transaction.amount_input = input("Amount: ")
+
+    try:
+        transaction.recipient_input = sys.argv[2]
+    except IndexError:
+        transaction.recipient_input = input("Recipient: ")
+
+    if not SignerFactory.address_is_valid(transaction.recipient_input):
+        print("Wrong address format")
+        sys.exit(1)
+
+    try:
+        transaction.operation_input = sys.argv[3]
+    except IndexError:
+        transaction.operation_input = ""
+
+    try:
+        transaction.openfield_input = sys.argv[4]
+    except IndexError:
+        transaction.openfield_input = ""
 
 
 if __name__ == "__main__":
     config = options.Get()
     config.read()
+    transaction = TokenTransaction()
+
     s = connect("127.0.0.1")
 
-    try:
-        wallet_file = sys.argv[5]
-    except:
-        wallet_file = input("Path to wallet: ")
 
-    try:
-        request_confirmation = sys.argv[6]
-    except:
-        request_confirmation = False
 
-    key, public_key_readable, private_key_readable, encrypted, unlocked, public_key_b64encoded, address, keyfile = essentials.keys_load_new(wallet_file)
+    key, public_key_readable, private_key_readable, encrypted, unlocked, public_key_b64encoded, address, keyfile = essentials.keys_load_new(transaction.wallet_file)
 
     if encrypted:
         key, private_key_readable = essentials.keys_unlock(private_key_readable)
@@ -79,34 +167,12 @@ if __name__ == "__main__":
     print("Transaction address: %s" % address)
     print("Transaction address balance: %s" % balance)
 
-    try:
-        amount_input = sys.argv[1]
-    except IndexError:
-        amount_input = input("Amount: ")
+    getargs()
 
-    try:
-        recipient_input = sys.argv[2]
-    except IndexError:
-        recipient_input = input("Recipient: ")
-
-    if not SignerFactory.address_is_valid(recipient_input):
-        print("Wrong address format")
-        sys.exit(1)
-
-    try:
-        operation_input = sys.argv[3]
-    except IndexError:
-        operation_input = ""
-
-    try:
-        openfield_input = sys.argv[4]
-    except IndexError:
-        openfield_input = ""
-
-    fee = fee_calculate(openfield_input)
+    fee = fee_calculate(transaction.openfield_input)
     print("Fee: %s" % fee)
 
-    if request_confirmation:
+    if transaction.request_confirmation:
         confirm = input("Confirm (y/n): ")
 
         if confirm != 'y':
@@ -114,51 +180,13 @@ if __name__ == "__main__":
             exit(1)
 
     try:
-        float(amount_input)
+        float(transaction.amount_input)
         is_float = 1
     except ValueError:
         is_float = 0
         sys.exit(1)
 
-    timestamp = '%.2f' % (time.time() - 5) #remote proofing
-    # TODO: use transaction object, no dup code for buffer assembling
-    transaction = (str(timestamp), str(address), str(recipient_input), '%.8f' % float(amount_input), str(operation_input), str(openfield_input))  # this is signed
-    # TODO: use polysign here
-    h = SHA.new(str(transaction).encode("utf-8"))
-    signer = PKCS1_v1_5.new(key)
-    signature = signer.sign(h)
-    signature_enc = base64.b64encode(signature)
-    txid = signature_enc[:56]
-
-    print(f"Encoded Signature: {signature_enc.decode('utf-8')}")
-    print(f"Transaction ID: {txid.decode('utf-8')}")
-
-    verifier = PKCS1_v1_5.new(key)
-
-    if verifier.verify(h, signature):
-        if float(amount_input) < 0:
-            print("Signature OK, but cannot use negative amounts")
-
-        elif float(amount_input) + float(fee) > float(balance):
-            print("Mempool: Sending more than owned")
-
-        else:
-            tx_submit = (str (timestamp), str (address), str (recipient_input), '%.8f' % float (amount_input), str (signature_enc.decode ("utf-8")), str (public_key_b64encoded.decode("utf-8")), str (operation_input), str (openfield_input))
-            while True:
-                try:
-                    s._send(s, "mpinsert")
-                    s._send(s, tx_submit)
-                    reply = s._receive(s)
-                    print ("Client: {}".format (reply))
-                    if reply != "*":  # response can be empty due to different timeout setting
-                        break
-                    else:
-                        print("Connection cut, retrying")
-
-                except Exception as e:
-                    print(f"A problem occurred: {e}, retrying")
-                    pass
-    else:
-        print("Invalid signature")
+    verify()
+    send_tx()
 
     s.close()
