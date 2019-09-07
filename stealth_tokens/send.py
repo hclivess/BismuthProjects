@@ -34,13 +34,12 @@ class TokenTransaction():
         self.amount_input = ""
         self.request_confirmation = ""
         self.wallet_file = ""
-        self.tx_submit = None
 
-def send_tx():
+def send_tx(tx_submit):
     while True:
         try:
             s._send("mpinsert")
-            s._send(transaction.tx_submit)
+            s._send(tx_submit)
             reply = s._receive()
             print("Client: {}".format(reply))
             if reply != "*":  # response can be empty due to different timeout setting
@@ -82,7 +81,7 @@ def verify():
             print("Mempool: Sending more than owned")
 
         else:
-            transaction.tx_submit = (str(transaction.timestamp),
+            tx_submit = (str(transaction.timestamp),
                          str(address),
                          str(transaction.recipient_input),
                          '%.8f' % float(transaction.amount_input),
@@ -90,6 +89,8 @@ def verify():
                          str(public_key_b64encoded.decode("utf-8")),
                          str(transaction.operation_input),
                          str(transaction.openfield_input))
+
+            return tx_submit
     else:
         print("Invalid signature")
 
@@ -186,7 +187,7 @@ if __name__ == "__main__":
         is_float = 0
         sys.exit(1)
 
-    verify()
-    send_tx()
+    tx_submit = verify()
+    send_tx(tx_submit)
 
     s.close()

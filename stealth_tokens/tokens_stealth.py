@@ -1,301 +1,118 @@
-# operation: token:issue
-# openfield: token_name:total_number(:slave_key)
-# - optional slave key is a hash of password + own address
+# operation: token:make
+# openfield: token_name:total_number(:address_token_key)
+# - optional address token key is a hash of password + own address
 
 # operation: token:transfer
-# openfield: token_name:amount(:slave_key)
-# - optional slave key is a hash of password + own address
+# openfield: token_name:amount(:address_token_key)
+# - optional address token key is a hash of password + own address
 
 # NEW:
 
-# operation: encrypt_with_mater_key(stoken:issue)
-# openfield: encrypt_with_mater_key(token_name:total_number(:slave_key))
-# - optional slave key is a hash of password + own address
+# operation: encrypt_with_mater_key(stoken:make)
+# openfield: encrypt_with_mater_key(token_name:total_number(:address_token_key))
+# - optional address token key is a hash of password + own address
 
 import sqlite3
+import random
+import os
+import string
 from hashlib import blake2b
 import json
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from base64 import b64decode, b64encode
-from bisbasic import log
 
 __version__ = '0.0.1'
 
-def master_key_generate(len=32): #AES-256 default
+def signals_generate(size):
+    signal_list = []
+    for item in range(size):
+        signal_list.append(''.join(random.choice(string.ascii_letters) for _ in range(10)))
+    return signal_list
+
+def token_key_generate(len=32): #AES-256 default
     return get_random_bytes(len)
 
-def encrypt(data, key):
+def encrypt_data(token_name, token_amount, operation, key):
     cipher = AES.new(key, AES.MODE_EAX)
     nonce = cipher.nonce
-    ciphertext, tag = cipher.encrypt_and_digest(data.encode())
+    ciphertext, tag = cipher.encrypt_and_digest(json.dumps({"name": token_name.zfill(10), "amount": token_amount.zfill(10), "operation":operation}).encode())
 
     return {"nonce": b64encode(nonce).decode(), "ciphertext": b64encode(ciphertext).decode(),"tag": b64encode(tag).decode()}
 
 def decrypt(enc_dict, key):
     cipher = AES.new(key, AES.MODE_EAX, nonce=b64decode(enc_dict["nonce"]))
 
-    plaintext = cipher.decrypt(b64decode(enc_dict["ciphertext"])).decode()
+    plaintext = json.loads(cipher.decrypt(b64decode(enc_dict["ciphertext"])).decode())
+
+    plaintext["name"] = plaintext["name"].lstrip("0") #remove leading 0s
+
+    if "amount" in plaintext:
+        plaintext["amount"] = plaintext["amount"].lstrip("0") #remove leading 0s
 
     try:
         cipher.verify(b64decode(enc_dict["tag"]))
-        print("The message is authentic:", plaintext)
+        #print("The message is authentic:", plaintext)
         return plaintext
     except ValueError:
         print("Key incorrect or message corrupted")
 
-def load_token_master_key(token):
+def load_token_key(token):
     with open('token_keys.json') as token_keys:
         keys_loaded = json.loads(token_keys.read())
     for key, value in keys_loaded.items():
         if key == token:
-            return b64decode(value)
+            return {"token": token, "token key": b64decode(value)}
 
-def save_token_master_key(token, key):
-    with open('token_keys.json') as token_keys:
-        keys_loaded = json.loads(token_keys.read())
-        keys_loaded[token] = b64encode(key).decode()
-    with open('token_keys.json',"w") as token_keys:
-        token_keys.write(json.dumps(keys_loaded))
+def save_token_key(token, signals, key):
+    if not os.path.exists(f'{token}_keys.json'):
+        keys = {}
+        keys["keys"] = b64encode(key).decode()
+        keys["signals"] = signals
 
-def slave_key_generate(master_key, address):
-    slave_key = blake2b(repr((master_key,address)).encode(), digest_size=7).hexdigest()
-    return slave_key
+        with open(f'{token}_keys.json',"w") as token_keys:
+            token_keys.write(json.dumps(keys))
 
-def blake2bhash_generate(data):
-    # new hash
-    blake2bhash = blake2b(str(data).encode(), digest_size=20).hexdigest()
-    return blake2bhash
-    # new hash
+def address_token_key_generate(token_key, address):
+    address_token_key = blake2b(repr((token_key,address)).encode(), digest_size=7).hexdigest()
+    return {"address":address, "address token key": address_token_key}
 
-def tokens_update(node, db_handler_instance):
-
-    db_handler_instance.index_cursor.execute("CREATE TABLE IF NOT EXISTS tokens (block_height INTEGER, timestamp, token, address, recipient, txid, amount INTEGER)")
-    db_handler_instance.index.commit()
-
-    db_handler_instance.index_cursor.execute("SELECT block_height FROM tokens ORDER BY block_height DESC LIMIT 1;")
-    try:
-        token_last_block = int(db_handler_instance.index_cursor.fetchone()[0])
-    except:
-        token_last_block = 0
-
-    node.logger.app_log.warning("Token anchor block: {}".format(token_last_block))
-
-    # node.logger.app_log.warning all token issuances
-    db_handler_instance.c.execute("SELECT block_height, timestamp, address, recipient, signature, operation, openfield FROM transactions WHERE block_height >= ? AND operation = ? AND reward = 0 ORDER BY block_height ASC;", (token_last_block, "stoken:issue",))
-    token_issuances = db_handler_instance.c.fetchall()
-    node.logger.app_log.warning(token_issuances)
-
-    tokens_processed = []
-
-    for issuance in token_issuances:
-        try:
-            token_split = issuance[6].split(":")
-            token_name = token_split[0].lower().strip()
-
-            try:
-                token_keyhole = token_split[2]
-            except:
-                token_keyhole = None
-
-            print(token_name,token_keyhole)
-
-
-            try:
-                db_handler_instance.index_cursor.execute("SELECT * from tokens WHERE token = ?", (token_name,))
-                dummy = db_handler_instance.index_cursor.fetchall()[0]  # check for uniqueness
-                node.logger.app_log.warning("Token issuance already processed: {}".format(token_name,))
-            except:
-                if token_name not in tokens_processed:
-                    block_height = issuance[0]
-                    node.logger.app_log.warning("Block height {}".format(block_height))
-
-                    timestamp = issuance[1]
-                    node.logger.app_log.warning("Timestamp {}".format(timestamp))
-
-                    tokens_processed.append(token_name)
-                    node.logger.app_log.warning("Token: {}".format(token_name))
-
-                    issued_by = issuance[3]
-                    node.logger.app_log.warning("Issued by: {}".format(issued_by))
-
-                    txid = issuance[4][:56]
-                    node.logger.app_log.warning("Txid: {}".format(txid))
-
-                    total = issuance[6].split(":")[1]
-                    node.logger.app_log.warning("Total amount: {}".format(total))
-
-                    db_handler_instance.index_cursor.execute("INSERT INTO tokens VALUES (?,?,?,?,?,?,?)",
-                              (block_height, timestamp, token_name, "issued", issued_by, txid, total))
-
-                    if node.plugin_manager:
-                        node.plugin_manager.execute_action_hook('token_issue',
-                                                           {'token': token_name, 'issuer': issued_by,
-                                                            'txid': txid, 'total': total})
-
-                else:
-                    node.logger.app_log.warning("This token is already registered: {}".format(issuance[1]))
-        except:
-            node.logger.app_log.warning("Error parsing")
-
-    db_handler_instance.index.commit()
-    # node.logger.app_log.warning all token issuances
-
-    # node.logger.app_log.warning("---")
-
-    # node.logger.app_log.warning all transfers of a given token
-    # token = "worthless"
-
-    db_handler_instance.c.execute("SELECT operation, openfield FROM transactions WHERE (block_height >= ? OR block_height <= ?) AND operation = ? and reward = 0 ORDER BY block_height ASC;",
-              (token_last_block, -token_last_block, "stoken:transfer",)) #includes mirror blocks
-    openfield_transfers = db_handler_instance.c.fetchall()
-    # print(openfield_transfers)
-
-    tokens_transferred = []
-    for transfer in openfield_transfers:
-        try:
-
-            token_name = transfer[1].split(":")[0].lower().strip()
-            try:
-                token_keyhole = transfer[1].split(":")[3].lower().strip()
-            except:
-                token_keyhole = None
-
-            print(token_name,token_keyhole)
-
-            if token_name not in tokens_transferred:
-                tokens_transferred.append(token_name)
-
-        except:
-            node.logger.app_log.warning(f"Error parsing")
-
-    if tokens_transferred:
-        node.logger.app_log.warning("Token transferred: {}".format(tokens_transferred))
-
-    for token in tokens_transferred:
-        node.logger.app_log.warning("processing {}".format(token))
-        db_handler_instance.c.execute("SELECT block_height, timestamp, address, recipient, signature, operation, openfield FROM transactions WHERE (block_height >= ? OR block_height <= ?) AND operation = ? AND openfield LIKE ? AND reward = 0 ORDER BY block_height ASC;",
-                  (token_last_block, -token_last_block, "stoken:transfer",token + '%',))
-        results2 = db_handler_instance.c.fetchall()
-        node.logger.app_log.warning(results2)
-
-        for r in results2:
-            block_height = r[0]
-            node.logger.app_log.warning("Block height {}".format(block_height))
-
-            timestamp = r[1]
-            node.logger.app_log.warning("Timestamp {}".format(timestamp))
-
-            token = r[6].split(":")[0]
-            node.logger.app_log.warning("Token {} operation".format(token))
-
-            sender = r[2]
-            node.logger.app_log.warning("Transfer from {}".format(sender))
-
-            recipient = r[3]
-            node.logger.app_log.warning("Transfer to {}".format(recipient))
-
-            txid = r[4][:56]
-            if txid == "0":
-                txid = blake2bhash_generate(r)
-            node.logger.app_log.warning("Txid: {}".format(txid))
-
-            try:
-                transfer_amount = int(r[6].split(":")[1])
-            except:
-                transfer_amount = 0
-
-            node.logger.app_log.warning("Transfer amount {}".format(transfer_amount))
-
-            # calculate balances
-            db_handler_instance.index_cursor.execute("SELECT sum(amount) FROM tokens WHERE recipient = ? AND block_height < ? AND token = ?",
-                      (sender,block_height,token,))
-
-            try:
-                credit_sender = int(db_handler_instance.index_cursor.fetchone()[0])
-            except:
-                credit_sender = 0
-            node.logger.app_log.warning("Sender's credit {}".format(credit_sender))
-
-            db_handler_instance.index_cursor.execute("SELECT sum(amount) FROM tokens WHERE address = ? AND block_height <= ? AND token = ?",
-                      (sender,block_height,token,))
-            try:
-                debit_sender = int(db_handler_instance.index_cursor.fetchone()[0])
-            except:
-                debit_sender = 0
-            node.logger.app_log.warning("Sender's debit: {}".format(debit_sender))
-            # calculate balances
-
-            # node.logger.app_log.warning all token transfers
-            balance_sender = credit_sender - debit_sender
-            if balance_sender < 0 and sender == "staking":
-                node.logger.app_log.warning("Total staked {}".format(abs(balance_sender)))
-            else:
-                node.logger.app_log.warning("Sender's balance {}".format(balance_sender))
-            try:
-                db_handler_instance.index_cursor.execute("SELECT txid from tokens WHERE txid = ?", (txid,))
-                dummy = db_handler_instance.index_cursor.fetchone()  # check for uniqueness
-                if dummy:
-                    node.logger.app_log.warning("Token operation already processed: {} {}".format(token, txid))
-                else:
-                    if (balance_sender - transfer_amount >= 0 and transfer_amount > 0) or (sender == "staking"):
-                        db_handler_instance.index_cursor.execute("INSERT INTO tokens VALUES (?,?,?,?,?,?,?)",
-                                  (abs(block_height), timestamp, token, sender, recipient, txid, transfer_amount))
-                        if node.plugin_manager:
-                            node.plugin_manager.execute_action_hook('token_transfer',
-                                                               {'token': token, 'from': sender,
-                                                                'to': recipient, 'txid': txid, 'amount': transfer_amount})
-
-                    else:  # save block height and txid so that we do not have to process the invalid transactions again
-                        node.logger.app_log.warning("Invalid transaction by {}".format(sender))
-                        db_handler_instance.index_cursor.execute("INSERT INTO tokens VALUES (?,?,?,?,?,?,?)", (block_height, "", "", "", "", txid, ""))
-            except Exception as e:
-                node.logger.app_log.warning("Exception {}".format(e))
-
-            node.logger.app_log.warning("Processing of {} finished".format(token))
-
-        db_handler_instance.index.commit()
+def tokens_update():
+    pass
 
 
 if __name__ == "__main__":
-    from libs import node,logger
-    import dbhandler
 
 
     #stealth tokens
     stealth_token = "stest"
     address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
 
-    #print("test", master_key_generate())
-    #save_token_master_key("stest", master_key_generate())
+    #print("test", token_key_generate())
+    save_token_key("stest", signals_generate(10), token_key_generate())
 
-    master_key = load_token_master_key(stealth_token)
-    slave_key = slave_key_generate(master_key, address)
+    token_key_dict = load_token_key(stealth_token)
+    print("token_key", token_key_dict)
 
-    print("master_key", master_key)
-    print("slave_key", slave_key)
+    address_token_key_dict = address_token_key_generate(token_key_dict["token key"], address)
+    print("address_token_key", address_token_key_dict)
     # stealth tokens
 
-    #print("stoken:issue")
+    #print("stoken:make")
     #print("stest:10000")
-    encrypted_message = encrypt(data="stest:100000", key=master_key)
 
-    print(encrypted_message)
-    print(decrypt(encrypted_message, master_key))
+    encrypted_data_make = encrypt_data(token_name="stest", token_amount="10000", operation="make", key=token_key_dict["token key"])
+    encrypted_data_move = encrypt_data(token_name="stest", token_amount="1", operation="move", key=token_key_dict["token key"])
 
-    import time
-    time.sleep(5000)
+    print("encrypted_data_make", encrypted_data_make)
+    print(decrypt(encrypted_data_make, token_key_dict["token key"]))
 
-    node = node.Node()
-    node.debug_level = "WARNING"
-    node.terminal_output = True
+    print("encrypted_data_move", encrypted_data_move)
+    print(decrypt(encrypted_data_move, token_key_dict["token key"]))
 
-    node.logger = logger.Logger()
-    node.logger.app_log = log.log("stealth.log", node.debug_level, node.terminal_output)
-    node.logger.app_log.warning("Configuration settings loaded")
-
-    db_handler = dbhandler.DbHandler("D:/Bismuth/static/index_reg.db","D:/Bismuth/static/regmode.db","D:/Bismuth/static/regmode.db", False, None, node.logger, False)
     #index var is automatically overwritten in regmode
 
-    tokens_update(node, db_handler)
+    tokens_update()
     # tokens_update("tokens.db","reindex")
+
+
