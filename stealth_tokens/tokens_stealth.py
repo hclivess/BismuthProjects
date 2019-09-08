@@ -1,17 +1,3 @@
-# operation: token:make
-# openfield: token_name:total_number(:address_token_key)
-# - optional address token key is a hash of password + own address
-
-# operation: token:transfer
-# openfield: token_name:amount(:address_token_key)
-# - optional address token key is a hash of password + own address
-
-# NEW:
-
-# operation: encrypt_with_mater_key(stoken:make)
-# openfield: encrypt_with_mater_key(token_name:total_number(:address_token_key))
-# - optional address token key is a hash of password + own address
-
 import sqlite3
 import random
 import os
@@ -27,7 +13,7 @@ __version__ = '0.0.1'
 def signals_generate(size):
     signal_list = []
     for item in range(size):
-        signal_list.append(''.join(random.choice(string.ascii_letters) for _ in range(10)))
+        signal_list.append(''.join(random.choice(string.ascii_letters + string.punctuation + string.digits) for _ in range(10)))
     return signal_list
 
 def token_key_generate(len=32): #AES-256 default
@@ -46,9 +32,7 @@ def decrypt(enc_dict, key):
     plaintext = json.loads(cipher.decrypt(b64decode(enc_dict["ciphertext"])).decode())
 
     plaintext["name"] = plaintext["name"].lstrip("0") #remove leading 0s
-
-    if "amount" in plaintext:
-        plaintext["amount"] = plaintext["amount"].lstrip("0") #remove leading 0s
+    plaintext["amount"] = plaintext["amount"].lstrip("0") #remove leading 0s
 
     try:
         cipher.verify(b64decode(enc_dict["tag"]))
@@ -83,18 +67,17 @@ def tokens_update():
 
 if __name__ == "__main__":
 
-
     #stealth tokens
     stealth_token = "stest"
     address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
 
     #print("test", token_key_generate())
-    save_token_key("stest", signals_generate(10), token_key_generate())
+    save_token_key(token="stest", signals=signals_generate(10), key=token_key_generate())
 
-    token_key_dict = load_token_key(stealth_token)
+    token_key_dict = load_token_key(token=stealth_token)
     print("token_key", token_key_dict)
 
-    address_token_key_dict = address_token_key_generate(token_key_dict["token key"], address)
+    address_token_key_dict = address_token_key_generate(token_key=token_key_dict["token key"], address=address)
     print("address_token_key", address_token_key_dict)
     # stealth tokens
 
@@ -114,5 +97,3 @@ if __name__ == "__main__":
 
     tokens_update()
     # tokens_update("tokens.db","reindex")
-
-
