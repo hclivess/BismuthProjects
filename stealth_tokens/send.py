@@ -17,6 +17,7 @@ args3,4,6 are not prompted if ran without args
 import base64
 import sys
 import time
+import json
 
 from Cryptodome.Hash import SHA
 from Cryptodome.Signature import PKCS1_v1_5
@@ -25,17 +26,20 @@ from bisbasic import essentials, options
 from bismuthclient import rpcconnections
 from bisbasic.essentials import fee_calculate
 from polysign.signerfactory import SignerFactory
+import tokens_stealth
 
 class TokenTransaction():
     def __init__(self):
-        self.operation_input = ""
-        self.openfield_input = ""
-        self.recipient_input = ""
-        self.amount_input = ""
-        self.request_confirmation = ""
-        self.wallet_file = ""
+        self.operation_input = None
+        self.openfield_input = None
+        self.recipient_input = None
+        self.amount_input = 0
+        self.request_confirmation = None
+        self.wallet_file = "wallet.der"
+        self.token_key_dict = None
+        self.token_amount_input = "0"
 
-def send_tx(tx_submit):
+def send_tx(s, tx_submit):
     while True:
         try:
             s._send("mpinsert")
@@ -94,6 +98,10 @@ def verify():
     else:
         print("Invalid signature")
 
+    if not SignerFactory.address_is_valid(transaction.recipient_input):
+        print("Wrong address format")
+        sys.exit(1)
+
 def connect(ip):
     if 'regnet' in config.version:
         port = 3030
@@ -104,42 +112,6 @@ def connect(ip):
 
     return rpcconnections.Connection((ip, int(port)))
 
-def getargs():
-    try:
-        transaction.wallet_file = sys.argv[5]
-    except:
-        transaction.wallet_file = input("Path to wallet: ")
-
-    try:
-        transaction.request_confirmation = sys.argv[6]
-    except:
-        transaction.request_confirmation = False
-
-    try:
-        transaction.amount_input = sys.argv[1]
-    except IndexError:
-        transaction.amount_input = input("Amount: ")
-
-    try:
-        transaction.recipient_input = sys.argv[2]
-    except IndexError:
-        transaction.recipient_input = input("Recipient: ")
-
-    if not SignerFactory.address_is_valid(transaction.recipient_input):
-        print("Wrong address format")
-        sys.exit(1)
-
-    try:
-        transaction.operation_input = sys.argv[3]
-    except IndexError:
-        transaction.operation_input = ""
-
-    try:
-        transaction.openfield_input = sys.argv[4]
-    except IndexError:
-        transaction.openfield_input = ""
-
-
 if __name__ == "__main__":
     config = options.Get()
     config.read()
@@ -147,16 +119,42 @@ if __name__ == "__main__":
 
     s = connect("127.0.0.1")
 
-
-
     key, public_key_readable, private_key_readable, encrypted, unlocked, public_key_b64encoded, address, keyfile = essentials.keys_load_new(transaction.wallet_file)
 
     if encrypted:
         key, private_key_readable = essentials.keys_unlock(private_key_readable)
 
-    print(f'Number of arguments: {len(sys.argv)} arguments.')
-    print(f'Argument list: {"".join(sys.argv)}')
     print(f'Using address: {address}')
+
+    ### generate
+    generate = input("Generate new token? (y/n)")
+    if generate == "y":
+        generate_name = input("Token name to generate: ")
+        tokens_stealth.save_token_key(token=generate_name,
+                                      signals=tokens_stealth.signals_generate(100),
+                                      key=tokens_stealth.token_key_generate())
+
+        print(f"Master file for {generate_name} generated")
+
+        transaction.token_key_dict = tokens_stealth.load_token_dict(token=generate_name)
+        transaction.token_amount_input = input("Amount to generate: ")
+        transaction.openfield_input = tokens_stealth.encrypt_data(token_name=generate_name,
+                                                                  token_amount=transaction.token_amount_input,
+                                                                  recipient=address, operation="make",
+                                                                  key_encoded=transaction.token_key_dict["key"])
+        transaction.operation_input = tokens_stealth.load_signal(transaction.token_key_dict["signals"])
+    ### /generate
+
+    ### load
+    else:
+        input_name = input("Token name to load: ")
+        transaction.token_key_dict = tokens_stealth.load_token_dict(token=input_name)
+        transaction.token_amount_input = input("Amount to transfer: ")
+        transaction.openfield_input = tokens_stealth.encrypt_data(token_name=input_name,
+                                                                  token_amount=transaction.token_amount_input,
+                                                                  recipient=address, operation="move",
+                                                                  key_encoded=transaction.token_key_dict["key"])
+    ### /load
 
     # get balance
 
@@ -165,13 +163,11 @@ if __name__ == "__main__":
     stats_account = s._receive()
     balance = stats_account[0]
 
-    print("Transaction address: %s" % address)
-    print("Transaction address balance: %s" % balance)
-
-    getargs()
+    print(f"Transaction address: ")
+    print(f"Transaction address balance: {balance}")
 
     fee = fee_calculate(transaction.openfield_input)
-    print("Fee: %s" % fee)
+    print(f"Fee: {fee}")
 
     if transaction.request_confirmation:
         confirm = input("Confirm (y/n): ")
@@ -180,14 +176,7 @@ if __name__ == "__main__":
             print("Transaction cancelled, user confirmation failed")
             exit(1)
 
-    try:
-        float(transaction.amount_input)
-        is_float = 1
-    except ValueError:
-        is_float = 0
-        sys.exit(1)
-
     tx_submit = verify()
-    send_tx(tx_submit)
+    send_tx(s, tx_submit)
 
     s.close()
