@@ -4,6 +4,7 @@ payout_level = 1
 payout_gap = 4
 month = 2629743
 lookback = 20
+exposure = 5
 
 import tweepy
 import json
@@ -47,7 +48,7 @@ def is_already_paid(tweet):
     print("already_paid",already_paid)
     return already_paid
 
-def tweet_qualify(tweet_id, exposure=10):
+def tweet_qualify(tweet_id):
     try:
         open_status = api.get_status(tweet_id)
         parsed = open_status._json
@@ -61,7 +62,8 @@ def tweet_qualify(tweet_id, exposure=10):
         parsed_followers = parsed['user']['followers_count']
         acc_age = time.mktime (time.strptime (parsed['user']['created_at'], '%a %b %d %H:%M:%S +0000 %Y'))
 
-        if "#bismuth" and "$bis" in parsed_text.lower() and retweet_count + favorite_count > exposure:
+        # if "#bismuth" and "$bis" in parsed_text.lower() and retweet_count + favorite_count > exposure and parsed_followers > 30 and acc_age < time.time() - month:
+        if "#bismuth" and "$bis" in parsed_text.lower() and retweet_count + favorite_count > exposure: #condition
             qualifies = True
         else:
             qualifies = False
@@ -117,7 +119,7 @@ if __name__ == "__main__":
             print ("name_count", name_count)
 
 
-            if tweet_qualified[0] and not is_already_paid(tweet_qualified[1]) and name_count < 1:
+            if tweet_qualified[0] and not is_already_paid(tweet_qualified[1]):
                 print ("Tweet qualifies")
 
                 recipient = row[1]
