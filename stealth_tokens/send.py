@@ -1,17 +1,5 @@
 """
-Send a transaction from console, with no password nor confirmation asked.
-To be used for unattended, automated processes.
-
-This file takes optional arguments,
-
-arg1: amount to send
-arg2: recipient address
-arg3: operation
-arg4: OpenField data
-arg5: wallet file
-arg6: request confirmation for every transaction
-
-args3,4,6 are not prompted if ran without args
+Heavily simplified
 """
 
 import base64
@@ -78,23 +66,16 @@ def verify():
     verifier = PKCS1_v1_5.new(key)
 
     if verifier.verify(h, signature):
-        if float(transaction.amount_input) < 0:
-            print("Signature OK, but cannot use negative amounts")
+        tx_submit = (str(transaction.timestamp),
+                     str(address),
+                     str(transaction.recipient_input),
+                     '%.8f' % float(transaction.amount_input),
+                     str(signature_enc.decode("utf-8")),
+                     str(public_key_b64encoded.decode("utf-8")),
+                     str(transaction.operation_input),
+                     str(transaction.openfield_input))
 
-        elif float(transaction.amount_input) + float(fee) > float(balance):
-            print("Mempool: Sending more than owned")
-
-        else:
-            tx_submit = (str(transaction.timestamp),
-                         str(address),
-                         str(transaction.recipient_input),
-                         '%.8f' % float(transaction.amount_input),
-                         str(signature_enc.decode("utf-8")),
-                         str(public_key_b64encoded.decode("utf-8")),
-                         str(transaction.operation_input),
-                         str(transaction.openfield_input))
-
-            return tx_submit
+        return tx_submit
     else:
         print("Invalid signature")
 

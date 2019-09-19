@@ -9,6 +9,16 @@ from Cryptodome.Random import get_random_bytes
 from base64 import b64decode, b64encode
 
 __version__ = '0.0.1'
+connection = sqlite3.connect("D:/bismuth/static/ledger.db")
+cursor = connection.cursor()
+
+def find_txs(signals_dict, anchor):
+    seperator = ', '
+    signals = print(seperator.join(signals_dict))
+    connection.execute("SELECT * FROM transactions WHERE operation IN (?) AND block_height >= ?", (signals, anchor, ))
+    result = cursor.fetchall()
+    print(result)
+
 
 def signals_generate(size):
     signal_list = []
@@ -99,6 +109,8 @@ if __name__ == "__main__":
                                        recipient=recipient,
                                        operation="move",
                                        key_encoded=token_key_dict["key"])
+
+    print(find_txs(token_key_dict["signals"], 0))
 
     print(decrypt(encrypted_data_make, token_key_dict["key"]))
     print("make (data)", encrypted_data_make)
