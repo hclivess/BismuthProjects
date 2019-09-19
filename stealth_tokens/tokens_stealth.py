@@ -13,8 +13,8 @@ connection = sqlite3.connect("D:/bismuth/static/ledger.db")
 cursor = connection.cursor()
 
 def find_txs(signals_dict, anchor):
-
-    query = 'SELECT * FROM transactions WHERE operation IN (%s)' % ','.join('?' for _ in signals_dict)
+    qmarks = ','.join('?' for _ in signals_dict)
+    query = 'SELECT * FROM transactions WHERE operation IN (%s) AND block_height >= %s' % (qmarks, anchor)
     result = cursor.execute(query, signals_dict).fetchall()
     print(result)
 
