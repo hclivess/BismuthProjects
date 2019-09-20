@@ -12,9 +12,12 @@ __version__ = '0.0.1'
 connection = sqlite3.connect("D:/bismuth/static/ledger.db")
 cursor = connection.cursor()
 
+def digestor(action):
+    pass
+
 def find_txs(signals_dict, anchor):
     qmarks = ','.join('?' for _ in signals_dict)
-    query = 'SELECT block_height, openfield FROM transactions WHERE operation IN (%s) AND block_height >= %s' % (qmarks, anchor)
+    query = 'SELECT block_height, openfield FROM transactions WHERE operation IN (%s) AND block_height >= %s ORDER BY block_height ASC' % (qmarks, anchor)
     result = cursor.execute(query, signals_dict).fetchall()
     return result
 
@@ -119,7 +122,5 @@ if __name__ == "__main__":
 
     x = find_txs(token_key_dict["signals"], 0)
     for y in x:
-        print("!!!", y[1])
-        print(json.loads(y[1]))
-
-        print(decrypt(y[1], token_key_dict["key"]))
+        action = decrypt(json.loads(y[1]), token_key_dict["key"])
+        print(action)
