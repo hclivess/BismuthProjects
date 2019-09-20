@@ -14,14 +14,14 @@ cursor = connection.cursor()
 
 def find_txs(signals_dict, anchor):
     qmarks = ','.join('?' for _ in signals_dict)
-    query = 'SELECT * FROM transactions WHERE operation IN (%s) AND block_height >= %s' % (qmarks, anchor)
+    query = 'SELECT block_height, openfield FROM transactions WHERE operation IN (%s) AND block_height >= %s' % (qmarks, anchor)
     result = cursor.execute(query, signals_dict).fetchall()
-    print(result)
+    return result
 
 def signals_generate(size):
     signal_list = []
     for item in range(size):
-        signal_list.append(''.join(random.choice(string.ascii_letters + string.punctuation + string.digits) for _ in range(10)))
+        signal_list.append(''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10)))
     return signal_list
 
 def token_key_generate(len=32): #AES-256 default
@@ -108,12 +108,18 @@ if __name__ == "__main__":
                                        operation="move",
                                        key_encoded=token_key_dict["key"])
 
-    print(find_txs(token_key_dict["signals"], 0))
 
     print(decrypt(encrypted_data_make, token_key_dict["key"]))
-    print("make (data)", encrypted_data_make)
+    print("make (data)", json.dumps(encrypted_data_make))
     print("make (operation)", load_signal(token_key_dict["signals"]))
 
     print(decrypt(encrypted_data_move, token_key_dict["key"]))
-    print("move (data)", encrypted_data_move)
+    print("move (data)", json.dumps(encrypted_data_move))
     print("move (operation)", load_signal(token_key_dict["signals"]))
+
+    x = find_txs(token_key_dict["signals"], 0)
+    for y in x:
+        print("!!!", y[1])
+        print(json.loads(y[1]))
+
+        print(decrypt(y[1], token_key_dict["key"]))
