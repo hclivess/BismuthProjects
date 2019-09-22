@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
                 recipient = row[1]
                 amount = payout_level
-                operation = "payout_tw"
+                operation = "twitter:payout"
                 openfield = ""
 
                 timestamp = '%.2f' % time.time ()
