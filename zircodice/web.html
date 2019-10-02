@@ -10,8 +10,8 @@
 </head>
 <body class='bg'>
 
-<h1>Welcome to ZircoDice</h1>
 <div class ='container-fluid'>
+    <h1>Welcome to ZircoDice</h1>
 <p>
     Please send any amount of coins lower than 100 to the address <strong>{{address}}</strong> and include the word '<strong>even</strong>' or '<strong>odd</strong>' in the OpenField data.
     You are betting on a random number from 0 to 9 the casino rolls. 0 is considered an even number. Every transaction has it's own roll to prevent abuse.
@@ -20,10 +20,10 @@
 </p>
 </div>
 
-<h1>Bets</h1>
 <div class ='container-fluid'>
+    <h1>Bets</h1>
     <table style="width:100%">
-  <tr>
+  <tr bgcolor='white'>
     <th>Block Height</th>
     <th>Time</th>
     <th>Player</th>
@@ -50,11 +50,12 @@
 </div>
 
 
-<h1>Payouts</h1>
+
 
 <div class ='container-fluid'>
+    <h1>Payouts</h1>
     <table style="width:100%">
-  <tr>
+  <tr bgcolor='white'>
     <th>Block Height</th>
     <th>Time</th>
     <th>Player</th>
@@ -72,14 +73,12 @@
   </tr>
 {%end%}
     </table>
-
-
 </div>
 
-<div class ='container'>
+<div class ='container-fluid'>
 <table class='table table-responsive'>
 
-    <tr bgcolor='white'><th>Statistics for the last 1000 bets</th>
+    <h1>Statistics for the last 1000 bets</h1>
 
     <tr bgcolor='#f1e3dd'><td>Player wins:</td><td>{{wins_total}} ({{win_percentage}}%)</td>
     <tr bgcolor='#f1e3dd'><td>Player losses: </td><td>{{losses_total}} ({{loss_percentage}}%)</td>

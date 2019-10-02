@@ -1,4 +1,6 @@
 hyper_path=d:/bismuth/static/hyper.db
 ledger_path=d:/bismuth/static/ledger.db
+mempool_path=d:/bismuth/mempool.db
 debug_level=WARNING
 full_ledger=True
+terminal_output=True

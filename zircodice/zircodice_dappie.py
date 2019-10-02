@@ -47,6 +47,7 @@ full_ledger = config.full_ledger
 ledger_path = config.ledger_path
 hyper_path = config.hyper_path
 terminal_output=config.terminal_output
+mempool_path = config.mempool_path
 
 confirmations = 5
 run = 0
@@ -114,17 +115,18 @@ while True:
                 # print "player wins"
                 won_count = won_count + 1
 
-                passed = 0
-                while passed == 0:
+                passed = False
+                while not passed:
                     try:
-                        c.execute("SELECT * FROM transactions where (openfield = ? OR openfield = ?);",("payout for " + tx_signature[:8],("payout for " + tx_signature)))
+                        c.execute("SELECT * FROM transactions WHERE openfield = ?;",("payout for " + tx_signature[:8],))
                         result_in_ledger = c.fetchone()[0]
                         print ("Payout transaction already in the ledger for {}".format(tx_signature[:8]))
                         paid_count = paid_count + 1
-                        passed = 1
+                        passed = True
 
                     except sqlite3.OperationalError as e:
                         print ("Database locked, retrying")
+                        time.sleep(1)
                         pass
 
                     except TypeError as e: #not there
@@ -132,7 +134,7 @@ while True:
                         print ("Appending tx to the payout list for {}".format(tx_signature[:8]))
                         payout_missing.append(x)
                         not_paid_count = not_paid_count + 1
-                        passed = 1
+                        passed = True
                     except:
                         raise
 
@@ -179,7 +181,7 @@ while True:
             if verifier.verify(h, base64.b64decode(signature_enc)):
                 print("Signature OK")
 
-            mempool = sqlite3.connect('mempool.db')
+            mempool = sqlite3.connect(mempool_path)
             mempool.text_factory = str
             m = mempool.cursor()
 
@@ -192,13 +194,14 @@ while True:
                     passed = True
                 except sqlite3.OperationalError as e:
                     print ("Database locked, retrying")
+                    time.sleep(1)
                     pass
                 except TypeError: #not there
                     m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)", (str(timestamp), str(address), str(payout_address), '%.8f' % (float(payout_amount-fee)), str(signature_enc.decode("utf-8")), str(public_key_hashed.decode("utf-8")), "0", str("payout for " + tx_signature[:8]), str(timestamp)))
                     mempool.commit()  # Save (commit) the changes
                     mempool.close()
                     print ("Mempool updated with a payout transaction for {}".format(tx_signature[:8]))
-                    passed = 1
+                    passed = True
                 except:
                     raise
 
