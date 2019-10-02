@@ -2,110 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ZircoDice</title>
-    <link rel = 'icon' href = 'static/zircodice.ico' type = 'image/x-icon'>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <meta http-equiv='refresh' content='60' >
-    <meta http-equiv='cache-control' content='no-cache'>
-    <link rel='stylesheet' type='text/css' href='static/style_zircodice.css'>
+    <title>{{title}}</title>
 </head>
+<body>
 
+{{result_bets}}
 
-        <body class='bg'>
+{{result_payouts}}
 
-        <center>
-        <h1>Welcome to ZircoDice</h1>
-        <p>Please send any amount of coins lower than 100 to the address <strong>{{address}}</strong> and include the word '<strong>even</strong>' or '<strong>odd</strong>' in the OpenField data.<br> You are betting on a random number from 0 to 9 the casino rolls. 0 is considered an even number. Every transaction has it's own roll to prevent abuse.<br>If you win, you will receive 2x your bet. House returns 95% of your win minus fees. Payout happens after 10 blocks have passed.</p>
-        <p>News: The outcome is now based on random number drawing, not on numbers included in blocks</p>
-        <br>
-
-
-        <div class ='container'>
-        <table class='table table-responsive'>
-
-        <tr bgcolor='white'><th>Statistics for the last 1000 bets</th>
-        <tr bgcolor='#f1e3dd'><td>Player wins:</td><td>{} ({}%)</td>".format(wins,percentage_of(wins,losses)))
-        <tr bgcolor='#f1e3dd'><td>Player losses: </td><td>{} ({}%)</td>".format(losses,percentage_of(losses,wins)))
-        <tr bgcolor='#f1e3dd'><td>Wins amount: </td><td>{}</td>".format(wins_amount))
-        <tr bgcolor='#f1e3dd'><td>Losses amount: </td><td>{}</td>".format(losses_amount))
-        <tr bgcolor='#f1e3dd'><td>House balance: </td><td>{}</td>".format(balancesimple(c, address)))
-
-        <tr bgcolor='#f1e3dd'><td>Odds rolled: </td><td>{}</td>".format(probability_count(roll_cursor)[1]))
-        <tr bgcolor='#f1e3dd'><td>Evens rolled: </td><td>{}</td>".format(probability_count(roll_cursor)[0]))
-
-
-        </table>
-        </div>
-
-
-
-        <tr bgcolor=white>
-        <td>Block Height</td>
-            <td>Time</td>
-            <td>Player</td>
-            <td>TXID</td>
-            <td>Amount</td>
-        </tr>
-
-            
-        for x in result_bets:
-            amount = x[4]
-            openfield = str(x[11])
-            betting_signatures.append(x[5]) #sig
-            txid = x[5][:56]
-            #print openfield
-
-            rolled = roll(x[1], txid, roll_db, roll_cursor)
-
-            if (rolled % 2 == 0) and (openfield == "even"): #if bets even and wins
-                cell_color = "#cfe0e8"
-                icon = "<img src=/static/green.png alt='green'>"
-                result = "win"
-                wins = wins + 1
-                wins_amount = wins_amount + amount
-            elif (rolled % 2 != 0) and (openfield == "odd"): #if bets odd and wins
-                cell_color = "#cfe0e8"
-                icon = "<img src=/static/green.png alt='green'>"
-                result = "win"
-                wins = wins + 1
-                wins_amount = wins_amount + amount
-            else:
-                cell_color = "#87bdd8"
-                icon = "<img src=/static/red.png alt='red'>"
-                result = "loss"
-                losses = losses + 1
-                losses_amount = losses_amount + amount
-
-            <tr bgcolor="+cell_color+">")
-            <td><p3>{}</td>".format(x[0]))#block height
-            <td>{}</td>".format(time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(x[1])))))#time
-            <td>{}</td>".format(x[2]))#player
-            <td>{}</td>".format(x[5][:56]))#txid
-            <td>{}</td>".format(rolled))
-            <td>{}</td>".format(x[4]))
-            <td>{}</td>".format(x[11]))
-            <td>{} {}</p3></td>".format(icon,result))
-            </tr>")
-
-        <tr bgcolor=white>
-        <td>Block Height</td><td>Time</td><td>Player</td><td>TXID</td><td>Casino Roll</td><td>Amount Bet</td><td>Bet on</td><td>Result</td>
-        </tr>
-
-
- {%for x in result_payouts%}
-        <tr bgcolor="+cell_color+">
-            <td>{{x[0]}}</td>
-            <td>{{x[1]}}</td>
-            <td>{{x[2]}}</td>
-            <td>{{x[5][:56]}}</td>
-            <td>{{rolled}}</td>
-            <td>{{x[4]}}</td>
-            <td>{{x[11]}}</td>
-            <td>{{icon}} {{result}}</td>
-        </tr>
-            {%end%}
-
-
-</center>
 </body>
 </html>

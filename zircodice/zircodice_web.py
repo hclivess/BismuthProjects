@@ -90,7 +90,7 @@ class MainHandler(tornado.web.RequestHandler):
         while True:
             try:
                 print("Mounting database...")
-                if full_ledger == 1:
+                if full_ledger:
                     conn = sqlite3.connect(ledger_path)
                 else:
                     conn = sqlite3.connect(hyper_path)
@@ -106,13 +106,15 @@ class MainHandler(tornado.web.RequestHandler):
                 c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;", ("odd", "even", address, block_anchor,))
                 result_bets = c.fetchall() # value to transfer
 
-                c.execute('SELECT * FROM transactions WHERE address = ? AND openfield LIKE ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;', (address, '%' + "payout" + '%', block_anchor,))
+                c.execute('SELECT * FROM transactions WHERE address = ? AND operation = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;', (address, "zd_payout", block_anchor,))
                 result_payouts = c.fetchall()  # value to transfer
                 break
 
             except Exception as e:
                 print("Retrying database access, {}".format(e))
                 time.sleep(1)
+
+        self.render("web.html", title="ZircoDice", result_bets=result_bets, result_payouts=result_payouts)
 
         view_bets = []
         view_bets.append("<tr bgcolor=white>")
@@ -243,7 +245,7 @@ class MainHandler(tornado.web.RequestHandler):
         html.append("</html>")
 
         c.close()
-        self.write(''.join(html))
+        #self.write(''.join(html))
 
 def make_app():
 
