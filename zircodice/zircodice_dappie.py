@@ -77,7 +77,7 @@ while True:
             block_height_last = c.fetchone()[0]
             # confirmations
 
-            c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) and recipient = ? and block_height <= ? AND block_height > ? ORDER BY block_height DESC LIMIT 500",("odd",)+("even",)+(address,)+(block_height_last-confirmations,)+(block_anchor,))
+            c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? and block_height <= ? AND block_height > ? AND amount >= ? ORDER BY block_height DESC LIMIT 500",("odd","even",address,block_height_last-confirmations,block_anchor,0.1,))
             result_bets = c.fetchall()
             break
         except sqlite3.OperationalError as e:
@@ -161,14 +161,15 @@ while True:
             # create transactions for missing payouts
             timestamp = '%.2f' % time.time()
 
-            payout_amount = Decimal(bet_amount * 2) - percentage(5, bet_amount)
+            win_amount = Decimal(bet_amount * 2) - percentage(5, bet_amount)
             payout_openfield = "payout for " + tx_signature[:8]
             payout_operation = "zircodice:payout"
             fee = fee_calculate(payout_openfield)
+            payout_amount = '%.8f' % float(win_amount-fee)
 
-            #float(0.01 + (float(payout_amount) * 0.001) + (float(len(payout_openfield)) / 100000) + (float(payout_keep) / 10))  # 0.1% + 0.01 dust
+            #float(0.01 + (float(win_amount) * 0.001) + (float(len(payout_openfield)) / 100000) + (float(payout_keep) / 10))  # 0.1% + 0.01 dust
 
-            transaction = (str(timestamp), str(address), str(payout_address), '%.8f' % float(payout_amount-fee), str(payout_operation), str(payout_openfield))  # this is signed
+            transaction = (str(timestamp), str(address), str(payout_address), str(payout_amount), str(payout_operation), str(payout_openfield))  # this is signed
             print(transaction)
 
             h = SHA.new(str(transaction).encode("utf-8"))
@@ -197,7 +198,7 @@ while True:
                     time.sleep(1)
                     pass
                 except TypeError: #not there
-                    m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)", (str(timestamp), str(address), str(payout_address), '%.8f' % float(payout_amount-fee), str(signature_enc.decode("utf-8")), str(public_key_hashed.decode("utf-8")), payout_operation, payout_openfield, str(timestamp)))
+                    m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)", (str(timestamp), str(address), str(payout_address), str(payout_amount), str(signature_enc.decode("utf-8")), str(public_key_hashed.decode("utf-8")), payout_operation, payout_openfield, str(timestamp)))
                     mempool.commit()  # Save (commit) the changes
                     mempool.close()
                     print ("Mempool updated with a payout transaction for {}".format(tx_signature[:8]))
