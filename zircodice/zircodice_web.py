@@ -105,7 +105,7 @@ class MainHandler(tornado.web.RequestHandler):
                 c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;", ("odd", "even", address, block_anchor,))
                 result_bets = c.fetchall() # value to transfer
 
-                c.execute('SELECT * FROM transactions WHERE address = ? AND operation = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;', (address, "zd_payout", block_anchor,))
+                c.execute('SELECT * FROM transactions WHERE address = ? AND operation = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;', (address, "zircodice:payout", block_anchor,))
                 result_payouts = c.fetchall()  # value to transfer
                 break
 
@@ -168,7 +168,7 @@ class MainHandler(tornado.web.RequestHandler):
 
         payout_rows = []
         for x in result_payouts:
-            if x[10] == "zd_payout":
+            if x[10] == "zircodice:payout":
                
                 payout_rows.append({"cell_color": "#daebe8",
                                  "block_height": x[0],

@@ -163,7 +163,7 @@ while True:
 
             payout_amount = Decimal(bet_amount * 2) - percentage(5, bet_amount)
             payout_openfield = "payout for " + tx_signature[:8]
-            payout_operation = "zd_payout"
+            payout_operation = "zircodice:payout"
             fee = fee_calculate(payout_openfield)
 
             #float(0.01 + (float(payout_amount) * 0.001) + (float(len(payout_openfield)) / 100000) + (float(payout_keep) / 10))  # 0.1% + 0.01 dust
