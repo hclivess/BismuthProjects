@@ -168,7 +168,7 @@ while True:
 
             #float(0.01 + (float(payout_amount) * 0.001) + (float(len(payout_openfield)) / 100000) + (float(payout_keep) / 10))  # 0.1% + 0.01 dust
 
-            transaction = (str(timestamp), str(address), str(payout_address), '%.8f' % float(payout_amount-fee), str(payout_operation), str(payout_openfield))  # this is signed
+            transaction = (str(timestamp), str(address), str(payout_address), str(fee), str(payout_operation), str(payout_openfield))  # this is signed
             print(transaction)
 
             h = SHA.new(str(transaction).encode("utf-8"))
@@ -197,7 +197,7 @@ while True:
                     time.sleep(1)
                     pass
                 except TypeError: #not there
-                    m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)", (str(timestamp), str(address), str(payout_address), '%.8f' % (float(payout_amount-fee)), str(signature_enc.decode("utf-8")), str(public_key_hashed.decode("utf-8")), "0", str("payout for " + tx_signature[:8]), str(timestamp)))
+                    m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)", (str(timestamp), str(address), str(payout_address), str(fee), str(signature_enc.decode("utf-8")), str(public_key_hashed.decode("utf-8")), payout_operation, payout_openfield, str(timestamp)))
                     mempool.commit()  # Save (commit) the changes
                     mempool.close()
                     print ("Mempool updated with a payout transaction for {}".format(tx_signature[:8]))

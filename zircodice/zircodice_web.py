@@ -169,7 +169,7 @@ class MainHandler(tornado.web.RequestHandler):
 
         payout_rows = []
         for x in result_payouts:
-            if x[10] == "payout":
+            if x[10] == "zd_payout":
                
                 payout_rows.append({"cell_color": "#daebe8",
                                  "block_height": x[0],
