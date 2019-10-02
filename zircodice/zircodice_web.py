@@ -134,7 +134,7 @@ class MainHandler(tornado.web.RequestHandler):
             txid = x[5][:56]
             #print openfield
 
-            rolled = roll(x[1],txid,roll_db,roll_cursor)
+            rolled = roll(x[1], txid, roll_db, roll_cursor)
 
             if (rolled % 2 == 0) and (openfield == "even"): #if bets even and wins
                 cell_color = "#cfe0e8"
@@ -168,7 +168,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 
-        c.execute('SELECT * FROM transactions WHERE address = ? AND openfield LIKE ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;',(address,)+('%'+"payout"+'%',)+(block_anchor,)) #should work, needs testing
+        c.execute('SELECT * FROM transactions WHERE address = ? AND openfield LIKE ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;',(address,)+('%'+"payout"+'%',)+(block_anchor,))
         result_payouts = c.fetchall()
 
         #print result_payouts
@@ -235,8 +235,6 @@ class MainHandler(tornado.web.RequestHandler):
 
         html.append("<tr bgcolor='#f1e3dd'><td>Odds rolled: </td><td>{}</td>".format(probability_count(roll_cursor)[1]))
         html.append("<tr bgcolor='#f1e3dd'><td>Evens rolled: </td><td>{}</td>".format(probability_count(roll_cursor)[0]))
-
-
 
 
         html.append("</table>")

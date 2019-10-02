@@ -140,11 +140,11 @@ while True:
                 # print "bank wins"
                 lost_count = lost_count + 1
 
-    print ("Run: " + str(run))
-    print ("Total client lost rounds: " + str(lost_count))
-    print ("Total client won rounds: " + str(won_count))
-    print ("Already paid out x times: " + str(paid_count))
-    print ("Not paid out yet x times: " + str(not_paid_count))
+    print (f"Run: {run}")
+    print (f"Total client lost rounds: {lost_count}")
+    print (f"Total client won rounds: {won_count}")
+    print (f"Already paid out x times: {paid_count}")
+    print (f"Not paid out yet x times: {not_paid_count}")
 
     for y in payout_missing:
         if y not in processed:
@@ -183,13 +183,13 @@ while True:
             mempool.text_factory = str
             m = mempool.cursor()
 
-            passed = 0
-            while passed == 0:
+            passed = False
+            while not passed:
                 try:
                     m.execute("SELECT * FROM transactions WHERE openfield = ?;",("payout for " + tx_signature[:8],))
                     result_in_mempool = m.fetchone()[0]
                     print ("Payout transaction already in the mempool")
-                    passed = 1
+                    passed = True
                 except sqlite3.OperationalError as e:
                     print ("Database locked, retrying")
                     pass
@@ -205,4 +205,3 @@ while True:
 
                 # create transactions for missing payouts
     time.sleep(15)
-conn.close()
