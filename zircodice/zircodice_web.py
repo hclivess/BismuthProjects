@@ -114,8 +114,6 @@ class MainHandler(tornado.web.RequestHandler):
                 print("Retrying database access, {}".format(e))
                 time.sleep(1)
 
-        self.render("web.html", title="ZircoDice", result_bets=result_bets, result_payouts=result_payouts)
-
         view_bets = []
         view_bets.append("<tr bgcolor=white>")
         view_bets.append("<td>Block Height</td><td>Time</td><td>Player</td><td>TXID</td><td>Casino Roll</td><td>Amount Bet</td><td>Bet on</td><td>Result</td>")
@@ -127,6 +125,8 @@ class MainHandler(tornado.web.RequestHandler):
         losses = 0
         wins_amount = 0
         losses_amount = 0
+
+        result_rows = []
 
         for x in result_bets:
 
@@ -145,6 +145,7 @@ class MainHandler(tornado.web.RequestHandler):
                 wins = wins + 1
                 wins_amount = wins_amount + amount
 
+
             elif (rolled % 2 != 0) and (openfield == "odd"): #if bets odd and wins
                 cell_color = "#cfe0e8"
                 icon = "<img src=/static/green.png alt='green'>"
@@ -159,6 +160,23 @@ class MainHandler(tornado.web.RequestHandler):
                 losses = losses + 1
                 losses_amount = losses_amount + amount
 
+            result_rows.append({"block_height": x[0],
+                                "time": x[1],
+                                "player": x[2],
+                                "txid": x[5][:56],
+                                "rolled": rolled,
+                                "amount": x[4],
+                                "result": result,
+                                })
+
+            self.render("web.html",
+                        title="ZircoDice",
+                        result_bets=result_bets,
+                        result_payouts=result_payouts,
+                        wins_amount=wins_amount,
+                        losses_amount=losses_amount,
+                        result_rows=result_rows)
+
             view_bets.append("<tr bgcolor="+cell_color+">")
             view_bets.append("<td><p3>{}</td>".format(x[0]))#block height
             view_bets.append("<td>{}</td>".format(time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(x[1])))))#time
@@ -170,8 +188,6 @@ class MainHandler(tornado.web.RequestHandler):
             view_bets.append("<td>{} {}</p3></td>".format(icon,result))
             view_bets.append("</tr>")
 
-
-
         #print result_payouts
         view_payouts = []
 
@@ -180,8 +196,7 @@ class MainHandler(tornado.web.RequestHandler):
         view_payouts.append("</tr>")
 
         for x in result_payouts:
-            #print betting_signatures
-            if x[11].startswith("payout"):
+            if x[10] == "payout":
                 view_payouts.append("<tr bgcolor=#daebe8>")
                 view_payouts.append("<td>{}</td>".format(x[0])) #block height
                 view_payouts.append("<td>{}</td>".format(time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(x[1]))))) #time
@@ -189,8 +204,6 @@ class MainHandler(tornado.web.RequestHandler):
                 view_payouts.append("<td>{}</td>".format(x[5][:56])) #txid
                 view_payouts.append("<td>{}</td>".format(x[4])) #amount
                 view_payouts.append("</tr>")
-
-
 
         html = []
         html.append("<!DOCTYPE html>")
