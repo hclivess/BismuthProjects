@@ -34,7 +34,7 @@ def percentage_of(part, whole):
 
     return '%.2f' % result
 
-def probability_count(roll_cursor):
+def oddity_count(roll_cursor):
     roll_cursor.execute("SELECT COUNT(*) FROM transactions WHERE rolled IN (?,?,?,?,?)", (0, 2, 4, 6, 8,))
     sum_even = roll_cursor.fetchone()[0]
     roll_cursor.execute("SELECT COUNT(*) FROM transactions WHERE rolled IN (?,?,?,?,?)", (1, 3, 5, 7, 9,))
@@ -114,11 +114,6 @@ class MainHandler(tornado.web.RequestHandler):
                 print("Retrying database access, {}".format(e))
                 time.sleep(1)
 
-        view_bets = []
-        view_bets.append("<tr bgcolor=white>")
-        view_bets.append("<td>Block Height</td><td>Time</td><td>Player</td><td>TXID</td><td>Casino Roll</td><td>Amount Bet</td><td>Bet on</td><td>Result</td>")
-        view_bets.append("</tr>")
-
         betting_signatures = []
 
         wins = 0
@@ -126,7 +121,7 @@ class MainHandler(tornado.web.RequestHandler):
         wins_amount = 0
         losses_amount = 0
 
-        result_rows = []
+        bet_rows = []
 
         for x in result_bets:
 
@@ -160,105 +155,47 @@ class MainHandler(tornado.web.RequestHandler):
                 losses = losses + 1
                 losses_amount = losses_amount + amount
 
-            result_rows.append({"block_height": x[0],
-                                "time": x[1],
+            bet_rows.append({"block_height": x[0],
+                                "time": time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(x[1]))),
                                 "player": x[2],
                                 "txid": x[5][:56],
                                 "rolled": rolled,
                                 "amount": x[4],
                                 "result": result,
+                                "icon": icon,
+                                "cell_color": cell_color,
                                 })
 
-            self.render("web.html",
-                        title="ZircoDice",
-                        result_bets=result_bets,
-                        result_payouts=result_payouts,
-                        wins_amount=wins_amount,
-                        losses_amount=losses_amount,
-                        result_rows=result_rows)
 
-            view_bets.append("<tr bgcolor="+cell_color+">")
-            view_bets.append("<td><p3>{}</td>".format(x[0]))#block height
-            view_bets.append("<td>{}</td>".format(time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(x[1])))))#time
-            view_bets.append("<td>{}</td>".format(x[2]))#player
-            view_bets.append("<td>{}</td>".format(x[5][:56]))#txid
-            view_bets.append("<td>{}</td>".format(rolled))
-            view_bets.append("<td>{}</td>".format(x[4]))
-            view_bets.append("<td>{}</td>".format(x[11]))
-            view_bets.append("<td>{} {}</p3></td>".format(icon,result))
-            view_bets.append("</tr>")
-
-        #print result_payouts
-        view_payouts = []
-
-        view_payouts.append("<tr bgcolor=white>")
-        view_payouts.append("<td>Block Height</td><td>Time</td><td>Player</td><td>TXID</td><td>Amount</td>")
-        view_payouts.append("</tr>")
-
+        payout_rows = []
         for x in result_payouts:
             if x[10] == "payout":
-                view_payouts.append("<tr bgcolor=#daebe8>")
-                view_payouts.append("<td>{}</td>".format(x[0])) #block height
-                view_payouts.append("<td>{}</td>".format(time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(x[1]))))) #time
-                view_payouts.append("<td>{}</td>".format(x[3]))  #player
-                view_payouts.append("<td>{}</td>".format(x[5][:56])) #txid
-                view_payouts.append("<td>{}</td>".format(x[4])) #amount
-                view_payouts.append("</tr>")
+               
+                payout_rows.append({"cell_color": "<tr bgcolor=#daebe8>",
+                                 "block_height": x[0],
+                                 "time": time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(x[1]))),
+                                 "player": x[3],
+                                 "txid": x[5][:56],
+                                 "amount": x[4]
+                                })
 
-        html = []
-        html.append("<!DOCTYPE html>")
-        html.append("<html>")
-        html.append("<link rel = 'icon' href = 'static/zircodice.ico' type = 'image/x-icon' / >")
-        html.append('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >')
-        html.append("<head>")
-        html.append("<meta http-equiv='refresh' content='60' >")
-        html.append("<link rel='stylesheet' type='text/css' href='static/style_zircodice.css'>")
-        html.append("</head>")
-        html.append("<META http-equiv='cache-control' content='no-cache'>")
-        html.append("<TITLE>ZircoDice</TITLE>")
-        html.append("<body><body class='bg'><center>")
-        html.append("<h1>Welcome to ZircoDice</h1>")
-        html.append("<p>Please send any amount of coins lower than 100 to the address <strong>"+address+"</strong> and include the word '<strong>even</strong>' or '<strong>odd</strong>' in the OpenField data.<br> You are betting on a random number from 0 to 9 the casino rolls. 0 is considered an even number. Every transaction has it's own roll to prevent abuse.<br>If you win, you will receive 2x your bet. House returns 95% of your win minus fees. Payout happens after 10 blocks have passed.</p>")
-        html.append("<p2>News: The outcome is now based on random number drawing, not on numbers included in blocks</p2>")
-        html.append("<br>")
-        html.append("<h1>Bets</h1>")
+        last_ago = last_block_height,time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(last_timestamp))),int((time.time() - float(last_timestamp))/60)
+        evens_rolled, odds_rolled = oddity_count(roll_cursor)
 
-        html.append("<div class ='container-fluid'>")
-        html.append("<table class='table table-responsive'>"+ str(''.join(view_bets))+"</table>")
-        html.append("</table>")
-        html.append("</div>")
-
-        html.append("<h1>Payouts</h1>")
-
-        html.append("<div class ='container-fluid'>")
-        html.append("<table class='table table-responsive'>" + str(''.join(view_payouts)))
-        html.append("</table>")
-        html.append("</div>")
-
-        html.append("<p>We are currently at block {} from {} ({} minutes ago)</p>".format(last_block_height,time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(last_timestamp))),int((time.time() - float(last_timestamp))/60)))
-
-        html.append("<div class ='container'>")
-        html.append("<table class='table table-responsive'>")
-
-        html.append("<tr colspan='2' bgcolor='white'><th>Statistics for the last 1000 bets</th>")
-        html.append("<tr bgcolor='#f1e3dd'><td>Player wins:</td><td>{} ({}%)</td>".format(wins,percentage_of(wins,losses)))
-        html.append("<tr bgcolor='#f1e3dd'><td>Player losses: </td><td>{} ({}%)</td>".format(losses,percentage_of(losses,wins)))
-        html.append("<tr bgcolor='#f1e3dd'><td>Wins amount: </td><td>{}</td>".format(wins_amount))
-        html.append("<tr bgcolor='#f1e3dd'><td>Losses amount: </td><td>{}</td>".format(losses_amount))
-        html.append("<tr bgcolor='#f1e3dd'><td>House balance: </td><td>{}</td>".format(balancesimple(c, address)))
-
-        html.append("<tr bgcolor='#f1e3dd'><td>Odds rolled: </td><td>{}</td>".format(probability_count(roll_cursor)[1]))
-        html.append("<tr bgcolor='#f1e3dd'><td>Evens rolled: </td><td>{}</td>".format(probability_count(roll_cursor)[0]))
-
-
-        html.append("</table>")
-        html.append("</div>")
-
-        html.append("</body>")
-        html.append("</html>")
-
-        c.close()
-        #self.write(''.join(html))
+        self.render("web.html",
+                    title="ZircoDice",
+                    address=address,
+                    last_ago=last_ago,
+                    house_balance=balancesimple(c, address),
+                    odds_rolled=odds_rolled,
+                    evens_rolled=evens_rolled,
+                    
+                    result_bets=result_bets,
+                    result_payouts=result_payouts,
+                    wins_amount=wins_amount,
+                    losses_amount=losses_amount,
+                    bet_rows=bet_rows,
+                    )
 
 def make_app():
 
