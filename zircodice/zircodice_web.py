@@ -17,8 +17,7 @@ full_ledger = config.full_ledger
 ledger_path = config.ledger_path
 hyper_path = config.hyper_path
 
-block_anchor = 1300000
-#1369139
+block_anchor = 1369139
 
 print("Mounting roll database...")
 roll_db = sqlite3.connect("roll.db")

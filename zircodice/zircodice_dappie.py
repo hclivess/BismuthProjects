@@ -12,7 +12,7 @@ if not os.path.exists("roll.db"):
     print("Roll database does not exist, if you run this on an existing casino, all bets will be re-rolled and payouts processed")
     input("Press any key to continue")
 
-block_anchor = 547989 #no payouts previous to this block
+block_anchor = 1369139 #no payouts previous to this block
 
 def roll(block_height, txid):
     roll = sqlite3.connect("roll.db")
