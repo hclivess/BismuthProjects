@@ -52,6 +52,7 @@ mempool_path = config.mempool_path
 confirmations = 5
 run = 0
 bet_max = 100
+bet_min = 0.1
 checked = []
 processed = []
 
@@ -77,7 +78,7 @@ while True:
             block_height_last = c.fetchone()[0]
             # confirmations
 
-            c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? and block_height <= ? AND block_height > ? AND amount >= ? ORDER BY block_height DESC LIMIT 500",("odd","even",address,block_height_last-confirmations,block_anchor,0.1,))
+            c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? and block_height <= ? AND block_height > ? AND amount >= ? AND amount <= ? ORDER BY block_height DESC LIMIT 500",("odd", "even", address, block_height_last-confirmations, block_anchor, bet_min, bet_max,))
             result_bets = c.fetchall()
             break
         except sqlite3.OperationalError as e:
@@ -111,7 +112,7 @@ while True:
             txid = x[5][:56]
             rolled = roll(x[0],txid)
             # print rolled
-            if (int(rolled) in player) and (bet_amount <= bet_max) and (bet_amount != 0):
+            if int(rolled) in player:
                 # print "player wins"
                 won_count = won_count + 1
 

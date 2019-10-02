@@ -18,6 +18,8 @@ ledger_path = config.ledger_path
 hyper_path = config.hyper_path
 
 block_anchor = 1369139
+bet_max = 100
+bet_min = 0.1
 
 print("Mounting roll database...")
 roll_db = sqlite3.connect("roll.db")
@@ -102,11 +104,11 @@ class MainHandler(tornado.web.RequestHandler):
                 last_block_height = result[0][0]
                 last_timestamp = result[0][1]
 
-                c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;", ("odd", "even", address, block_anchor,))
-                result_bets = c.fetchall() # value to transfer
+                c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? AND block_height > ? AND amount >= ? AND amount <= ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;", ("odd", "even", address, block_anchor, bet_min, bet_max,))
+                result_bets = c.fetchall()
 
                 c.execute('SELECT * FROM transactions WHERE address = ? AND operation = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;', (address, "zircodice:payout", block_anchor,))
-                result_payouts = c.fetchall()  # value to transfer
+                result_payouts = c.fetchall()
                 break
 
             except Exception as e:
