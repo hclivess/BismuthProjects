@@ -182,8 +182,6 @@ class MainHandler(tornado.web.RequestHandler):
         evens_rolled, odds_rolled = oddity_count(roll_cursor)
         win_percentage = percentage_of(wins_total, losses_total)
         loss_percentage = percentage_of(losses_total, wins_total)
-        losses_total = wins_total
-        wins_total = losses_total
 
         self.render("web.html",
                     title="ZircoDice",
