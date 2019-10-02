@@ -34,16 +34,13 @@ def percentage_of(part, whole):
 
     return '%.2f' % result
 
-
 def probability_count(roll_cursor):
-    roll_cursor.execute("SELECT COUNT(*) FROM transactions WHERE rolled IN (?,?,?,?,?)", (0,) + (2,) + (4,) + (6,) + (8,))
+    roll_cursor.execute("SELECT COUNT(*) FROM transactions WHERE rolled IN (?,?,?,?,?)", (0, 2, 4, 6, 8,))
     sum_even = roll_cursor.fetchone()[0]
-    roll_cursor.execute("SELECT COUNT(*) FROM transactions WHERE rolled IN (?,?,?,?,?)", (1,) + (3,) + (5,) + (7,) + (9,))
+    roll_cursor.execute("SELECT COUNT(*) FROM transactions WHERE rolled IN (?,?,?,?,?)", (1, 3, 5, 7, 9,))
     sum_odd = roll_cursor.fetchone()[0]
 
     return sum_even, sum_odd
-
-
 
 def balancesimple(cursor_db,address):
 
@@ -106,9 +103,11 @@ class MainHandler(tornado.web.RequestHandler):
                 last_block_height = result[0][0]
                 last_timestamp = result[0][1]
 
-                c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;",("odd",)+("even",)+(address,)+(block_anchor,))
-                result_bets = c.fetchall()
+                c.execute("SELECT * FROM transactions WHERE (openfield = ? OR openfield = ?) AND recipient = ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;", ("odd", "even", address, block_anchor,))
+                result_bets = c.fetchall() # value to transfer
 
+                c.execute('SELECT * FROM transactions WHERE address = ? AND openfield LIKE ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;', (address, '%' + "payout" + '%', block_anchor,))
+                result_payouts = c.fetchall()  # value to transfer
                 break
 
             except Exception as e:
@@ -128,6 +127,7 @@ class MainHandler(tornado.web.RequestHandler):
         losses_amount = 0
 
         for x in result_bets:
+
             amount = x[4]
             openfield = str(x[11])
             betting_signatures.append(x[5]) #sig
@@ -142,12 +142,14 @@ class MainHandler(tornado.web.RequestHandler):
                 result = "win"
                 wins = wins + 1
                 wins_amount = wins_amount + amount
+
             elif (rolled % 2 != 0) and (openfield == "odd"): #if bets odd and wins
                 cell_color = "#cfe0e8"
                 icon = "<img src=/static/green.png alt='green'>"
                 result = "win"
                 wins = wins + 1
                 wins_amount = wins_amount + amount
+
             else:
                 cell_color = "#87bdd8"
                 icon = "<img src=/static/red.png alt='red'>"
@@ -167,9 +169,6 @@ class MainHandler(tornado.web.RequestHandler):
             view_bets.append("</tr>")
 
 
-
-        c.execute('SELECT * FROM transactions WHERE address = ? AND openfield LIKE ? AND block_height > ? ORDER BY block_height DESC, timestamp DESC LIMIT 1000;',(address,)+('%'+"payout"+'%',)+(block_anchor,))
-        result_payouts = c.fetchall()
 
         #print result_payouts
         view_payouts = []
