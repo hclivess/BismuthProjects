@@ -18,6 +18,7 @@ ledger_path = config.ledger_path
 hyper_path = config.hyper_path
 
 block_anchor = 1300000
+#1369139
 
 print("Mounting roll database...")
 roll_db = sqlite3.connect("roll.db")
@@ -86,7 +87,6 @@ class MainHandler(tornado.web.RequestHandler):
 
         # redraw chart
 
-
         while True:
             try:
                 print("Mounting database...")
@@ -116,8 +116,8 @@ class MainHandler(tornado.web.RequestHandler):
 
         betting_signatures = []
 
-        wins = 0
-        losses = 0
+        wins_total = 0
+        losses_total = 0
         wins_amount = 0
         losses_amount = 0
 
@@ -133,26 +133,26 @@ class MainHandler(tornado.web.RequestHandler):
 
             rolled = roll(x[1], txid, roll_db, roll_cursor)
 
-            if (rolled % 2 == 0) and (openfield == "even"): #if bets even and wins
+            if (rolled % 2 == 0) and (openfield == "even"): #if bets even and wins_total
                 cell_color = "#cfe0e8"
-                icon = "<img src=/static/green.png alt='green'>"
+                icon = "green"
                 result = "win"
-                wins = wins + 1
+                wins_total = wins_total + 1
                 wins_amount = wins_amount + amount
 
 
-            elif (rolled % 2 != 0) and (openfield == "odd"): #if bets odd and wins
+            elif (rolled % 2 != 0) and (openfield == "odd"): #if bets odd and wins_total
                 cell_color = "#cfe0e8"
-                icon = "<img src=/static/green.png alt='green'>"
+                icon = "green"
                 result = "win"
-                wins = wins + 1
+                wins_total = wins_total + 1
                 wins_amount = wins_amount + amount
 
             else:
                 cell_color = "#87bdd8"
-                icon = "<img src=/static/red.png alt='red'>"
+                icon = "red"
                 result = "loss"
-                losses = losses + 1
+                losses_total = losses_total + 1
                 losses_amount = losses_amount + amount
 
             bet_rows.append({"block_height": x[0],
@@ -171,7 +171,7 @@ class MainHandler(tornado.web.RequestHandler):
         for x in result_payouts:
             if x[10] == "payout":
                
-                payout_rows.append({"cell_color": "<tr bgcolor=#daebe8>",
+                payout_rows.append({"cell_color": "#daebe8",
                                  "block_height": x[0],
                                  "time": time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(x[1]))),
                                  "player": x[3],
@@ -179,19 +179,26 @@ class MainHandler(tornado.web.RequestHandler):
                                  "amount": x[4]
                                 })
 
-        last_ago = last_block_height,time.strftime("%Y/%m/%d,%H:%M:%S", time.gmtime(float(last_timestamp))),int((time.time() - float(last_timestamp))/60)
+        minutes_ago = int((time.time() - float(last_timestamp))/60)
         evens_rolled, odds_rolled = oddity_count(roll_cursor)
+        win_percentage = percentage_of(wins_total, losses_total)
+        loss_percentage = percentage_of(losses_total, wins_total)
+        losses_total = wins_total
+        wins_total = losses_total
 
         self.render("web.html",
                     title="ZircoDice",
                     address=address,
-                    last_ago=last_ago,
+                    minutes_ago=minutes_ago,
                     house_balance=balancesimple(c, address),
                     odds_rolled=odds_rolled,
                     evens_rolled=evens_rolled,
+                    win_percentage=win_percentage,
+                    loss_percentage=loss_percentage,
+                    losses_total=losses_total,
+                    wins_total=wins_total,
                     
-                    result_bets=result_bets,
-                    result_payouts=result_payouts,
+                    payout_rows=payout_rows,
                     wins_amount=wins_amount,
                     losses_amount=losses_amount,
                     bet_rows=bet_rows,
