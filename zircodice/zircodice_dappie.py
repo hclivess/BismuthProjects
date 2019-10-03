@@ -228,7 +228,7 @@ if __name__ == "__main__":
 
                         except TypeError as e:
                             print (f"Appending tx to the payout list for {local_id}")
-                            payout_missinb.append(x)
+                            payout_missing.append(x)
                             not_paid_count = not_paid_count + 1
                             passed_ledger = True
                         except:
