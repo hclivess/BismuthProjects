@@ -73,11 +73,11 @@ def roll(block_height, txid, roll_db, roll_cursor):
     roll_db.commit()
 
     try:
-        roll_cursor.execute("SELECT rolled FROM transactions WHERE txid = ?",(txid,))
+        roll_cursor.execute("SELECT rolled FROM transactions WHERE txid = ?", (txid,))
         roll_number = roll_cursor.fetchone()[0]
     except:
         roll_number = (randint(0, 9))
-        roll_cursor.execute("INSERT INTO transactions VALUES (?,?,?)",(block_height, txid, roll_number))
+        roll_cursor.execute("INSERT INTO transactions VALUES (?,?,?)", (block_height, txid, roll_number))
 
     roll_db.commit()
     return roll_number
