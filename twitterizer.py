@@ -1,11 +1,11 @@
 # add additional info to the tweet: address that is allowed to withdraw
 sleep_interval = 900
-payout_level = 1
-payout_gap = 4
-month = 2629743
-lookback = 20
-exposure = 5
-anchor = 0
+payout_level = 3 # how much to pay
+payout_gap = 4 # gap between payouts to the same user
+month = 2629743 # used to limit payouts to old accounts only
+lookback = 20 # how many submitted tweets to look back through
+exposure = 5 # required combination of retweets and likes
+anchor = 0 # ignores submissions before this block
 
 import json
 import os
