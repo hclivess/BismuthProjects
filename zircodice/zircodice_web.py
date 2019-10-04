@@ -1,6 +1,7 @@
 import sqlite3, time, re, options
 from decimal import *
 import essentials
+import json
 from bismuthclient.bismuthcrypto import keys_load_new
 
 import tornado.ioloop
@@ -23,9 +24,42 @@ bet_min = 0.1
 
 print("Mounting roll database...")
 roll_db = sqlite3.connect("roll.db")
-roll_db.text_factory = str
 roll_cursor = roll_db.cursor()
 print("Roll database mounted...")
+
+def format_bets(data):
+    output_dict = {}
+    output_dict["block_height"] = data[0]
+    output_dict["timestamp"] = data[1]
+    output_dict["address"] = data[2]
+    output_dict["recipient"] = data[3]
+    output_dict["amount"] = data[4]
+    #output_dict["signature"] = data[5]
+    #output_dict["public_key"] = data[6]
+    #output_dict["block_hash"] = data[7]
+    #output_dict["fee"] = data[8]
+    #output_dict["reward"] = data[9]
+    output_dict["operation"] = data[10]
+    output_dict["openfield"] = data[11]
+    output_dict["rolled"] = data[12]
+    #output_dict["txid"] = data[13]
+    output_dict["victorious"] = data[14]
+    output_dict["settled"] = data[15]
+    print (output_dict)
+
+    return json.dumps(output_dict)
+
+def getbytxid(txid):
+    game_db = sqlite3.connect("games.db")
+    g = game_db.cursor()
+    try:
+        g.execute("SELECT * FROM bets WHERE txid = ?", (txid,))
+        result = format_bets(g.fetchall()[0])
+    except:
+        result = "not found"
+    game_db.close()
+
+    return result
 
 def percentage_of(part, whole):
     getcontext().prec = 2  # decimal places
@@ -46,7 +80,7 @@ def oddity_count(roll_cursor):
 
 def balancesimple(cursor_db,address):
 
-    cursor_db.execute("SELECT sum(amount) FROM transactions WHERE recipient = ?;", (address,))
+    cursor_db.execute("SELECT SUM(amount) FROM transactions WHERE recipient = ?", (address,))
     credit_ledger = cursor_db.fetchone()[0]
     credit_ledger = 0 if credit_ledger is None else float('%.8f' % credit_ledger)
     credit = float(credit_ledger)
@@ -81,6 +115,11 @@ def roll(block_height, txid, roll_db, roll_cursor):
 
     roll_db.commit()
     return roll_number
+
+class GetByTxIdHandler(tornado.web.RequestHandler):
+    def get(self, txid):
+        display = getbytxid(txid)
+        self.write(display)
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -165,6 +204,7 @@ class MainHandler(tornado.web.RequestHandler):
                                 "result": result,
                                 "icon": icon,
                                 "cell_color": cell_color,
+                                "bet": openfield,
                                 })
 
 
@@ -208,6 +248,7 @@ def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "static"}),
+        (r"/txid/(.*)", GetByTxIdHandler),
     ])
 
 

@@ -24,16 +24,12 @@ def results_db_insert(tx):
     r = results_db.cursor()
 
     r.execute("CREATE TABLE IF NOT EXISTS results ("
-              "block_height	INTEGER,"
               "timestamp	NUMERIC,"
               "address	TEXT,"
               "recipient	TEXT,"
               "amount	NUMERIC,"
               "signature	TEXT,"
               "public_key	TEXT,"
-              "block_hash	TEXT,"
-              "fee	NUMERIC,"
-              "reward	NUMERIC,"
               "operation	TEXT,"
               "openfield	TEXT);")
     results_db.commit()
@@ -43,12 +39,18 @@ def results_db_insert(tx):
         _ = r.fetchone()[0] #already there
         print(f"Transaction already in the result database for {tx[5][:8]}")
     except:
-        r.execute("INSERT INTO bets VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7], tx[8], tx[9], tx[10], tx[11]))
+        print(tx)
+        r.execute("INSERT INTO results VALUES (?,?,?,?,?,?,?,?)", (tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7]))
         results_db.commit()
+
+        print(tx[4][:56])
+        r.execute("UPDATE bets SET paid = ? WHERE binder = ?", (True, tx[7]))
+        results_db.commit()
+
         results_db.close()
         print(f"Local database updated with a result transaction for {tx[5][:8]}")
         
-def bets_db_insert(tx):
+def bets_db_insert(tx, rolled, victorious):
     bets_db = sqlite3.connect("games.db")
     bets_db.text_factory = str
     b = bets_db.cursor()
@@ -65,7 +67,12 @@ def bets_db_insert(tx):
               "fee	NUMERIC,"
               "reward	NUMERIC,"
               "operation	TEXT,"
-              "openfield	TEXT);")
+              "openfield	TEXT,"
+              "rolled	TEXT,"
+              "txid TEXT,"
+              "victorious BOOLEAN,"
+              "paid BOOLEAN,"
+              "binder TEXT);")
     bets_db.commit()
 
     try:
@@ -73,22 +80,31 @@ def bets_db_insert(tx):
         _ = b.fetchone()[0] #already there
         print(f"Transaction already in the bet database for {tx[5][:8]}")
     except:
-        b.execute("INSERT INTO bets VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7], tx[8], tx[9], tx[10], tx[11]))
+        b.execute("INSERT INTO bets VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7], tx[8], tx[9], tx[10], tx[11], rolled, tx[5][:56], victorious, False, "payout for "+tx[5][:8]))
         bets_db.commit()
+
         bets_db.close()
         print(f"Local database updated with a bet transaction for {tx[5][:8]}")
 
-
-def bets_db_add(tx):
-    passed_payout_db = False
-    while not passed_payout_db:
+def results_db_add(tx):
+    passed = False
+    while not passed:
         try:
-            bets_db_insert(tx)
-            passed_payout_db = True
+            results_db_insert(tx)
+            passed = True
         except sqlite3.OperationalError as e:
             print("Database locked, retrying")
             time.sleep(1)
-            raise
+
+def bets_db_add(tx, rolled, victorious):
+    passed = False
+    while not passed:
+        try:
+            bets_db_insert(tx, rolled, victorious)
+            passed = True
+        except sqlite3.OperationalError as e:
+            print("Database locked, retrying")
+            time.sleep(1)
 
 def roll(block_height, txid):
     roll = sqlite3.connect("roll.db")
@@ -111,13 +127,9 @@ def roll(block_height, txid):
 def percentage(percent, whole):
     return ((Decimal (percent) * Decimal(whole)) / 100)
 
-key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, _ = essentials.keys_load_new("wallet.der")
-
-
-
-
-
 if __name__ == "__main__":
+    key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, _ = essentials.keys_load_new("wallet.der")
+
     config = options.Get()
     config.read()
     debug_level = config.debug_level
@@ -212,6 +224,7 @@ if __name__ == "__main__":
                 if int(rolled) in player:
                     # print "player wins"
                     won_count = won_count + 1
+                    victorious = True
 
                     passed_ledger = False
                     while not passed_ledger:
@@ -237,7 +250,9 @@ if __name__ == "__main__":
                 else:
                     # print "bank wins"
                     lost_count = lost_count + 1
-                    bets_db_add(x)
+                    victorious = False
+
+                bets_db_add(x, rolled, victorious)
 
         print (f"Run: {run}")
         print (f"Total client lost rounds: {lost_count}")
@@ -256,7 +271,6 @@ if __name__ == "__main__":
 
                 # create transactions for missing payouts
                 timestamp = '%.2f' % time.time()
-
                 win_amount = Decimal(bet_amount * 2) - percentage(5, bet_amount)
                 payout_openfield = "payout for " + local_id
                 payout_operation = "zircodice:payout"
@@ -265,7 +279,7 @@ if __name__ == "__main__":
 
                 #float(0.01 + (float(win_amount) * 0.001) + (float(len(payout_openfield)) / 100000) + (float(payout_keep) / 10))  # 0.1% + 0.01 dust
 
-                transaction = (
+                payout_transaction = (
                     str(timestamp),
                     str(address),
                     str(recipient),
@@ -274,7 +288,7 @@ if __name__ == "__main__":
                     str(payout_openfield)
                                )  # this is signed
 
-                h = SHA.new(str(transaction).encode("utf-8"))
+                h = SHA.new(str(payout_transaction).encode("utf-8"))
                 signer = PKCS1_v1_5.new(key)
                 signature = signer.sign(h)
                 signature_enc = base64.b64encode(signature)
@@ -283,6 +297,17 @@ if __name__ == "__main__":
                 verifier = PKCS1_v1_5.new(key)
                 if verifier.verify(h, base64.b64decode(signature_enc)):
                     print("Signature OK")
+
+                whole_tx = (
+                    str(timestamp),
+                    str(address),
+                    str(recipient),
+                    str(payout_amount),
+                    str(signature_enc.decode("utf-8")),
+                    str(public_key_hashed.decode("utf-8")),
+                    payout_operation,
+                    payout_openfield,
+                    str(timestamp))
 
                 mempool = sqlite3.connect(mempool_path)
                 mempool.text_factory = str
@@ -301,20 +326,14 @@ if __name__ == "__main__":
 
                     except TypeError: #not there
                         m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
-                                  (str(timestamp),
-                                   str(address),
-                                   str(recipient),
-                                   str(payout_amount),
-                                   str(signature_enc.decode("utf-8")),
-                                   str(public_key_hashed.decode("utf-8")),
-                                   payout_operation,
-                                   payout_openfield,
-                                   str(timestamp)))
+                                  whole_tx)
 
                         mempool.commit()  # Save (commit) the changes
                         mempool.close()
                         print (f"Mempool updated with a payout transaction for {local_id}")
                         passed_mp = True
+
+                        results_db_add(whole_tx)
 
                     except:
                         raise
