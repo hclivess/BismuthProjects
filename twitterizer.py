@@ -83,12 +83,14 @@ def tweet_qualify(tweet_id):
 
 
 def process_tweet_id(data):
-    if data.isdigit():
-        return data
-    else:
-        processed = re.findall("status\/(\d+)", data)
-        return processed[0]
-
+    try:
+        if data.isdigit():
+            return data
+        else:
+            processed = re.findall("(\d+){19,}", data)
+            return processed[0]
+    except:
+        print(f"Unable to process {data}")
 
 if __name__ == "__main__":
     if not os.path.exists('twitter.db'):
