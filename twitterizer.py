@@ -5,6 +5,7 @@ payout_gap = 4
 month = 2629743
 lookback = 20
 exposure = 5
+anchor = 1000000
 
 import json
 import os
@@ -38,7 +39,8 @@ auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
-key, public_key_readable, private_key_readable, encrypted, unlocked, public_key_hashed, myaddress, keyfile = essentials.keys_load()
+#key, public_key_readable, private_key_readable, encrypted, unlocked, public_key_hashed, myaddress, keyfile = essentials.keys_load()
+key, public_key_readable, private_key_readable, _, _, public_key_hashed, myaddress, _ = essentials.keys_load("wallet.der")
 
 
 def is_already_paid(tweet):
@@ -51,19 +53,17 @@ def is_already_paid(tweet):
 
     print("already_paid", already_paid)
     return already_paid
-
-
-def tweet_qualify(tweet_id):
+   
+    
+def tweet_parse(tweet_id):
     try:
-        open_status = api.get_status(tweet_id)
+        open_status = api.get_status(tweet_id, tweet_mode="extended")
         parsed = open_status._json
-        # print(parsed)
-        # time.sleep(900)
 
         parsed_id = parsed['user']['id']  # add this
         favorite_count = parsed['favorite_count']
         retweet_count = parsed['retweet_count']
-        parsed_text = parsed['text']
+        parsed_text = parsed['full_text']
         parsed_followers = parsed['user']['followers_count']
         acc_age = time.mktime(time.strptime(parsed['user']['created_at'], '%a %b %d %H:%M:%S +0000 %Y'))
 
@@ -73,13 +73,26 @@ def tweet_qualify(tweet_id):
         else:
             qualifies = False
 
-        print("parsed_id", parsed_id, "favorite_count", favorite_count, "retweet_count", retweet_count, "parsed_text", parsed_text, "parsed_followers", parsed_followers, "acc_age", acc_age, "qualifies", qualifies)
+        print("parsed_id",
+              parsed_id,
+              "favorite_count",
+              favorite_count,
+              "retweet_count",
+              retweet_count,
+              "parsed_text",
+              parsed_text,
+              "parsed_followers",
+              parsed_followers,
+              "acc_age",
+              acc_age,
+              "qualifies",
+              qualifies)
 
     except Exception as e:
-        print("Exception with {}: {}".format(tweet_id, e))
+        print(f"Exception with {tweet_id}: {e}")
         qualifies, parsed_text, parsed_id = False, False, False
 
-    return qualifies, parsed_text, parsed_id
+    return {"qualifies": qualifies, "parsed_text": parsed_text, "parsed_id": parsed_id}
 
 
 def process_tweet_id(data):
@@ -87,18 +100,23 @@ def process_tweet_id(data):
         if data.isdigit():
             return data
         else:
-            processed = re.findall("(\d+){19,}", data)
+            processed = re.findall("(\d+){8,}", data)
             return processed[0]
     except:
         print(f"Unable to process {data}")
 
-if __name__ == "__main__":
+def define_databases():
     if not os.path.exists('twitter.db'):
         # create empty mempool
         twitter = sqlite3.connect('twitter.db')
         twitter.text_factory = str
         t = twitter.cursor()
-        t.execute("CREATE TABLE IF NOT EXISTS tweets (block_height, address, openfield, tweet, user)")
+        t.execute("CREATE TABLE IF NOT EXISTS tweets ("
+                  "block_height,"
+                  "address,"
+                  "openfield,"
+                  "tweet,"
+                  "user)")
         twitter.commit()
         print("Created twitter database")
     else:
@@ -112,27 +130,33 @@ if __name__ == "__main__":
         conn = sqlite3.connect(ledger_path)
     else:
         conn = sqlite3.connect(hyper_path)
-    if "testnet" in version:  # overwrite for testnet
-        conn = sqlite3.connect("static/test.db")
-
     conn.text_factory = str
     c = conn.cursor()
     # ledger
 
+
+    return twitter, t, conn, c
+
+if __name__ == "__main__":
+    twitter, t, conn, c = define_databases()
+
     while True:
         # twitter limits: 180 requests per 15m
-        for row in c.execute("SELECT * FROM (SELECT block_height, address, openfield FROM transactions WHERE operation = ? ORDER BY block_height DESC LIMIT ?) ORDER BY block_height ASC", ("twitter", lookback)):  # select top *, but order them ascendingly so older have priority
+        for row in c.execute("SELECT * FROM "
+                             "(SELECT block_height, address, openfield FROM transactions WHERE operation = ? ORDER BY block_height DESC LIMIT ?) "
+                             "ORDER BY block_height ASC", ("twitter", lookback)):  # select top *, but order them ascendingly so older have priority
+
 
             tweet_id = process_tweet_id(row[2])
-            tweet_qualified = tweet_qualify(tweet_id)
-            name = tweet_qualified[2]
+            tweet_parsed = tweet_parse(tweet_id)
+            name = tweet_parsed["parsed_id"]
 
             t.execute("SELECT COUNT() FROM (SELECT * FROM tweets ORDER BY block_height DESC LIMIT ?) WHERE name = ?", (payout_gap, name,))
             name_count = t.fetchone()[0]
 
             print("name_count", name_count)
 
-            if tweet_qualified[0] and not is_already_paid(tweet_qualified[1]):
+            if tweet_parsed["qualifies"] and not is_already_paid(tweet_parsed["parsed_text"]):
                 print("Tweet qualifies")
 
                 recipient = row[1]
@@ -154,19 +178,32 @@ if __name__ == "__main__":
                         connections.send(s, "mpinsert", 10)
                         connections.send(s, tx_submit, 10)
                         reply = connections.receive(s, 10)
-                        print("Payout result: {}".format(reply))
+                        print(f"Payout result: {reply}")
                         break
 
                     if reply[-1] == "Success":
-                        t.execute("INSERT INTO tweets VALUES (?, ?, ?, ?, ?)", (row[0], row[1], row[2], tweet_qualified[1], name))
+                        t.execute("INSERT INTO tweets VALUES (?, ?, ?, ?, ?)", (row[0],
+                                                                                row[1],
+                                                                                row[2],
+                                                                                tweet_parsed["parsed_text"],
+                                                                                name))
                         twitter.commit()
                         print("Tweet saved to database")
-                        api.retweet(tweet_id)
-                        api.update_status("Bismuth address {} wins giveaway of {} $BIS for https://twitter.com/web/status/{}".format(recipient, amount, tweet_id))
+
+                        try:
+                            api.retweet(tweet_id)
+                        except Exception as e:
+                            print(e)
+
+                        try:
+                            api.update_status("Bismuth address {recipient} wins a giveaway of {amount} $BIS for https://twitter.com/web/status/{tweet_id}")
+                        except Exception as e:
+                            print(e)
+                            
                     else:
                         print("Mempool insert failure")
 
                 break
 
-        print("Run finished, sleeping for {} minutes".format(sleep_interval / 60))
+        print(f"Run finished, sleeping for {sleep_interval / 60} minutes")
         time.sleep(sleep_interval)
