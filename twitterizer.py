@@ -5,7 +5,7 @@ payout_gap = 4
 month = 2629743
 lookback = 20
 exposure = 5
-anchor = 1000000
+anchor = 0
 
 import json
 import os
@@ -133,9 +133,44 @@ def define_databases():
     conn.text_factory = str
     c = conn.cursor()
     # ledger
-
-
     return twitter, t, conn, c
+
+def payout(tx_submit, block_height, tweet_parsed):
+    s = socks.socksocket()
+    s.settimeout(0.3)
+    print(tx_submit)
+
+    s.connect(("127.0.0.1", int(5658)))
+    print("Status: Connected to node")
+    while True:
+        connections.send(s, "mpinsert", 10)
+        connections.send(s, tx_submit, 10)
+        reply = connections.receive(s, 10)
+        print(f"Payout result: {reply}")
+        break
+
+    if reply[-1] == "Success":
+        t.execute("INSERT INTO tweets VALUES (?, ?, ?, ?, ?)", (block_height,
+                                                                tx_submit[2],
+                                                                tx_submit[7],
+                                                                tweet_parsed["parsed_text"],
+                                                                name))
+        twitter.commit()
+        print("Tweet saved to database")
+
+        try:
+            api.retweet(tweet_id)
+        except Exception as e:
+            print(e)
+
+        try:
+            api.update_status("Bismuth address {recipient} wins a giveaway of {amount} $BIS for https://twitter.com/web/status/{tweet_id}")
+        except Exception as e:
+            print(e)
+
+    else:
+        print("Mempool insert failure")
+
 
 if __name__ == "__main__":
     twitter, t, conn, c = define_databases()
@@ -146,8 +181,11 @@ if __name__ == "__main__":
                              "(SELECT block_height, address, openfield FROM transactions WHERE operation = ? ORDER BY block_height DESC LIMIT ?) "
                              "ORDER BY block_height ASC", ("twitter", lookback)):  # select top *, but order them ascendingly so older have priority
 
+            block_height = row[0]
+            sender_address = row[1]
+            openfield_text = row[2]
 
-            tweet_id = process_tweet_id(row[2])
+            tweet_id = process_tweet_id(openfield_text)
             tweet_parsed = tweet_parse(tweet_id)
             name = tweet_parsed["parsed_id"]
 
@@ -159,51 +197,25 @@ if __name__ == "__main__":
             if tweet_parsed["qualifies"] and not is_already_paid(tweet_parsed["parsed_text"]):
                 print("Tweet qualifies")
 
-                recipient = row[1]
+                recipient = sender_address
                 amount = payout_level
                 operation = "twitter:payout"
                 openfield = ""
 
                 timestamp = '%.2f' % time.time()
-                tx_submit = essentials.sign_rsa(timestamp, myaddress, recipient, amount, operation, openfield, key, public_key_hashed)
+                tx_submit = essentials.sign_rsa(timestamp,
+                                                myaddress,
+                                                recipient,
+                                                amount,
+                                                operation,
+                                                openfield,
+                                                key,
+                                                public_key_hashed)
 
                 if tx_submit:
-                    s = socks.socksocket()
-                    s.settimeout(0.3)
-                    print(tx_submit)
+                    payout(tx_submit, block_height, tweet_parsed)
 
-                    s.connect(("127.0.0.1", int(5658)))
-                    print("Status: Connected to node")
-                    while True:
-                        connections.send(s, "mpinsert", 10)
-                        connections.send(s, tx_submit, 10)
-                        reply = connections.receive(s, 10)
-                        print(f"Payout result: {reply}")
-                        break
-
-                    if reply[-1] == "Success":
-                        t.execute("INSERT INTO tweets VALUES (?, ?, ?, ?, ?)", (row[0],
-                                                                                row[1],
-                                                                                row[2],
-                                                                                tweet_parsed["parsed_text"],
-                                                                                name))
-                        twitter.commit()
-                        print("Tweet saved to database")
-
-                        try:
-                            api.retweet(tweet_id)
-                        except Exception as e:
-                            print(e)
-
-                        try:
-                            api.update_status("Bismuth address {recipient} wins a giveaway of {amount} $BIS for https://twitter.com/web/status/{tweet_id}")
-                        except Exception as e:
-                            print(e)
-                            
-                    else:
-                        print("Mempool insert failure")
-
-                break
+                break #one at a time
 
         print(f"Run finished, sleeping for {sleep_interval / 60} minutes")
         time.sleep(sleep_interval)
