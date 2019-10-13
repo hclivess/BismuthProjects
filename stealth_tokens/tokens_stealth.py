@@ -100,10 +100,10 @@ def load_signal(signals):
     return random.choice(signals)
 
 
-def account_file_load(account, token):
-    if not os.path.exists(f"account_data/{account}"):
-        os.mkdir(f"account_data/{account}")
-    account_path = f"account_data/{account}/{token}.json"
+def account_file_load(account):
+    if not os.path.exists(f"account_data"):
+        os.mkdir(f"account_data")
+    account_path = f"account_data/{account}.json"
 
     if not os.path.exists(account_path):
         with open(account_path, "w") as token_keys:
@@ -115,33 +115,36 @@ def account_file_load(account, token):
     return account_contents
 
 
-def account_file_save(account, data, token):
-    account_path = f"account_data/{account}/{token}.json"
+def account_file_save(account, data):
+    account_path = f"account_data/{account}.json"
     with open(account_path, "w") as account_file:
         account_file.write(json.dumps(data))
 
 
-def account_add_to(account, token, amount):
+def account_add_to(account, token, amount, debtor):
     amount = int(amount)
-    data = account_file_load(account, token)
-    data["token"] = token
 
-    try:
-        data["amount"] += amount
-    except:
-        data["amount"] = amount
+    if account_take_from(debtor, token, amount):
+        data = account_file_load(account)
 
-    account_file_save(account, data, token)
+        try:
+            data[token] += amount
+        except:
+            data[token] = amount
+
+        account_file_save(account, data)
 
 
 def account_take_from(account, token, amount: int):
     amount = int(amount)
-    data = account_file_load(account, token)
-    data["token"] = token
+    data = account_file_load(account)
 
-    if data["amount"] - amount >= 0:
-        data["amount"] -= amount
-        account_file_save(account, data, token)
+    if data[token] - amount >= 0:
+        data[token] -= amount
+        account_file_save(account, data)
+        return True
+    else:
+        return False
 
 
 if __name__ == "__main__":
@@ -183,7 +186,7 @@ if __name__ == "__main__":
         action = decrypt(json.loads(y[1]), token_key_dict["key"])
         print(action)
 
-    print(account_file_load("test", "stoken2"))
+    print(account_file_load("test"))
 
-    account_add_to(account="test", token="stoken2", amount=10)
-    print(account_take_from(account="test", token="stoken2", amount=0.2))
+    account_add_to(account="test", token="stoken2", amount=1, debtor="test0")
+    account_add_to(account="test", token="stoken3", amount=1, debtor="test0")
