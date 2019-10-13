@@ -16,8 +16,8 @@ def digestor(action):
     pass
 
 def find_txs(signals_dict, anchor):
-    qmarks = ','.join('?' for _ in signals_dict)
-    query = 'SELECT block_height, openfield FROM transactions WHERE operation IN (%s) AND block_height >= %s ORDER BY block_height ASC' % (qmarks, anchor)
+    signal_set = ','.join('?' for _ in signals_dict)
+    query = 'SELECT block_height, openfield FROM transactions WHERE operation IN (%s) AND block_height >= %s ORDER BY block_height ASC' % (signal_set, anchor)
     result = cursor.execute(query, signals_dict).fetchall()
     return result
 
@@ -68,7 +68,8 @@ def load_token_dict(token):
     else:
         return False
 
-def save_token_key(token, signals, key):
+def save_token_key(token, signals, public_signal, key):
+    print(public_signal)
     if not os.path.exists("stealth_data"):
         os.mkdir("stealth_data")
     token_path = f'stealth_data/{token}_keys.json'
@@ -77,6 +78,7 @@ def save_token_key(token, signals, key):
         keys["name"] = token
         keys["key"] = b64encode(key).decode()
         keys["signals"] = signals
+        keys["public_signal"] = public_signal[0]
 
         with open(token_path,"w") as token_keys:
             token_keys.write(json.dumps(keys))
@@ -95,6 +97,7 @@ if __name__ == "__main__":
 
     save_token_key(token="stest",
                    signals=signals_generate(100),
+                   public_signal=signals_generate(1),
                    key=token_key_generate())
 
     token_key_dict = load_token_dict(token=token_name)
