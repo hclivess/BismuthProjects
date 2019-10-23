@@ -19,9 +19,15 @@ def digestor(action):
 
 def find_txs(signals_dict, anchor):
     signal_set = ','.join('?' for _ in signals_dict)
-    query = 'SELECT block_height, openfield FROM transactions WHERE operation IN (%s) AND block_height >= %s ORDER BY block_height ASC' % (signal_set, anchor)
+    query = 'SELECT address, block_height, openfield FROM transactions WHERE operation IN (%s) AND block_height >= %s ORDER BY block_height ASC' % (signal_set, anchor)
     result = cursor.execute(query, signals_dict).fetchall()
-    return result
+
+    return_list = []
+    for entry in result:
+        zipped = dict(zip(["address", "block_height", "openfield"], [entry[0], entry[1], entry[2]]))
+        return_list.append(zipped)
+
+    return return_list
 
 
 def signals_generate(size):
@@ -120,6 +126,14 @@ def account_file_save(account, data):
     with open(account_path, "w") as account_file:
         account_file.write(json.dumps(data))
 
+def account_genesis(account, token, amount):
+    amount = int(amount)
+    data = account_file_load(account)
+    try:
+        data[token]
+    except: # if unprocessed
+        data[token] = amount
+        account_file_save(account, data)
 
 def account_add_to(account, token, amount, debtor):
     amount = int(amount)
@@ -139,13 +153,16 @@ def account_take_from(account, token, amount: int):
     amount = int(amount)
     data = account_file_load(account)
 
-    if data[token] - amount >= 0:
-        data[token] -= amount
-        account_file_save(account, data)
-        return True
-    else:
+    try:
+        if data[token] - amount >= 0:
+            data[token] -= amount
+            account_file_save(account, data)
+            return True
+        else:
+            return False
+    except:
+        print("Insufficient balance or corrupted file")
         return False
-
 
 if __name__ == "__main__":
 
@@ -180,13 +197,29 @@ if __name__ == "__main__":
     print("move (data)", json.dumps(encrypted_data_move))
     print("move (operation)", load_signal(token_key_dict["signals"]))
 
+    # account_add_to(account="test", token="stoken2", amount=1, debtor="test0")
+    # account_add_to(account="test", token="stoken3", amount=1, debtor="test0")
+    #print(account_file_load("test"))
+
+    # below belongs in a function
     print("Existing transactions for the given master key:")
-    x = find_txs(token_key_dict["signals"], 0)
-    for y in x:
-        action = decrypt(json.loads(y[1]), token_key_dict["key"])
+    found_txs = find_txs(signals_dict=token_key_dict["signals"], anchor=0)
+
+    for transaction in found_txs:
+        action = decrypt(json.loads(transaction["openfield"]), token_key_dict["key"])
+        print(transaction)
         print(action)
 
-    print(account_file_load("test"))
+    for transaction in found_txs:
+        action = decrypt(json.loads(transaction["openfield"]), token_key_dict["key"])
+        if action["operation"] == "make":
+            account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
+            break  # take first only
 
-    account_add_to(account="test", token="stoken2", amount=1, debtor="test0")
-    account_add_to(account="test", token="stoken3", amount=1, debtor="test0")
+    for transaction in found_txs:
+        action = decrypt(json.loads(transaction["openfield"]), token_key_dict["key"])
+        if action["operation"] == "move":
+            account_add_to(account=action["recipient"], token=action["name"], amount=1, debtor=transaction["address"])
+
+
+
