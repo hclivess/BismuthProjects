@@ -230,19 +230,11 @@ if __name__ == "__main__":
             print(transaction)
             action = decrypt(transaction["openfield"], token_key_dict["key"])
             print(action)
+
         except Exception as e:
             print(f"Corrupted message: {e}")
 
-    for transaction in found_txs:  # issuance
-        try:
-            action = decrypt(transaction["openfield"], token_key_dict["key"])
 
-            if not is_processed(transaction["openfield"]["nonce"]):
-                if action["operation"] == "make":
-                    account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
-                    break  # take first only
-        except Exception as e:
-            print(f"Corrupted message: {e}")
 
     for transaction in found_txs:  # transactions
         try:
@@ -250,7 +242,16 @@ if __name__ == "__main__":
 
             if not is_processed(transaction["openfield"]["nonce"]):
                 process(json.loads(transaction["openfield"]["nonce"]))
+
                 if action["operation"] == "move":
                     account_add_to(account=action["recipient"], token=action["name"], amount=1, debtor=transaction["address"])
+
+                elif action["operation"] == "make":
+                    account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
+                    break  # take first only
+
+            else:
+                print("Skipping processed transaction")
+
         except Exception as e:
             print(f"Corrupted message: {e}")
