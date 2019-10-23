@@ -248,7 +248,6 @@ if __name__ == "__main__":
 
                 elif action["operation"] == "make":
                     account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
-                    break  # take first only
 
             else:
                 print("Skipping processed transaction")
