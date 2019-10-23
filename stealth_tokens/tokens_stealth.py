@@ -3,6 +3,7 @@ import os
 import random
 import sqlite3
 import string
+from hashlib import blake2b
 from base64 import b64decode, b64encode
 
 from Cryptodome.Cipher import AES
@@ -12,10 +13,29 @@ __version__ = '0.0.1'
 connection = sqlite3.connect("D:/bismuth/static/ledger.db")
 cursor = connection.cursor()
 
+def blake2b_generate(nonce):
+    return blake2b(nonce.encode(), digest_size=20).hexdigest()
+
+def process(nonce):
+    if not os.path.exists("stealth_history"):
+        os.mkdir("stealth_history")
+    hash_path = f'stealth_history/{blake2b_generate(nonce)}'
+
+    if not os.path.exists(hash_path):
+        with open(hash_path, "w") as nonce_file:
+            nonce_file.write("")
+
+def is_processed(nonce):
+    if not os.path.exists("stealth_history"):
+        os.mkdir("stealth_history")
+    hash_path = f'stealth_history/{blake2b_generate(nonce)}'
+    if os.path.exists(hash_path):
+        return True
+    else:
+        return False
 
 def digestor(action):
     pass
-
 
 def find_txs(signals_dict, anchor):
     signal_set = ','.join('?' for _ in signals_dict)
@@ -24,7 +44,7 @@ def find_txs(signals_dict, anchor):
 
     return_list = []
     for entry in result:
-        zipped = dict(zip(["address", "block_height", "openfield"], [entry[0], entry[1], entry[2]]))
+        zipped = dict(zip(["address", "block_height", "openfield"], [entry[0], entry[1], json.loads(entry[2])]))
         return_list.append(zipped)
 
     return return_list
@@ -73,7 +93,7 @@ def decrypt(enc_dict, key_encoded):
 
 
 def load_token_dict(token):
-    token_path = f'stealth_data/{token}_keys.json'
+    token_path = f'stealth_keys/{token}_keys.json'
     if os.path.exists(token_path):
         with open(token_path) as token_keys:
             keys_loaded = json.loads(token_keys.read())
@@ -84,9 +104,9 @@ def load_token_dict(token):
 
 def save_token_key(token, signals, public_signal, key):
     print(public_signal)
-    if not os.path.exists("stealth_data"):
-        os.mkdir("stealth_data")
-    token_path = f'stealth_data/{token}_keys.json'
+    if not os.path.exists("stealth_keys"):
+        os.mkdir("stealth_keys")
+    token_path = f'stealth_keys/{token}_keys.json'
     if not os.path.exists(token_path):
         keys = {}
         keys["name"] = token
@@ -107,9 +127,9 @@ def load_signal(signals):
 
 
 def account_file_load(account):
-    if not os.path.exists(f"account_data"):
-        os.mkdir(f"account_data")
-    account_path = f"account_data/{account}.json"
+    if not os.path.exists(f"stealth_accounts"):
+        os.mkdir(f"stealth_accounts")
+    account_path = f"stealth_accounts/{account}.json"
 
     if not os.path.exists(account_path):
         with open(account_path, "w") as token_keys:
@@ -122,7 +142,7 @@ def account_file_load(account):
 
 
 def account_file_save(account, data):
-    account_path = f"account_data/{account}.json"
+    account_path = f"stealth_accounts/{account}.json"
     with open(account_path, "w") as account_file:
         account_file.write(json.dumps(data))
 
@@ -166,11 +186,11 @@ def account_take_from(account, token, amount: int):
 
 if __name__ == "__main__":
 
-    token_name = "stest"
-    address = "fa442ebb19292114f4f9d53a72c6b396472c7971b9de598bc9d0b4cd"
-    recipient = "46fa2d2f7a8ed7221aa292e36e2c0bfdc6e53e0a4bd65e34694dc94b"
+    token_name = "stest3"
+    address = "4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed"
+    recipient = "4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed"
 
-    save_token_key(token="stest",
+    save_token_key(token=token_name,
                    signals=signals_generate(100),
                    public_signal=signals_generate(1),
                    key=token_key_generate())
@@ -178,12 +198,12 @@ if __name__ == "__main__":
     token_key_dict = load_token_dict(token=token_name)
     print("token_key_dict", token_key_dict)
 
-    encrypted_data_make = encrypt_data(token_name="stest",
+    encrypted_data_make = encrypt_data(token_name=token_name,
                                        token_amount="10000",
                                        recipient=recipient,
                                        operation="make",
                                        key_encoded=token_key_dict["key"])
-    encrypted_data_move = encrypt_data(token_name="stest",
+    encrypted_data_move = encrypt_data(token_name=token_name,
                                        token_amount="1",
                                        recipient=recipient,
                                        operation="move",
@@ -205,21 +225,32 @@ if __name__ == "__main__":
     print("Existing transactions for the given master key:")
     found_txs = find_txs(signals_dict=token_key_dict["signals"], anchor=0)
 
-    for transaction in found_txs:
-        action = decrypt(json.loads(transaction["openfield"]), token_key_dict["key"])
-        print(transaction)
-        print(action)
+    for transaction in found_txs:  # print
+        try:
+            print(transaction)
+            action = decrypt(transaction["openfield"], token_key_dict["key"])
+            print(action)
+        except Exception as e:
+            print(f"Corrupted message: {e}")
 
-    for transaction in found_txs:
-        action = decrypt(json.loads(transaction["openfield"]), token_key_dict["key"])
-        if action["operation"] == "make":
-            account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
-            break  # take first only
+    for transaction in found_txs:  # issuance
+        try:
+            action = decrypt(transaction["openfield"], token_key_dict["key"])
 
-    for transaction in found_txs:
-        action = decrypt(json.loads(transaction["openfield"]), token_key_dict["key"])
-        if action["operation"] == "move":
-            account_add_to(account=action["recipient"], token=action["name"], amount=1, debtor=transaction["address"])
+            if not is_processed(transaction["openfield"]["nonce"]):
+                if action["operation"] == "make":
+                    account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
+                    break  # take first only
+        except Exception as e:
+            print(f"Corrupted message: {e}")
 
+    for transaction in found_txs:  # transactions
+        try:
+            action = decrypt(transaction["openfield"], token_key_dict["key"])
 
-
+            if not is_processed(transaction["openfield"]["nonce"]):
+                process(json.loads(transaction["openfield"]["nonce"]))
+                if action["operation"] == "move":
+                    account_add_to(account=action["recipient"], token=action["name"], amount=1, debtor=transaction["address"])
+        except Exception as e:
+            print(f"Corrupted message: {e}")
