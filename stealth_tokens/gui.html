@@ -3,17 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <script src="https://ajax.cloudflare.com/cdn-cgi/scripts/a2bd7673/cloudflare-static/rocket-loader.min.js" data-cf-settings="655e58efa2fda60e82186aff-|49" defer=""></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
 </head>
 <body>
 
+<div class ='container-fluid'>
+
 <h1>Accounts and holdings</h1>
     {% for account in accounts %}
-    {{account}}
+    <h3>{{account["account"]}}</h3>
     {% end %}
 
-<h1>Accounts and transfers</h1>
+    {% for account in accounts %}
+        {% for key, value in account.items() %}
+            {% if key != "account" %}
+                {{key}} {{value}}
+            {% end %}
+        {% end %}
+    {% end %}
 
-<h1>Registered transactions</h1>
+</div>
+
+<div class ='container-fluid'>
+      <form action="/send">
+        <div class="col-xs-4">
+            <label for="1">Send</label>
+            <input type="text" class="form-control" name="token" id="1" placeholder="Enter name of the token">
+            <input type="text" class="form-control" name="recipient" id="2" placeholder="Enter recipient">
+
+            <button type="submit" class="btn btn-primary">Send</button>
+        </div>
+      </form>
+</div>
+
+<div class ='container-fluid'>
+      <form action="/generate">
+        <div class="col-xs-4">
+            <label for="1">Generate</label>
+            <input type="text" class="form-control" name="token" id="3" placeholder="Enter name of the token to create">
+            <input type="text" class="form-control" name="amount" id="4" placeholder="Enter amount">
+            <button type="submit" class="btn btn-primary">Generate</button>
+        </div>
+      </form>
+</div>
 
 </body>
 </html>

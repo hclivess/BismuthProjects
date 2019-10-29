@@ -2,6 +2,7 @@ import tornado.ioloop
 import tornado.web
 import webbrowser
 import glob
+import json
 import os
 
 def get_accounts():
@@ -10,7 +11,7 @@ def get_accounts():
 
     for path in paths:
         with open(path) as infile:
-            account = infile.read()
+            account = json.loads(infile.read())
             accounts.append(account)
     return accounts
 
