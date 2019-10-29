@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 import random
@@ -33,9 +34,6 @@ def is_processed(nonce):
         return True
     else:
         return False
-
-def digestor(action):
-    pass
 
 def find_txs(signals_dict, anchor):
     signal_set = ','.join('?' for _ in signals_dict)
@@ -118,8 +116,37 @@ def save_token_key(token, signals, public_signal, key):
             token_keys.write(json.dumps(keys))
 
 
-def tokens_update():
-    pass
+def tokens_update(token_key_dict):
+    found_txs = find_txs(signals_dict=token_key_dict["signals"], anchor=0)
+
+    for transaction in found_txs:  # print
+        try:
+            print(transaction)
+            action = decrypt(transaction["openfield"], token_key_dict["key"])
+            print(action)
+
+        except Exception as e:
+            print(f"Corrupted message: {e}")
+
+
+    for transaction in found_txs:  # transactions
+        try:
+            action = decrypt(transaction["openfield"], token_key_dict["key"])
+
+            if not is_processed(transaction["openfield"]["nonce"]):
+                process(json.loads(transaction["openfield"]["nonce"]))
+
+                if action["operation"] == "move":
+                    account_add_to(account=action["recipient"], token=action["name"], amount=1, debtor=transaction["address"])
+
+                elif action["operation"] == "make":
+                    account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
+
+            else:
+                print("Skipping processed transaction")
+
+        except Exception as e:
+            print(f"Corrupted message: {e}")
 
 
 def load_signal(signals):
@@ -184,6 +211,16 @@ def account_take_from(account, token, amount: int):
         print("Insufficient balance or corrupted file")
         return False
 
+def load_tokens():
+    token_paths = glob.glob('stealth_keys\*.json')
+
+    token_names = []
+    for token_path in token_paths:
+        token_names.append(os.path.basename(token_path))
+
+    print(token_names)
+    return token_names
+
 if __name__ == "__main__":
 
     token_name = "stest3"
@@ -223,34 +260,6 @@ if __name__ == "__main__":
 
     # below belongs in a function
     print("Existing transactions for the given master key:")
-    found_txs = find_txs(signals_dict=token_key_dict["signals"], anchor=0)
 
-    for transaction in found_txs:  # print
-        try:
-            print(transaction)
-            action = decrypt(transaction["openfield"], token_key_dict["key"])
-            print(action)
-
-        except Exception as e:
-            print(f"Corrupted message: {e}")
-
-
-
-    for transaction in found_txs:  # transactions
-        try:
-            action = decrypt(transaction["openfield"], token_key_dict["key"])
-
-            if not is_processed(transaction["openfield"]["nonce"]):
-                process(json.loads(transaction["openfield"]["nonce"]))
-
-                if action["operation"] == "move":
-                    account_add_to(account=action["recipient"], token=action["name"], amount=1, debtor=transaction["address"])
-
-                elif action["operation"] == "make":
-                    account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
-
-            else:
-                print("Skipping processed transaction")
-
-        except Exception as e:
-            print(f"Corrupted message: {e}")
+    load_tokens()
+    tokens_update(token_key_dict)
