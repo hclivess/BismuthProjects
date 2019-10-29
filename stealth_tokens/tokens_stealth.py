@@ -91,7 +91,7 @@ def decrypt(enc_dict, key_encoded):
 
 
 def load_token_dict(token):
-    token_path = f'stealth_keys/{token}_keys.json'
+    token_path = f'stealth_keys/{token}'
     if os.path.exists(token_path):
         with open(token_path) as token_keys:
             keys_loaded = json.loads(token_keys.read())
@@ -104,7 +104,7 @@ def save_token_key(token, signals, public_signal, key):
     print(public_signal)
     if not os.path.exists("stealth_keys"):
         os.mkdir("stealth_keys")
-    token_path = f'stealth_keys/{token}_keys.json'
+    token_path = f'stealth_keys/{token}'
     if not os.path.exists(token_path):
         keys = {}
         keys["name"] = token
@@ -116,7 +116,7 @@ def save_token_key(token, signals, public_signal, key):
             token_keys.write(json.dumps(keys))
 
 
-def tokens_update(token_key_dict):
+def tokens_update(token_key_dict: dict):
     found_txs = find_txs(signals_dict=token_key_dict["signals"], anchor=0)
 
     for transaction in found_txs:  # print
@@ -127,7 +127,6 @@ def tokens_update(token_key_dict):
 
         except Exception as e:
             print(f"Corrupted message: {e}")
-
 
     for transaction in found_txs:  # transactions
         try:
@@ -218,12 +217,11 @@ def load_tokens():
     for token_path in token_paths:
         token_names.append(os.path.basename(token_path))
 
-    print(token_names)
     return token_names
 
 if __name__ == "__main__":
 
-    token_name = "stest3"
+    token_name = "stest3.json"
     address = "4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed"
     recipient = "4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed"
 
@@ -258,8 +256,13 @@ if __name__ == "__main__":
     # account_add_to(account="test", token="stoken3", amount=1, debtor="test0")
     #print(account_file_load("test"))
 
-    # below belongs in a function
+    # end of test
     print("Existing transactions for the given master key:")
 
-    load_tokens()
-    tokens_update(token_key_dict)
+    loaded_tokens = load_tokens()
+
+    for token in loaded_tokens:
+        print(token)
+        token_key_dict = load_token_dict(token=token)
+
+        tokens_update(token_key_dict)
