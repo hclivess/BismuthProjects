@@ -124,7 +124,7 @@ def tokens_update(token_key_dict: dict):
     print("Existing transactions for the given master key:")
     for transaction in found_txs:  # print
         try:
-            print(transaction)
+            print("transaction", transaction)
             action = decrypt(transaction["openfield"], token_key_dict["key"])
             print(action)
 
@@ -136,7 +136,7 @@ def tokens_update(token_key_dict: dict):
             action = decrypt(transaction["openfield"], token_key_dict["key"])
 
             if not is_processed(transaction["openfield"]["nonce"]):
-                process(json.loads(transaction["openfield"]["nonce"]))
+                process(transaction["openfield"]["nonce"])
 
                 if action["operation"] == "move":
                     account_add_to(account=action["recipient"], token=action["name"], amount=1, debtor=transaction["address"])
@@ -149,6 +149,7 @@ def tokens_update(token_key_dict: dict):
 
         except Exception as e:
             print(f"Corrupted message: {e}")
+            raise
 
 
 def load_signal(signals):
@@ -183,6 +184,8 @@ def token_genesis(account: str, token: str, amount: int):
         data[token]
     except: # if unprocessed
         data[token] = amount
+        data["account"] = account
+
         account_file_save(account, data)
 
 
