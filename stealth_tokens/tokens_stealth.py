@@ -6,6 +6,7 @@ import sqlite3
 import string
 from hashlib import blake2b
 from base64 import b64decode, b64encode
+from bismuthclient import bismuthutil
 
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
@@ -13,6 +14,7 @@ from Cryptodome.Random import get_random_bytes
 __version__ = '0.0.1'
 connection = sqlite3.connect("D:/bismuth/static/ledger.db")
 cursor = connection.cursor()
+Bismuthutil = bismuthutil.BismuthUtil()
 
 def blake2b_generate(nonce):
     return blake2b(nonce.encode(), digest_size=20).hexdigest()
@@ -119,6 +121,7 @@ def save_token_key(token, signals, public_signal, key):
 def tokens_update(token_key_dict: dict):
     found_txs = find_txs(signals_dict=token_key_dict["signals"], anchor=0)
 
+    print("Existing transactions for the given master key:")
     for transaction in found_txs:  # print
         try:
             print(transaction)
@@ -139,7 +142,7 @@ def tokens_update(token_key_dict: dict):
                     account_add_to(account=action["recipient"], token=action["name"], amount=1, debtor=transaction["address"])
 
                 elif action["operation"] == "make":
-                    account_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
+                    token_genesis(account=action["recipient"], token=action["name"], amount=action["amount"])
 
             else:
                 print("Skipping processed transaction")
@@ -172,7 +175,8 @@ def account_file_save(account, data):
     with open(account_path, "w") as account_file:
         account_file.write(json.dumps(data))
 
-def account_genesis(account, token, amount):
+
+def token_genesis(account: str, token: str, amount: int):
     amount = int(amount)
     data = account_file_load(account)
     try:
@@ -181,7 +185,8 @@ def account_genesis(account, token, amount):
         data[token] = amount
         account_file_save(account, data)
 
-def account_add_to(account, token, amount, debtor):
+
+def account_add_to(account: str, token: str, amount: int, debtor: str):
     amount = int(amount)
 
     if account_take_from(debtor, token, amount):
@@ -195,7 +200,7 @@ def account_add_to(account, token, amount, debtor):
         account_file_save(account, data)
 
 
-def account_take_from(account, token, amount: int):
+def account_take_from(account: str, token: str, amount: int):
     amount = int(amount)
     data = account_file_load(account)
 
@@ -219,12 +224,30 @@ def load_tokens():
 
     return token_names
 
-if __name__ == "__main__":
 
-    token_name = "stest3.json"
-    address = "4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed"
-    recipient = "4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed"
+def move_token(token_name: str, recipient: str, amount: str):
+    token_key_dict = load_token_dict(token=token_name)
+    print("token_key_dict", token_key_dict)
 
+    encrypted_data_move = encrypt_data(token_name=token_name,
+                                       token_amount=str(amount),
+                                       recipient=recipient,
+                                       operation="move",
+                                       key_encoded=token_key_dict["key"])
+
+    print(decrypt(encrypted_data_move, token_key_dict["key"]))
+
+    operation = load_signal(token_key_dict["signals"])
+    data = json.dumps(encrypted_data_move)
+    bisurl = Bismuthutil.create_bis_url(recipient, amount, operation, data)
+
+    print("move (data)", data)
+    print("move (operation)", operation)
+    print("BISURL to move", bisurl)
+
+    return data, operation, bisurl
+
+def generate_token(token_name: str, recipient: str, amount: str):
     save_token_key(token=token_name,
                    signals=signals_generate(100),
                    public_signal=signals_generate(1),
@@ -234,30 +257,36 @@ if __name__ == "__main__":
     print("token_key_dict", token_key_dict)
 
     encrypted_data_make = encrypt_data(token_name=token_name,
-                                       token_amount="10000",
+                                       token_amount=str(amount),
                                        recipient=recipient,
                                        operation="make",
                                        key_encoded=token_key_dict["key"])
-    encrypted_data_move = encrypt_data(token_name=token_name,
-                                       token_amount="1",
-                                       recipient=recipient,
-                                       operation="move",
-                                       key_encoded=token_key_dict["key"])
 
-    print(decrypt(encrypted_data_make, token_key_dict["key"]))
-    print("make (data)", json.dumps(encrypted_data_make))
-    print("make (operation)", load_signal(token_key_dict["signals"]))
 
-    print(decrypt(encrypted_data_move, token_key_dict["key"]))
-    print("move (data)", json.dumps(encrypted_data_move))
-    print("move (operation)", load_signal(token_key_dict["signals"]))
+    #print(decrypt(encrypted_data_make, token_key_dict["key"]))
 
-    # account_add_to(account="test", token="stoken2", amount=1, debtor="test0")
-    # account_add_to(account="test", token="stoken3", amount=1, debtor="test0")
-    #print(account_file_load("test"))
+    operation = load_signal(token_key_dict["signals"])
+    data = json.dumps(encrypted_data_make)
+    bisurl = Bismuthutil.create_bis_url(recipient, amount, operation, data)
 
-    # end of test
-    print("Existing transactions for the given master key:")
+    print("make (data)", data)
+    print("make (operation)", operation)
+    print("BISURL to make", bisurl)
+
+    return data, operation, bisurl
+
+if __name__ == "__main__":
+    # account_add_to(account="test", token="stoken2", amount=1, debtor="test0") #  this is automated based on chain
+    # account_add_to(account="test", token="stoken3", amount=1, debtor="test0") #  this is automated based on chain
+    # print(account_file_load("test"))
+
+    generate_token(token_name="stest4.json",
+                   recipient="4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed",
+                   amount="10000")
+
+    move_token(token_name="stest3.json",
+                recipient="4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed",
+                amount="1")
 
     loaded_tokens = load_tokens()
 
