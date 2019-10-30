@@ -16,6 +16,11 @@ connection = sqlite3.connect("D:/bismuth/static/ledger.db")
 cursor = connection.cursor()
 Bismuthutil = bismuthutil.BismuthUtil()
 
+def load_address(file="wallet.der"):
+    with open(file) as infile:
+        loaded_file = json.loads(infile.read())
+        address = loaded_file["Address"]
+    return address
 
 def blake2b_generate(nonce):
     return blake2b(nonce.encode(), digest_size=20).hexdigest()

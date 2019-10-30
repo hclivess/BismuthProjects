@@ -4,7 +4,7 @@ import webbrowser
 import glob
 import json
 import os
-from tokens_stealth import move_token, generate_token
+from tokens_stealth import move_token, generate_token, load_address
 
 def get_accounts():
     accounts = []
@@ -36,7 +36,7 @@ class generateHandler(tornado.web.RequestHandler):
     def get(self, data):
         token_name = generateHandler.get_argument(self, "token")
         amount = generateHandler.get_argument(self, "amount")
-        recipient = "4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed"
+        recipient = load_address()
 
         #print(token_name, amount)
         txdata = generate_token(token_name=token_name, recipient=recipient, amount=amount)
@@ -54,8 +54,6 @@ def make_app():
         (r"/overview", overviewHandler),
         (r"/", MainHandler),
     ])
-
-
 
 if __name__ == "__main__":
     app = make_app()
