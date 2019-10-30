@@ -93,7 +93,8 @@ def decrypt(enc_dict, key_encoded):
 
 
 def load_token_dict(token):
-    token_path = f'stealth_keys/{token}'
+    token_path = f'stealth_keys/{token}.json'
+
     if os.path.exists(token_path):
         with open(token_path) as token_keys:
             keys_loaded = json.loads(token_keys.read())
@@ -248,7 +249,7 @@ def move_token(token_name: str, recipient: str, amount: str):
     print("move (operation)", operation)
     print("BISURL to move", bisurl)
 
-    return data, operation, bisurl
+    return {"data": data, "operation" : operation, "bisurl": bisurl}
 
 def generate_token(token_name: str, recipient: str, amount: str):
     save_token_key(token=token_name,
@@ -276,18 +277,18 @@ def generate_token(token_name: str, recipient: str, amount: str):
     print("make (operation)", operation)
     print("BISURL to make", bisurl)
 
-    return data, operation, bisurl
+    return {"data": data, "operation" : operation, "bisurl": bisurl}
 
 if __name__ == "__main__":
     # account_add_to(account="test", token="stoken2", amount=1, debtor="test0") #  this is automated based on chain
     # account_add_to(account="test", token="stoken3", amount=1, debtor="test0") #  this is automated based on chain
     # print(account_file_load("test"))
 
-    generate_token(token_name="stest4.json",
+    generate_token(token_name="stest4",
                    recipient="4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed",
                    amount="10000")
 
-    move_token(token_name="stest3.json",
+    move_token(token_name="stest3",
                 recipient="4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed",
                 amount="1")
 

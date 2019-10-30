@@ -2,28 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Operations</title>
     <script src="https://ajax.cloudflare.com/cdn-cgi/scripts/a2bd7673/cloudflare-static/rocket-loader.min.js" data-cf-settings="655e58efa2fda60e82186aff-|49" defer=""></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
 </head>
 <body>
 
-<div class ='container-fluid'>
-
-<h1>Accounts and holdings</h1>
-    {% for account in accounts %}
-    <h3>{{account["account"]}}</h3>
-    {% end %}
-
-    {% for account in accounts %}
-        {% for key, value in account.items() %}
-            {% if key != "account" %}
-                {{key}} {{value}}
-            {% end %}
-        {% end %}
-    {% end %}
-
+<div class="panel panel-default">
+  <div class="panel-heading">Bismuth Shielded Tokens Detached Interface</div>
+  <div class="panel-body">
+      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups" >
+        <div class="btn-group mr-2" role="group" aria-label="First group">
+            <a href='/' class='btn btn-success' role='button'>Operations</a>
+            <a href='/overview' class='btn btn-info' role='button'>Overview</a>
+        </div>
+      </div>
+  </div>
 </div>
 
 <div class ='container-fluid'>
@@ -32,6 +27,7 @@
             <label for="1">Send</label>
             <input type="text" class="form-control" name="token" id="1" placeholder="Enter name of the token">
             <input type="text" class="form-control" name="recipient" id="2" placeholder="Enter recipient">
+            <input type="text" class="form-control" name="amount" id="3" placeholder="Enter amount">
 
             <button type="submit" class="btn btn-primary">Send</button>
         </div>
@@ -42,8 +38,8 @@
       <form action="/generate">
         <div class="col-xs-4">
             <label for="1">Generate</label>
-            <input type="text" class="form-control" name="token" id="3" placeholder="Enter name of the token to create">
-            <input type="text" class="form-control" name="amount" id="4" placeholder="Enter amount">
+            <input type="text" class="form-control" name="token" id="4" placeholder="Enter name of the token to create">
+            <input type="text" class="form-control" name="amount" id="5" placeholder="Enter amount">
             <button type="submit" class="btn btn-primary">Generate</button>
         </div>
       </form>

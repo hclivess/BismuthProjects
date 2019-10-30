@@ -4,6 +4,7 @@ import webbrowser
 import glob
 import json
 import os
+from tokens_stealth import move_token, generate_token
 
 def get_accounts():
     accounts = []
@@ -18,10 +19,37 @@ def get_accounts():
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         accounts = get_accounts()
-        self.render("gui.html", accounts=accounts)
+        self.render("operations.html", accounts=accounts)
+
+class sendHandler(tornado.web.RequestHandler):
+    def get(self, data):
+
+        token_name = sendHandler.get_argument(self, "token")
+        recipient = sendHandler.get_argument(self, "recipient")
+        amount = sendHandler.get_argument(self, "amount")
+
+        print(token_name, recipient, amount)
+        txdata = move_token(token_name, recipient, amount)
+        self.render("bisurl.html", txdata=txdata)
+
+
+        self.render("operations.html")
+
+class generateHandler(tornado.web.RequestHandler):
+    def get(self):
+        accounts = get_accounts()
+        self.render("bisurl.html", accounts=accounts)
+
+class overviewHandler(tornado.web.RequestHandler):
+    def get(self):
+        accounts = get_accounts()
+        self.render("overview.html", accounts=accounts)
 
 def make_app():
     return tornado.web.Application([
+        (r"/send(.*)", sendHandler),
+        (r"/generate(.*)", generateHandler),
+        (r"/overview", overviewHandler),
         (r"/", MainHandler),
     ])
 
