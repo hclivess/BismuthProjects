@@ -28,17 +28,19 @@ class sendHandler(tornado.web.RequestHandler):
         recipient = sendHandler.get_argument(self, "recipient")
         amount = sendHandler.get_argument(self, "amount")
 
-        print(token_name, recipient, amount)
+        #print(token_name, recipient, amount)
         txdata = move_token(token_name, recipient, amount)
         self.render("bisurl.html", txdata=txdata)
 
-
-        self.render("operations.html")
-
 class generateHandler(tornado.web.RequestHandler):
-    def get(self):
-        accounts = get_accounts()
-        self.render("bisurl.html", accounts=accounts)
+    def get(self, data):
+        token_name = generateHandler.get_argument(self, "token")
+        amount = generateHandler.get_argument(self, "amount")
+        recipient = "4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed"
+
+        #print(token_name, amount)
+        txdata = generate_token(token_name=token_name, recipient=recipient, amount=amount)
+        self.render("bisurl_generate.html", txdata=txdata)
 
 class overviewHandler(tornado.web.RequestHandler):
     def get(self):

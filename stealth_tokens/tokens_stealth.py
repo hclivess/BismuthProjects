@@ -107,7 +107,7 @@ def save_token_key(token, signals, public_signal, key):
     print(public_signal)
     if not os.path.exists("stealth_keys"):
         os.mkdir("stealth_keys")
-    token_path = f'stealth_keys/{token}'
+    token_path = f'stealth_keys/{token}.json'
     if not os.path.exists(token_path):
         keys = {}
         keys["name"] = token
@@ -265,7 +265,6 @@ def generate_token(token_name: str, recipient: str, amount: str):
                                        recipient=recipient,
                                        operation="make",
                                        key_encoded=token_key_dict["key"])
-
 
     #print(decrypt(encrypted_data_make, token_key_dict["key"]))
 
