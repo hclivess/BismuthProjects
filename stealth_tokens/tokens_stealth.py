@@ -4,20 +4,22 @@ import os
 import random
 import sqlite3
 import string
-from hashlib import blake2b
 from base64 import b64decode, b64encode
-from bismuthclient import bismuthutil
+from hashlib import blake2b
 
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
+from bismuthclient import bismuthutil
 
 __version__ = '0.0.1'
 connection = sqlite3.connect("D:/bismuth/static/ledger.db")
 cursor = connection.cursor()
 Bismuthutil = bismuthutil.BismuthUtil()
 
+
 def blake2b_generate(nonce):
     return blake2b(nonce.encode(), digest_size=20).hexdigest()
+
 
 def process(nonce):
     if not os.path.exists("stealth_history"):
@@ -28,6 +30,7 @@ def process(nonce):
         with open(hash_path, "w") as nonce_file:
             nonce_file.write("")
 
+
 def is_processed(nonce):
     if not os.path.exists("stealth_history"):
         os.mkdir("stealth_history")
@@ -36,6 +39,7 @@ def is_processed(nonce):
         return True
     else:
         return False
+
 
 def find_txs(signals_dict, anchor):
     signal_set = ','.join('?' for _ in signals_dict)
@@ -183,7 +187,7 @@ def token_genesis(account: str, token: str, amount: int):
     data = account_file_load(account)
     try:
         data[token]
-    except: # if unprocessed
+    except:  # if unprocessed
         data[token] = amount
         data["account"] = account
 
@@ -219,6 +223,7 @@ def account_take_from(account: str, token: str, amount: int):
         print("Insufficient balance or corrupted file")
         return False
 
+
 def load_tokens():
     token_paths = glob.glob('stealth_keys\*.json')
 
@@ -249,7 +254,8 @@ def move_token(token_name: str, recipient: str, amount: str):
     print("move (operation)", operation)
     print("BISURL to move", bisurl)
 
-    return {"data": data, "operation" : operation, "bisurl": bisurl}
+    return {"data": data, "operation": operation, "bisurl": bisurl}
+
 
 def generate_token(token_name: str, recipient: str, amount: str):
     save_token_key(token=token_name,
@@ -266,7 +272,7 @@ def generate_token(token_name: str, recipient: str, amount: str):
                                        operation="make",
                                        key_encoded=token_key_dict["key"])
 
-    #print(decrypt(encrypted_data_make, token_key_dict["key"]))
+    # print(decrypt(encrypted_data_make, token_key_dict["key"]))
 
     operation = load_signal(token_key_dict["signals"])
     data = json.dumps(encrypted_data_make)
@@ -276,7 +282,8 @@ def generate_token(token_name: str, recipient: str, amount: str):
     print("make (operation)", operation)
     print("BISURL to make", bisurl)
 
-    return {"data": data, "operation" : operation, "bisurl": bisurl}
+    return {"data": data, "operation": operation, "bisurl": bisurl}
+
 
 if __name__ == "__main__":
     # account_add_to(account="test", token="stoken2", amount=1, debtor="test0") #  this is automated based on chain
@@ -288,8 +295,8 @@ if __name__ == "__main__":
                    amount="10000")
 
     move_token(token_name="stest3",
-                recipient="4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed",
-                amount="1")
+               recipient="4edadac9093d9326ee4b17f869b14f1a2534f96f9c5d7b48dc9acaed",
+               amount="1")
 
     loaded_tokens = load_tokens()
 

@@ -4,46 +4,45 @@
     <meta charset="UTF-8">
     <title>BISURL</title>
     <script src="https://ajax.cloudflare.com/cdn-cgi/scripts/a2bd7673/cloudflare-static/rocket-loader.min.js" data-cf-settings="655e58efa2fda60e82186aff-|49" defer=""></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.12/clipboard.min.js"></script>
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
 </head>
 
 
-
 <body>
 
-    <script>
+<script>
     var clip = new Clipboard('.btn');
 
 
-    </script>
+
+</script>
 
 <div class="panel panel-default">
-  <div class="panel-heading">Bismuth Shielded Tokens Detached Interface</div>
-  <div class="panel-body">
-      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups" >
-        <div class="btn-group mr-2" role="group" aria-label="First group">
-            <a href='/' class='btn btn-success' role='button'>Operations</a>
-            <a href='/overview' class='btn btn-info' role='button'>Overview</a>
+    <div class="panel-heading">Bismuth Shielded Tokens Detached Interface</div>
+    <div class="panel-body">
+        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+            <div class="btn-group mr-2" role="group" aria-label="First group">
+                <a href='/' class='btn btn-success' role='button'>Operations</a>
+                <a href='/overview' class='btn btn-info' role='button'>Overview</a>
+            </div>
         </div>
-      </div>
-  </div>
+    </div>
 </div>
 
-<div class ='container-fluid'>
+<div class='container-fluid'>
     <h3>BISURL to copy into a Bismuth wallet:</h3>
     {{txdata['bisurl']}}
 
 </div>
 
-<div class ='container-fluid'>
+<div class='container-fluid'>
     <button class="btn" data-clipboard-text="{{txdata['bisurl']}}">
         Copy
     </button>
 </div>
-
 
 
 </body>

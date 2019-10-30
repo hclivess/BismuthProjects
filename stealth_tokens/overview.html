@@ -4,38 +4,65 @@
     <meta charset="UTF-8">
     <title>Overview</title>
     <script src="https://ajax.cloudflare.com/cdn-cgi/scripts/a2bd7673/cloudflare-static/rocket-loader.min.js" data-cf-settings="655e58efa2fda60e82186aff-|49" defer=""></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 </head>
 <body>
 
 <div class="panel panel-default">
-  <div class="panel-heading">Bismuth Shielded Tokens Detached Interface</div>
-  <div class="panel-body">
-      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups" >
-        <div class="btn-group mr-2" role="group" aria-label="First group">
-            <a href='/' class='btn btn-success' role='button'>Operations</a>
-            <a href='/overview' class='btn btn-info' role='button'>Overview</a>
+    <div class="panel-heading">Bismuth Shielded Tokens Detached Interface</div>
+    <div class="panel-body">
+        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+            <div class="btn-group mr-2" role="group" aria-label="First group">
+                <a href='/' class='btn btn-success' role='button'>Operations</a>
+                <a href='/overview' class='btn btn-info' role='button'>Overview</a>
+            </div>
         </div>
-      </div>
-  </div>
+    </div>
 </div>
 
-<div class ='container-fluid'>
+<div class='container-fluid'>
 
-<h1>Accounts and holdings</h1>
-    {% for account in accounts %}
-    <h3>{{account["account"]}}</h3>
-    {% end %}
+    <h1>Accounts and holdings</h1>
 
-    {% for account in accounts %}
-        {% for key, value in account.items() %}
-            {% if key != "account" %}
-                {{key}} {{value}}
-            {% end %}
+
+</div>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">Address</th>
+        <th scope="col">Token name</th>
+        <th scope="col">Amount</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    <tr>
+        {% for account in accounts %}
+
+        <th scope="row">{{account["account"]}}</th>
         {% end %}
-    {% end %}
 
+        {% for account in accounts %}
+        {% for key, value in account.items() %}
+        {% if key != "account" %}
+        <td>{{key}}</td>
+        <td>{{value}}</td>
+        {% end %}
+        {% end %}
+        {% end %}
+
+
+    </tr>
+
+
+    </tbody>
+</table>
+
+
+<div class='container-fluid'>
+    <p>This data is taken from the local Bismuth blockchain ledger. Transactions need to be processed by your local Bismuth node before they appear here.</p>
 </div>
 
 <!-- more template html... -->
