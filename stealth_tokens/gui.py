@@ -30,7 +30,11 @@ class sendHandler(tornado.web.RequestHandler):
 
         #print(token_name, recipient, amount)
         txdata = move_token(token_name, recipient, amount)
-        self.render("bisurl.html", txdata=txdata)
+
+        if amount and token_name and recipient:
+            self.render("bisurl.html", txdata=txdata)
+        else:
+            self.render("error.html")
 
 class generateHandler(tornado.web.RequestHandler):
     def get(self, data):
@@ -40,7 +44,12 @@ class generateHandler(tornado.web.RequestHandler):
 
         #print(token_name, amount)
         txdata = generate_token(token_name=token_name, recipient=recipient, amount=amount)
-        self.render("bisurl_generate.html", txdata=txdata)
+
+        if amount and token_name:
+            self.render("bisurl_generate.html", txdata=txdata)
+        else:
+            self.render("error.html")
+
 
 class overviewHandler(tornado.web.RequestHandler):
     def get(self):
