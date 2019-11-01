@@ -18,6 +18,10 @@ def get_accounts():
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
+        self.render("welcome.html")
+
+class operationsHandler(tornado.web.RequestHandler):
+    def get(self):
         accounts = get_accounts()
         self.render("operations.html", accounts=accounts)
 
@@ -60,6 +64,7 @@ def make_app():
     return tornado.web.Application([
         (r"/send(.*)", sendHandler),
         (r"/generate(.*)", generateHandler),
+        (r"/operations", operationsHandler),
         (r"/overview", overviewHandler),
         (r"/", MainHandler),
     ])
