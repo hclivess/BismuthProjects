@@ -28,9 +28,10 @@
     <tr>
         <form action="/send">
             <th scope="row">Sending existing token</th>
+            <td><input type="text" class="form-control" name="sender" id="2" placeholder="Enter your address"></td>
             <td><input type="text" class="form-control" name="token" id="1" placeholder="Enter name of the token"></td>
-            <td><input type="text" class="form-control" name="recipient" id="2" placeholder="Enter recipient"></td>
-            <td><input type="text" class="form-control" name="amount" id="3" placeholder="Enter amount"></td>
+            <td><input type="text" class="form-control" name="recipient" id="3" placeholder="Enter recipient"></td>
+            <td><input type="text" class="form-control" name="amount" id="4" placeholder="Enter amount"></td>
             <td>
                 <button type="submit" class="btn btn-primary">Send</button>
             </td>
@@ -39,9 +40,10 @@
     <tr>
         <form action="/generate">
             <th scope="row">Generating new token</th>
-            <td><input type="text" class="form-control" name="token" id="4" placeholder="Enter name of the token to create"></td>
+            <td><input type="text" class="form-control" name="sender" id="5" placeholder="Enter your address"></td>
+            <td><input type="text" class="form-control" name="token" id="6" placeholder="Enter name of the token to create"></td>
             <td></td>
-            <td><input type="text" class="form-control" name="amount" id="5" placeholder="Enter amount"></td>
+            <td><input type="text" class="form-control" name="amount" id="7" placeholder="Enter amount"></td>
             <td>
                 <button type="submit" class="btn btn-primary">Generate</button>
             </td>

@@ -37,15 +37,26 @@
     <h3>BISURL to copy into a Bismuth wallet:</h3>
     {{txdata['bisurl']}}
 </div>
-
-<div class='container-fluid'>
+    <div class='container-fluid'>
     <button class="btn" data-clipboard-text="{{txdata['bisurl']}}">
-        <p>Copy</p>
+        Copy BISURL
     </button>
 </div>
 
 <div class='container-fluid'>
-    <p>Your master key file has been saved to local stealth_keys folder. If you want to share access to transaction history and token operations with anyone else, you need to share this file with them.</p>
+    <h3>Keyfile for backup:</h3>
+    {{txdata['keyfile']}}
+</div>
+<div class='container-fluid'>
+    <button class="btn" data-clipboard-text="{{txdata['keyfile']}}">
+        Copy Keyfile
+    </button>
+</div>
+
+
+
+<div class='container-fluid'>
+    <h4>Your master key file has been saved to local stealth_keys folder. If you want to share access to transaction history and token operations with anyone else, you need to share this file with them.</h4>
 </div>
 
 
