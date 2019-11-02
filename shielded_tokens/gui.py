@@ -44,7 +44,8 @@ class generateHandler(tornado.web.RequestHandler):
     def get(self, data):
         token_name = generateHandler.get_argument(self, "token")
         amount = generateHandler.get_argument(self, "amount")
-        recipient = load_address()
+        #recipient = load_address()
+        recipient = generateHandler.get_argument(self, "sender")
 
         #print(token_name, amount)
         txdata = generate_token(token_name=token_name, recipient=recipient, amount=amount)

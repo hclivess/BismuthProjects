@@ -107,8 +107,8 @@ def decrypt(enc_dict, key_encoded):
 
 
 def load_token_dict(token):
-    print(f"Loading keys for {token}")
-    token_path = f'shielded_keys/{token}'
+    print(f"Loading keys for {token}.json")
+    token_path = f'shielded_keys/{token}.json'
 
     if os.path.exists(token_path):
         with open(token_path) as token_keys:
