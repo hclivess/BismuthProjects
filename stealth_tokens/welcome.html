@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+    <script src="https://ajax.cloudflare.com/cdn-cgi/scripts/a2bd7673/cloudflare-static/rocket-loader.min.js" data-cf-settings="655e58efa2fda60e82186aff-|49" defer=""></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.12/clipboard.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+</head>
+
+<body>
+<div class="panel panel-default">
+    <div class="panel-heading">Bismuth Shielded Tokens Detached Interface</div>
+    <div class="panel-body">
+        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+            <div class="btn-group mr-2" role="group" aria-label="First group">
+                <a href='/' class='btn btn-warning' role='button'>Welcome</a>
+                <a href='/operations' class='btn btn-success' role='button'>Operations</a>
+                <a href='/overview' class='btn btn-info' role='button'>Overview</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='container-fluid'>
+
+    <h2>Welcome to the Bismuth shielded token interface</h2>
+
+    <strong>Warning! This is an alpha version. Only use for testing.</strong>
+
+    <h3>Glossary:</h3>
+    <h4>Shielded token:</h4>
+    <p>A token operating on the Bismuth network with access limited by the master key.</p>
+    <h4>Master key:</h4>
+    <p>A file which contains decryption details for individual Bismuth shielded token transactions.</p>
+    <h3>Description:</h3>
+    <p>Shielded token is a special type of token, which requires you to have the master key for its decryption. Without a master key, you are unable to see transactions on the network. With the master key, you have full access to the transaction history and balances for the given token.</p>
+    <h3>What is yet to be added:</h3>
+    <h4>Public transactions:</h4>
+    <p>also referred to as "ambiguous transactions". These are zero-knowledge transactions that can be performed by people who do not have access to the shielded token master key. Such third parties can blindly submit such transactions in good faith that they are transacting value. Only those with keys can validate such transactions.</p>
+    <h4>Rollback protection:</h4>
+    <p>Rigorous protection against double spending and forking has not been implemented yet</p>
+    <h4>Anchors:</h4>
+    <p>The system is missing anchor points that limit calculation only to the unprocessed part of the chain.</p>
+    </div>
+
+</body>
+</html>
