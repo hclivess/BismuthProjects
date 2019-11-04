@@ -2,6 +2,8 @@
 
 This interface runs on Tornado. It is designed to be portable. It newly uses json instead of a database for data storage.
 
+![Thumbnail](resources/thumb.png "Thumbnail")
+
 ## Configuration
 You need to adjust path to your Bismuth ledger in config.txt
 
