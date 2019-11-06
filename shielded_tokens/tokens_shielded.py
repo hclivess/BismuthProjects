@@ -107,8 +107,8 @@ def decrypt(enc_dict, key_encoded):
 
 
 def load_token_dict(token):
-    print(f"Loading keys for {token}.json")
-    token_path = f'shielded_keys/{token}.json'
+    print(f"Loading keys for {token}")
+    token_path = f'shielded_keys/{token}'
 
     if os.path.exists(token_path):
         with open(token_path) as token_keys:
@@ -246,7 +246,7 @@ def load_tokens():
 
 
 def move_token(token_name: str, recipient: str, amount: str):
-    token_key_dict = load_token_dict(token=token_name)
+    token_key_dict = load_token_dict(token=f"{token_name}.json")
     print("token_key_dict", token_key_dict)
 
     encrypted_data_move = encrypt_data(token_name=token_name,
@@ -274,7 +274,7 @@ def generate_token(token_name: str, recipient: str, amount: str):
                    public_signal=signals_generate(1),
                    key=token_key_generate())
 
-    token_key_dict = load_token_dict(token=token_name)
+    token_key_dict = load_token_dict(token=f"{token_name}.json")
     print("token_key_dict", token_key_dict)
 
     encrypted_data_make = encrypt_data(token_name=token_name,
