@@ -17,7 +17,7 @@ config = options.Get()
 config.read()
 ledger_path = config.ledger_path
 
-connection = sqlite3.connect("D:/bismuth/static/ledger.db")
+connection = sqlite3.connect(ledger_path)
 cursor = connection.cursor()
 Bismuthutil = bismuthutil.BismuthUtil()
 
