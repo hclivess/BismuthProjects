@@ -287,7 +287,7 @@ def generate_token(token_name: str, recipient: str, amount: str):
 
     operation = load_signal(token_key_dict["signals"])
     data = json.dumps(encrypted_data_make)
-    bisurl = Bismuthutil.create_bis_url(recipient, amount, operation, data)
+    bisurl = Bismuthutil.create_bis_url(recipient, 0, operation, data)
 
     print("make (data)", data)
     print("make (operation)", operation)
