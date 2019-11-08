@@ -33,11 +33,14 @@ class sendHandler(tornado.web.RequestHandler):
         amount = sendHandler.get_argument(self, "amount")
 
         #print(token_name, recipient, amount)
-        txdata = move_token(token_name, recipient, amount)
+        try:
+            txdata = move_token(token_name, recipient, amount)
 
-        if amount.isdigit() and token_name.isalnum() and recipient.isalnum():
-            self.render("bisurl_send.html", txdata=txdata)
-        else:
+            if amount.isdigit() and token_name.isalnum() and recipient.isalnum():
+                self.render("bisurl_send.html", txdata=txdata)
+            else:
+                self.render("error.html")
+        except:
             self.render("error.html")
 
 class generateHandler(tornado.web.RequestHandler):
