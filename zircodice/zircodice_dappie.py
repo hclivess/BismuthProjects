@@ -1,10 +1,14 @@
-import sqlite3, base64, options, os
-
-from Cryptodome.Signature import PKCS1_v1_5
-from Cryptodome.Hash import SHA
+import base64
+import options
+import os
+import sqlite3
 import time
 from decimal import *
 from random import randint
+
+from Cryptodome.Hash import SHA
+from Cryptodome.Signature import PKCS1_v1_5
+
 import essentials
 from essentials import fee_calculate
 
@@ -12,7 +16,8 @@ if not os.path.exists("roll.db"):
     print("Roll database does not exist, if you run this on an existing casino, all bets will be re-rolled and payouts processed")
     input("Press any key to continue")
 
-block_anchor = 1425090 #no payouts before this block
+block_anchor = 1425090  # no payouts before this block
+
 
 def update_payout(signature):
     print(signature[:56])
@@ -21,7 +26,6 @@ def update_payout(signature):
 
 
 def games_db_insert(tx):
-
     g.execute("CREATE TABLE IF NOT EXISTS results ("
               "timestamp	NUMERIC,"
               "address	TEXT,"
@@ -35,7 +39,7 @@ def games_db_insert(tx):
 
     try:
         g.execute("SELECT * FROM results WHERE signature = ?;", (tx[5],))
-        _ = g.fetchone()[0] #already there
+        _ = g.fetchone()[0]  # already there
         print(f"Transaction already in the result database for {tx[5][:8]}")
     except:
         print(tx)
@@ -43,7 +47,8 @@ def games_db_insert(tx):
         games_db.commit()
 
         print(f"Local database updated with a result transaction for {tx[4][:8]}")
-        
+
+
 def bets_db_insert(tx, rolled, victorious):
     g.execute("CREATE TABLE IF NOT EXISTS bets ("
               "block_height	INTEGER,"
@@ -67,13 +72,14 @@ def bets_db_insert(tx, rolled, victorious):
 
     try:
         g.execute("SELECT * FROM bets WHERE signature = ?;", (tx[5],))
-        _ = g.fetchone()[0] #already there
+        _ = g.fetchone()[0]  # already there
         print(f"Transaction already in the bet database for {tx[5][:8]}")
     except:
         g.execute("INSERT INTO bets VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7], tx[8], tx[9], tx[10], tx[11], rolled, tx[5][:56], victorious, False, tx[5][:8]))
         games_db.commit()
 
         print(f"Local database updated with a bet transaction for {tx[5][:8]}")
+
 
 def games_db_add(tx):
     passed = False
@@ -84,6 +90,7 @@ def games_db_add(tx):
         except sqlite3.OperationalError as e:
             print("Database locked, retrying")
             time.sleep(1)
+
 
 def can_be_added_to_bets(signature):
     g.execute("SELECT * FROM bets WHERE signature = ?", (signature,))
@@ -123,6 +130,7 @@ def bets_db_add(tx, rolled, victorious):
             time.sleep(1)
     print(f"Added to bets database: {tx}")
 
+
 def roll(block_height, txid):
     roll = sqlite3.connect("roll.db")
     roll.text_factory = str
@@ -131,7 +139,7 @@ def roll(block_height, txid):
     roll.commit()
 
     try:
-        g.execute("SELECT rolled FROM transactions WHERE txid = ?",(txid,))
+        g.execute("SELECT rolled FROM transactions WHERE txid = ?", (txid,))
         roll_number = g.fetchone()[0]
     except:
         roll_number = (randint(0, 9))
@@ -141,8 +149,10 @@ def roll(block_height, txid):
     roll.close()
     return roll_number
 
+
 def percentage(percent, whole):
-    return ((Decimal (percent) * Decimal(whole)) / 100)
+    return ((Decimal(percent) * Decimal(whole)) / 100)
+
 
 if __name__ == "__main__":
 
@@ -193,7 +203,7 @@ if __name__ == "__main__":
             result_bets = c.fetchall()
 
         except sqlite3.OperationalError as e:
-            print ("Database locked, retrying")
+            print("Database locked, retrying")
             time.sleep(1)
             pass
 
@@ -201,51 +211,51 @@ if __name__ == "__main__":
         del pay_this[:]
 
         for x in result_bets:
-                openfield = str(x[11])
-                if openfield == "even":
-                    player = [0, 2, 4, 6, 8]
-                    bank = [1, 3, 5, 7, 9]
-                else: #if odd
-                    player = [1, 3, 5, 7, 9]
-                    bank = [0, 2, 4, 6, 8]
+            openfield = str(x[11])
+            if openfield == "even":
+                player = [0, 2, 4, 6, 8]
+                bank = [1, 3, 5, 7, 9]
+            else:  # if odd
+                player = [1, 3, 5, 7, 9]
+                bank = [0, 2, 4, 6, 8]
 
-                bet_amount = float(x[4])
-                block_hash = x[7]
-                # print block_hash
-                tx_signature = x[5]  # unique
-                local_id = tx_signature[:8]
-                txid = x[5][:56]
-                rolled = roll(x[0],txid)
-                # print rolled
-                if int(rolled) in player:
-                    # print "player wins"
-                    victorious = True
-                    if is_eligible(x[5]):
-                        pay_this.append(x)
-                    print("Won")
+            bet_amount = float(x[4])
+            block_hash = x[7]
+            # print block_hash
+            tx_signature = x[5]  # unique
+            local_id = tx_signature[:8]
+            txid = x[5][:56]
+            rolled = roll(x[0], txid)
+            # print rolled
+            if int(rolled) in player:
+                # print "player wins"
+                victorious = True
+                if is_eligible(x[5]):
+                    pay_this.append(x)
+                print("Won")
 
-                else:
-                    # print "bank wins"
-                    victorious = False
-                    print("Lost")
+            else:
+                # print "bank wins"
+                victorious = False
+                print("Lost")
 
-                if can_be_added_to_bets(tx_signature):
-                    bets_db_add(x, rolled, victorious)
+            if can_be_added_to_bets(tx_signature):
+                bets_db_add(x, rolled, victorious)
 
         for y in pay_this:
             recipient = y[2]
             bet_amount = float(y[4])
             tx_signature = [5]  # unique
-            #print y
+            # print y
 
             # create transactions for missing payouts
             timestamp = '%.2f' % time.time()
             win_amount = Decimal(bet_amount * 2) - percentage(5, bet_amount)
             payout_operation = "zircodice:payout"
             fee = fee_calculate(y[5][:8])
-            payout_amount = '%.8f' % float(win_amount-fee)
+            payout_amount = '%.8f' % float(win_amount - fee)
 
-            #float(0.01 + (float(win_amount) * 0.001) + (float(len(payout_openfield)) / 100000) + (float(payout_keep) / 10))  # 0.1% + 0.01 dust
+            # float(0.01 + (float(win_amount) * 0.001) + (float(len(payout_openfield)) / 100000) + (float(payout_keep) / 10))  # 0.1% + 0.01 dust
 
             payout_transaction = (
                 str(timestamp),
@@ -254,7 +264,7 @@ if __name__ == "__main__":
                 str(payout_amount),
                 str(payout_operation),
                 str(y[5][:8])
-                           )  # this is signed
+            )  # this is signed
 
             h = SHA.new(str(payout_transaction).encode("utf-8"))
             signer = PKCS1_v1_5.new(key)
@@ -287,12 +297,12 @@ if __name__ == "__main__":
 
                 mempool.commit()  # Save (commit) the changes
                 mempool.close()
-                print (f"Mempool updated with a payout transaction for {y[5][:8]}")
+                print(f"Mempool updated with a payout transaction for {y[5][:8]}")
                 passed_mp = True
 
-                games_db_add(whole_tx) #todo: after 24h, check if the tx exists in the ledger. If not, remove this and update paid to 0 in bets db
+                games_db_add(whole_tx)  # todo: after 24h, check if the tx exists in the ledger. If not, remove this and update paid to 0 in bets db
                 update_payout(tx_signature)
                 break
 
-                    # create transactions for missing payouts
+                # create transactions for missing payouts
         time.sleep(15)
