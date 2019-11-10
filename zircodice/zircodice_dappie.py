@@ -153,7 +153,7 @@ def roll(block_height, txid):
         roll_number = r.fetchone()[0]
     except:
         roll_number = (randint(0, 9))
-        r.execute("INSERT INTO transactions VALUES (?,?,?)",(block_height, txid, roll_number))
+        r.execute("INSERT INTO transactions VALUES (?,?,?)", (block_height, txid, roll_number))
 
     roll.commit()
     roll.close()
@@ -303,7 +303,7 @@ if __name__ == "__main__":
                 print (f"Mempool updated with a payout transaction for {local_id}")
                 passed_mp = True
 
-                results_db_add(whole_tx)
+                results_db_add(whole_tx) #todo: after 24h, check if the tx exists in the ledger. If not, remove this and update paid to 0 in bets db
                 update_payout(tx_signature)
                 break
 
