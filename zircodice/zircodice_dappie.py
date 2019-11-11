@@ -1,5 +1,4 @@
 import base64
-import options
 import os
 import sqlite3
 import time
@@ -10,6 +9,7 @@ from Cryptodome.Hash import SHA
 from Cryptodome.Signature import PKCS1_v1_5
 
 import essentials
+import options
 from essentials import fee_calculate
 
 if not os.path.exists("roll.db"):

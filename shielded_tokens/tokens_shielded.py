@@ -293,7 +293,7 @@ def generate_token(token_name: str, recipient: str, amount: str):
     print("make (operation)", operation)
     print("BISURL to make", bisurl)
 
-    return {"data": data, "operation": operation, "bisurl": bisurl, "keyfile": token_key_dict}
+    return {"data": data, "operation": operation, "bisurl": bisurl, "keyfile": json.dumps(token_key_dict)}
 
 
 if __name__ == "__main__":
