@@ -4,7 +4,7 @@ import webbrowser
 import glob
 import json
 import os
-from tokens_shielded import move_token, generate_token, load_address, tokens_update, load_tokens, load_token_dict
+from tokens_shielded import move_token, generate_token, load_address, tokens_update, load_tokens, load_token_dict, test_db
 
 def get_accounts():
     accounts = []
@@ -82,5 +82,6 @@ def make_app():
 if __name__ == "__main__":
     app = make_app()
     app.listen(4646)
+    test_db()
     webbrowser.open_new_tab("http://127.0.0.1:4646")
     tornado.ioloop.IOLoop.current().start()

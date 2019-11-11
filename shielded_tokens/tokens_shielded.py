@@ -21,6 +21,18 @@ connection = sqlite3.connect(ledger_path)
 cursor = connection.cursor()
 Bismuthutil = bismuthutil.BismuthUtil()
 
+def test_db():
+    try:
+        cursor.execute("SELECT MAX (block_height) FROM transactions")
+        result = cursor.fetchone()[0]
+        if result:
+            print(f"DB test passed, last block: {result}")
+        else:
+            raise ValueError("DB test failed")
+    except:
+        raise ValueError("DB test failed")
+
+
 def load_address(file="wallet.der"):
     with open(file) as infile:
         loaded_file = json.loads(infile.read())
