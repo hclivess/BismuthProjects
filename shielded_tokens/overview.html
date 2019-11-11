@@ -36,25 +36,28 @@
         <th scope="col">Amount</th>
     </tr>
     </thead>
-    <tbody>
 
-    <tr>
-        {% for account in accounts %}
+<tbody>
 
-        <th scope="row">{{account["account"]}}</th>
-        {% end %}
+
 
         {% for account in accounts %}
+        <tr>
+            <th>{{account['account']}}</th>
+        </tr>
+
         {% for key, value in account.items() %}
-        {% if key != "account" %}
-        <td>{{key}}</td>
-        <td>{{value}}</td>
-        {% end %}
-        {% end %}
-        {% end %}
+        <tr>
 
+                {% if key != "account" %}
+                <td></td>
+                <td>{{key}}</td>
+                <td>{{value}}</td>
+                {% end %}
+        {% end %}
+        {% end %}
+        </tr>
 
-    </tr>
 
     </tbody>
 </table>
