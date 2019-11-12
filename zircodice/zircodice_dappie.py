@@ -12,11 +12,7 @@ import essentials
 import options
 from essentials import fee_calculate
 
-if not os.path.exists("roll.db"):
-    print("Roll database does not exist, if you run this on an existing casino, all bets will be re-rolled and payouts processed")
-    input("Press any key to continue")
-
-block_anchor = 1425090  # no payouts before this block
+block_anchor = 1428361  # no payouts before this block
 
 
 def update_payout(signature):
@@ -128,22 +124,18 @@ def bets_db_add(tx, rolled, victorious):
     print(f"Added to bets database: {tx}")
 
 
-def roll(block_height, txid):
-    roll = sqlite3.connect("roll.db")
-    roll.text_factory = str
-    r = roll.cursor()
-    r.execute("CREATE TABLE IF NOT EXISTS transactions (block_height INTEGER, txid, rolled)")
-    roll.commit()
+def roll(timestamp, txid):
+    g.execute("CREATE TABLE IF NOT EXISTS rolls (timestamp NUMERIC, txid, rolled NUMERIC)")
+    games_db.commit()
 
     try:
-        r.execute("SELECT rolled FROM transactions WHERE txid = ?", (txid,))
-        roll_number = r.fetchone()[0]
+        g.execute("SELECT rolled FROM rolls WHERE txid = ?", (txid,))
+        roll_number = g.fetchone()[0]
     except:
-        roll_number = (randint(0, 9))
-        r.execute("INSERT INTO transactions VALUES (?,?,?)", (block_height, txid, roll_number))
+        roll_number = randint(0, 9)
+        g.execute("INSERT INTO rolls VALUES (?,?,?)", (timestamp, txid, roll_number))
 
-    roll.commit()
-    roll.close()
+    games_db.commit()
     return roll_number
 
 

@@ -22,10 +22,8 @@ block_anchor = 1369139
 bet_max = 100
 bet_min = 0.1
 
-print("Mounting roll database...")
-roll_db = sqlite3.connect("roll.db")
-roll_cursor = roll_db.cursor()
-print("Roll database mounted...")
+game_db = sqlite3.connect("games.db")
+g = game_db.cursor()
 
 def format_bets(data):
     output_dict = {}
@@ -50,14 +48,12 @@ def format_bets(data):
     return json.dumps(output_dict)
 
 def getbytxid(txid):
-    game_db = sqlite3.connect("games.db")
-    g = game_db.cursor()
+
     try:
         g.execute("SELECT * FROM bets WHERE txid = ?", (txid,))
         result = format_bets(g.fetchall()[0])
     except:
         result = "not found"
-    game_db.close()
 
     return result
 
@@ -70,11 +66,11 @@ def percentage_of(part, whole):
 
     return '%.2f' % result
 
-def oddity_count(roll_cursor):
-    roll_cursor.execute("SELECT COUNT(*) FROM transactions WHERE rolled IN (?,?,?,?,?)", (0, 2, 4, 6, 8,))
-    sum_even = roll_cursor.fetchone()[0]
-    roll_cursor.execute("SELECT COUNT(*) FROM transactions WHERE rolled IN (?,?,?,?,?)", (1, 3, 5, 7, 9,))
-    sum_odd = roll_cursor.fetchone()[0]
+def oddity_count(g):
+    g.execute("SELECT COUNT(*) FROM rolls WHERE rolled IN (?,?,?,?,?)", (0, 2, 4, 6, 8,))
+    sum_even = g.fetchone()[0]
+    g.execute("SELECT COUNT(*) FROM rolls WHERE rolled IN (?,?,?,?,?)", (1, 3, 5, 7, 9,))
+    sum_odd = g.fetchone()[0]
 
     return sum_even, sum_odd
 
@@ -102,18 +98,18 @@ def balancesimple(cursor_db,address):
     return balance
 
 
-def roll(block_height, txid, roll_db, roll_cursor):
-    roll_cursor.execute("CREATE TABLE IF NOT EXISTS transactions (block_height INTEGER, txid, rolled)")
-    roll_db.commit()
+def roll(block_height, txid, game_db, g):
+    g.execute("CREATE TABLE IF NOT EXISTS rolls (timestamp NUMERIC, txid, rolled INTEGER)")
+    game_db.commit()
 
     try:
-        roll_cursor.execute("SELECT rolled FROM transactions WHERE txid = ?", (txid,))
-        roll_number = roll_cursor.fetchone()[0]
+        g.execute("SELECT rolled FROM rolls WHERE txid = ?", (txid,))
+        roll_number = g.fetchone()[0]
     except:
         roll_number = (randint(0, 9))
-        roll_cursor.execute("INSERT INTO transactions VALUES (?,?,?)", (block_height, txid, roll_number))
+        g.execute("INSERT INTO rolls VALUES (?,?,?)", (block_height, txid, roll_number))
 
-    roll_db.commit()
+    game_db.commit()
     return roll_number
 
 class GetByTxIdHandler(tornado.web.RequestHandler):
@@ -171,7 +167,7 @@ class MainHandler(tornado.web.RequestHandler):
             txid = x[5][:56]
             #print openfield
 
-            rolled = roll(x[1], txid, roll_db, roll_cursor)
+            rolled = roll(x[1], txid, game_db, g)
 
             if (rolled % 2 == 0) and (openfield == "even"): #if bets even and wins_total
                 cell_color = "#cfe0e8"
@@ -221,7 +217,7 @@ class MainHandler(tornado.web.RequestHandler):
                                 })
 
         minutes_ago = int((time.time() - float(last_timestamp))/60)
-        evens_rolled, odds_rolled = oddity_count(roll_cursor)
+        evens_rolled, odds_rolled = oddity_count(g)
         win_percentage = percentage_of(wins_total, losses_total)
         loss_percentage = percentage_of(losses_total, wins_total)
 
