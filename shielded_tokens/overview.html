@@ -43,17 +43,14 @@
 
         {% for account in accounts %}
         <tr>
-            <th>{{account['account']}}</th>
+            <th>{{account['name']}}</th>
         </tr>
 
-        {% for key, value in account.items() %}
+        {% for key, value in account['tokens'].items() %}
         <tr>
-
-                {% if key != "account" %}
                 <td></td>
                 <td>{{key}}</td>
                 <td>{{value}}</td>
-                {% end %}
         {% end %}
         {% end %}
         </tr>

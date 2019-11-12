@@ -4,17 +4,9 @@ import webbrowser
 import glob
 import json
 import os
-from tokens_shielded import move_token, generate_token, load_address, tokens_update, load_tokens, load_token_dict, test_db
+from tokens_shielded import move_token, generate_token, load_address, tokens_update, load_tokens, load_token_dict, test_db, get_accounts
 
-def get_accounts():
-    accounts = []
-    paths = glob.glob("shielded_accounts/*")
 
-    for path in paths:
-        with open(path) as infile:
-            account = json.loads(infile.read())
-            accounts.append(account)
-    return accounts
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):

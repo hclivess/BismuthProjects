@@ -191,19 +191,19 @@ def account_file_load(account):
 
     if not os.path.exists(account_path):
         with open(account_path, "w") as token_keys:
-            token_keys.write(json.dumps({}))
+            token_keys.write(json.dumps({"tokens": {}}))
 
     with open(account_path) as file:
-        account_contents = json.loads(file.read())
+        account_contents = json.loads(file.read())["tokens"]
 
     return account_contents
 
-
 def account_file_save(account, data):
     account_path = f"shielded_accounts/{account}.json"
-    with open(account_path, "w") as account_file:
-        account_file.write(json.dumps(data))
 
+    data_formatted = {"name": account, "tokens": data}
+    with open(account_path, "w") as account_file:
+        account_file.write(json.dumps(data_formatted))
 
 def token_genesis(account: str, token: str, amount: int):
     amount = int(amount)
@@ -212,10 +212,17 @@ def token_genesis(account: str, token: str, amount: int):
         data[token]
     except:  # if unprocessed
         data[token] = amount
-        data["account"] = account
-
         account_file_save(account, data)
 
+def get_accounts():
+    accounts = []
+    paths = glob.glob("shielded_accounts/*")
+
+    for path in paths:
+        with open(path) as infile:
+            account = json.loads(infile.read())
+            accounts.append(account)
+    return accounts
 
 def account_add_to(account: str, token: str, amount: int, debtor: str):
     amount = int(amount)
