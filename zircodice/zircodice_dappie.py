@@ -135,15 +135,15 @@ def roll(block_height, txid):
     roll = sqlite3.connect("roll.db")
     roll.text_factory = str
     r = roll.cursor()
-    g.execute("CREATE TABLE IF NOT EXISTS transactions (block_height INTEGER, txid, rolled)")
+    r.execute("CREATE TABLE IF NOT EXISTS transactions (block_height INTEGER, txid, rolled)")
     roll.commit()
 
     try:
-        g.execute("SELECT rolled FROM transactions WHERE txid = ?", (txid,))
-        roll_number = g.fetchone()[0]
+        r.execute("SELECT rolled FROM transactions WHERE txid = ?", (txid,))
+        roll_number = r.fetchone()[0]
     except:
         roll_number = (randint(0, 9))
-        g.execute("INSERT INTO transactions VALUES (?,?,?)", (block_height, txid, roll_number))
+        r.execute("INSERT INTO transactions VALUES (?,?,?)", (block_height, txid, roll_number))
 
     roll.commit()
     roll.close()
@@ -245,7 +245,7 @@ if __name__ == "__main__":
         for y in pay_this:
             recipient = y[2]
             bet_amount = float(y[4])
-            tx_signature = [5]  # unique
+            tx_signature = y[5]  # unique
             # print y
 
             # create transactions for missing payouts
