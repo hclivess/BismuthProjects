@@ -21,7 +21,7 @@ block_anchor = 1425090  # no payouts before this block
 
 def update_payout(signature):
     print(signature[:56])
-    g.execute("UPDATE bets SET paid = ? WHERE signature = ?", (True, signature))
+    g.execute("UPDATE bets SET settled = ? WHERE signature = ?", (True, signature))
     games_db.commit()
 
 
@@ -66,7 +66,7 @@ def bets_db_insert(tx, rolled, victorious):
               "rolled	TEXT,"
               "txid TEXT,"
               "victorious BOOLEAN,"
-              "paid BOOLEAN,"
+              "settled BOOLEAN,"
               "binder TEXT);")
     games_db.commit()
 
@@ -105,10 +105,7 @@ def can_be_added_to_bets(signature):
 
 
 def is_eligible(signature):
-    games_db = sqlite3.connect("games.db")
-    games_db.text_factory = str
-    r = games_db.cursor()
-    g.execute("SELECT * FROM bets WHERE signature = ? AND paid = 0 AND victorious = 1", (signature,))
+    g.execute("SELECT * FROM bets WHERE signature = ? AND settled = 0 AND victorious = 1", (signature,))
     result = g.fetchall()
 
     if result:
@@ -300,7 +297,7 @@ if __name__ == "__main__":
                 print(f"Mempool updated with a payout transaction for {y[5][:8]}")
                 passed_mp = True
 
-                games_db_add(whole_tx)  # todo: after 24h, check if the tx exists in the ledger. If not, remove this and update paid to 0 in bets db
+                games_db_add(whole_tx)  # todo: after 24h, check if the tx exists in the ledger. If not, remove this and update settled to 0 in bets db
                 update_payout(tx_signature)
                 break
 
