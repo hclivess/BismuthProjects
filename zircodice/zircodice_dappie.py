@@ -11,7 +11,7 @@ import bisbasic.essentials as essentials
 import bisbasic.options as options
 from bisbasic.essentials import fee_calculate
 
-block_anchor = 2864871  # no payouts before this block
+block_anchor = 2864000  # no payouts before this block
 
 
 def update_payout(signature):
@@ -38,7 +38,8 @@ def games_db_insert(tx):
         print(f"Transaction already in the result database for {tx[5][:8]}")
     except:
         print(tx)
-        g.execute("INSERT INTO results VALUES (?,?,?,?,?,?,?,?)", (tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7]))
+        g.execute("INSERT INTO results VALUES (?,?,?,?,?,?,?,?)",
+                  (tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7]))
         games_db.commit()
 
         print(f"Local database updated with a result transaction for {tx[4][:8]}")
@@ -70,7 +71,9 @@ def bets_db_insert(tx, rolled, victorious):
         _ = g.fetchone()[0]  # already there
         print(f"Transaction already in the bet database for {tx[5][:8]}")
     except:
-        g.execute("INSERT INTO bets VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7], tx[8], tx[9], tx[10], tx[11], rolled, tx[5][:56], victorious, False, tx[5][:8]))
+        g.execute("INSERT INTO bets VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+            tx[0], tx[1], tx[2], tx[3], tx[4], tx[5], tx[6], tx[7], tx[8], tx[9], tx[10], tx[11], rolled, tx[5][:56],
+            victorious, False, tx[5][:8]))
         games_db.commit()
 
         print(f"Local database updated with a bet transaction for {tx[5][:8]}")
@@ -142,9 +145,35 @@ def percentage(percent, whole):
     return ((Decimal(percent) * Decimal(whole)) / 100)
 
 
-if __name__ == "__main__":
+def recheck(txs_check_later):
+    for tx in txs_check_later:
+        if time.time() > int(tx[0]) + 1200:
+            """older than 20 minutes"""
+            payout_recheck(tx)
 
-    key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, _ = essentials.keys_load_new("wallet.der")
+
+def payout_recheck(tx):
+    print(f"Rechecking {tx}")
+    c.execute("SELECT * FROM bets WHERE signature = ?", (signature,))
+    result = c.fetchall()
+
+    if result:
+        print(f"{signature[:8]} exists (re-check)")
+        txs_check_later.remove(tx)
+
+    else:
+        print(f"{signature[:8]} re-added (re-check)")
+        tx[0] = '%.2f' % time.time()  # update timestamp
+        m.execute("INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?)",
+                  whole_tx)
+
+        mempool.commit()  # Save (commit) the changes
+        mempool.close()
+
+
+if __name__ == "__main__":
+    key, public_key_readable, private_key_readable, _, _, public_key_hashed, address, _ = essentials.keys_load_new(
+        "wallet.der")
 
     config = options.Get()
     config.read()
@@ -153,6 +182,8 @@ if __name__ == "__main__":
     ledger_path = config.ledger_path
     hyper_path = config.hyper_path
     mempool_path = "mempool.db"
+
+    txs_check_later = []
 
     confirmations = 0
     bet_max = 100
@@ -288,9 +319,13 @@ if __name__ == "__main__":
                 print(f"Mempool updated with a payout transaction for {y[5][:8]}")
                 passed_mp = True
 
-                games_db_add(whole_tx)  # todo: after 24h, check if the tx exists in the ledger. If not, remove this and update settled to 0 in bets db
+                games_db_add(whole_tx)  # todo: after 24h
                 update_payout(tx_signature)
+
+                txs_check_later.append(whole_tx)
                 break
 
                 # create transactions for missing payouts
+
+        recheck(txs_check_later=txs_check_later)
         time.sleep(15)
