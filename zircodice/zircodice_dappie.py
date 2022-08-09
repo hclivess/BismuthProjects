@@ -152,7 +152,7 @@ if __name__ == "__main__":
     full_ledger = config.full_ledger
     ledger_path = config.ledger_path
     hyper_path = config.hyper_path
-    mempool_path = config.mempool_path
+    mempool_path = "mempool.db"
 
     confirmations = 0
     bet_max = 100
