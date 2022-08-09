@@ -1,5 +1,4 @@
 import base64
-import os
 import sqlite3
 import time
 from decimal import *
@@ -8,9 +7,9 @@ from random import randint
 from Cryptodome.Hash import SHA
 from Cryptodome.Signature import PKCS1_v1_5
 
-import essentials
-import options
-from essentials import fee_calculate
+import bisbasic.essentials as essentials
+import bisbasic.options as options
+from bisbasic.essentials import fee_calculate
 
 block_anchor = 2864871  # no payouts before this block
 
