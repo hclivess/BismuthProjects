@@ -12,7 +12,7 @@ import essentials
 import options
 from essentials import fee_calculate
 
-block_anchor = 1428361  # no payouts before this block
+block_anchor = 2864871  # no payouts before this block
 
 
 def update_payout(signature):
