@@ -147,7 +147,7 @@ def percentage(percent, whole):
 
 def recheck(txs_check_later):
     for tx in txs_check_later:
-        if time.time() > int(tx[0]) + 1200:
+        if time.time() > int(float(tx[0])) + 1200:
             """older than 20 minutes"""
             payout_recheck(tx)
 
